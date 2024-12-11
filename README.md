@@ -54,53 +54,53 @@ Each class/library mentioned is preceded by a number representing the level of d
 and so on.
 
 
-    1 Arduino.h     Header file
-        2 WProgram.h    Copyright (c) 2017 PJRC.COM, LLC.
-                        Permission is hereby granted, free of charge, to any person obtaining
-                        a copy of this software and associated documentation files (the
-                        "Software"), to deal in the Software without restriction, including
-                        without limitation the rights to use, copy, modify, merge, publish,
-                        distribute, sublicense, and/or sell copies of the Software, and to
-                        permit persons to whom the Software is furnished to do so, subject to
-                        the following conditions:
-                        1. The above copyright notice and this permission notice shall be
-                        included in all copies or substantial portions of the Software.
-                        2. If the Software is incorporated into a build system that allows
-                        selection among a list of target devices, then similar target
-                        devices manufactured by PJRC.COM must be included in the list of
-                        target devices and selectable in the same manner.
-                        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-                        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-                        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-                        NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-                        BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-                        ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-                        CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-                        SOFTWARE.
+1 Arduino.h     Header file
+    2 WProgram.h    Copyright (c) 2017 PJRC.COM, LLC.
+                    Permission is hereby granted, free of charge, to any person obtaining
+                    a copy of this software and associated documentation files (the
+                    "Software"), to deal in the Software without restriction, including
+                    without limitation the rights to use, copy, modify, merge, publish,
+                    distribute, sublicense, and/or sell copies of the Software, and to
+                    permit persons to whom the Software is furnished to do so, subject to
+                    the following conditions:
+                    1. The above copyright notice and this permission notice shall be
+                    included in all copies or substantial portions of the Software.
+                    2. If the Software is incorporated into a build system that allows
+                    selection among a list of target devices, then similar target
+                    devices manufactured by PJRC.COM must be included in the list of
+                    target devices and selectable in the same manner.
+                    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+                    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+                    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+                    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+                    BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+                    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+                    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+                    SOFTWARE.
 
-                        notes:
-                        1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non sono pubblici,
-                        non ci sono commenti leggibili; 
-                        2. Il software NON consente di utilizzare un'altra piattaforma diversa del Teensy 4.1.
+                    notes:
+                    1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non sono pubblici,
+                    non ci sono commenti leggibili; 
+                    2. Il software NON consente di utilizzare un'altra piattaforma diversa del Teensy 4.1.
 
 
-            3 stdlib.h  Copyright (C) 2002-2024 Free Software Foundation, Inc.
-                        This file is part of the GNU ISO C++ Library.  This library is free
-                        software; you can redistribute it and/or modify it under the
-                        terms of the GNU General Public License as published by the
-                        Free Software Foundation; either version 3, or (at your option)
-                        any later version.
-                        This library is distributed in the hope that it will be useful,
-                        but WITHOUT ANY WARRANTY; without even the implied warranty of
-                        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-                        GNU General Public License for more details.
-                        Under Section 7 of GPL version 3, you are granted additional
-                        permissions described in the GCC Runtime Library Exception, version
-                        3.1, as published by the Free Software Foundation.
-                        You should have received a copy of the GNU General Public License and
-                        a copy of the GCC Runtime Library Exception along with this program;
-                        see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
-                        <http://www.gnu.org/licenses/>.
+        3 stdlib.h  Copyright (C) 2002-2024 Free Software Foundation, Inc.
+                    This file is part of the GNU ISO C++ Library.  This library is free
+                    software; you can redistribute it and/or modify it under the
+                    terms of the GNU General Public License as published by the
+                    Free Software Foundation; either version 3, or (at your option)
+                    any later version.
+                    This library is distributed in the hope that it will be useful,
+                    but WITHOUT ANY WARRANTY; without even the implied warranty of
+                    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                    GNU General Public License for more details.
+                    Under Section 7 of GPL version 3, you are granted additional
+                    permissions described in the GCC Runtime Library Exception, version
+                    3.1, as published by the Free Software Foundation.
+                    You should have received a copy of the GNU General Public License and
+                    a copy of the GCC Runtime Library Exception along with this program;
+                    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+                    <http://www.gnu.org/licenses/>.
 
                         notes:
                         Licenza GNU GPL è una licenza libera, che permette di redistribuire e/o modificare il software, ma richiede che le stesse libertà siano mantenute per chi riceve il software. In altre parole il software modificato deve mantenere la stessa licenza GPL.
