@@ -103,11 +103,8 @@ Actually more versions are in progress of design.
                         <http://www.gnu.org/licenses/>.
 
                         notes:
-                        Licenza GNU GPL è una licenza libera, che permette di redistribuire e/o modificare il software, ma
-                        richiede che le stesse libertà siano mantenute per chi riceve il software. In altre parole il software
-                        modificato deve mantenere la stessa licenza GPL. Se il progetto utilizza codice coperto dalla licenza
-                        GPLv3 con l'eccezione della GCC Runtime Library Exception 3.1, posso distribuire il software come
-                        closed source senza essere obbligato a rilasciare il codice sorgente del progetto.
+                        Licenza GNU GPL è una licenza libera, che permette di redistribuire e/o modificare il software, ma richiede che le stesse libertà siano mantenute per chi riceve il software. In altre parole il software modificato deve mantenere la stessa licenza GPL.
+                        Se il progetto utilizza codice coperto dalla licenza GPLv3 con l'eccezione della GCC Runtime Library Exception 3.1, posso distribuire il software come closed source senza essere obbligato a rilasciare il codice sorgente del progetto.
 
 
             3 string.h  Copyright (C) 2002-2024 Free Software Foundation, Inc. (see above for licensing)
