@@ -42,11 +42,11 @@ Actually more versions are in progress of design.
 
 #### Original and Modified libraries/classes included, with licensing notes.   
 
-This following text describes the full * *#include* * tree for LILLA code. Each class/library mentioned is preceded by a number representing the level of dependency:
+This following text describes the full #include tree for LILLA code. Each class/library mentioned is preceded by a number representing the level of dependency:<br/>
 
 * level-1: explicitely included in LILLA code<br/>
   * level-2: included in a level-1 element<br/>
-    * level-3: included in a level-2 element
+    * level-3: included in a level-2 element</p>
 
 and so on.</p>
 
