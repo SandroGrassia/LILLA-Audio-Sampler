@@ -47,9 +47,9 @@ Actually more versions are in progress of design.
         
         This following text describes the full #include tree for LILLA code.
         Each class/library mentioned is preceded by a number representing the level of dependency:
-        1: explicitely included in LILLA code
-        2: included in a level-1 element
-        3: included in a level-2 element
+        level 1: explicitely included in LILLA code
+        level 2: included in a level-1 element
+        level 3: included in a level-2 element
         
         and so on.
 
