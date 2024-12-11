@@ -45,10 +45,7 @@ List item one continued with a second paragraph followed by an
 Indented block.
 +
 .................
-
-========================================================================
-Original and Modified libraries/classes included, with licensing notes.
-========================================================================   
+Original and Modified libraries/classes included, with licensing notes.   
 
 This following text describes the full #include tree for LILLA code. Each class/library mentioned is preceded by a number representing the level of dependency:
 level 1: explicitely included in LILLA code
