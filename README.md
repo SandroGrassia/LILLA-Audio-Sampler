@@ -41,17 +41,17 @@ Actually more versions are in progress of design.
 
 
 
-    ========================================================================
-    (Original or modified) included libraries/classes, with licensing notes.
-    ========================================================================   
+========================================================================
+(Original or modified) included libraries/classes, with licensing notes.
+========================================================================   
 
-    This following text describes the full #include tree for LILLA code.
-    Each class/library mentioned is preceded by a number representing the level of dependency:
-    1: explicitely included in LILLA code
-    2: included in a level-1 element
-    3: included in a level-2 element
-    
-    and so on.
+This following text describes the full #include tree for LILLA code.
+Each class/library mentioned is preceded by a number representing the level of dependency:
+1: explicitely included in LILLA code
+2: included in a level-1 element
+3: included in a level-2 element
+
+and so on.
 
 
     1 Arduino.h     Header file
