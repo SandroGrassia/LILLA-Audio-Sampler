@@ -52,10 +52,11 @@ Actually more versions are in progress of design.
      * Item 2b
 ```
 
-* Item 1</p>
+* Item 1
   ppp pp p ppppp pppppppp pppp p p p ppppppppppp p p  ppppp pppp pppppp pppppp ppppppp pp ppppppppp ppp p p p p pppp ppppp pppppp pp p p pppp
 * Item 2
   * Item 1a
+    ppp pp p ppppp pppppppp pppp p p p ppppppppppp p p  ppppp pppp pppppp pppppp ppppppp pp ppppppppp ppp p p p p pppp ppppp pppppp pp p p pppp
   * Item 2a
      * Item 1b
      * Item 2b
