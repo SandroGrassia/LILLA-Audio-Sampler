@@ -40,33 +40,9 @@ Latest version is LILLA 2023; PCB is realized in Hong Kong, components assemblin
 Actually more versions are in progress of design.
 
 
-```git
-* Item 1</p>
->pippo</p>
->pippo</p>
->pippo pppppppppppp pppppp ppppppppppppp pppppppppp ppppppp pppp pppppppppppp ppppppp ppppppppppp ppp p p p p ppppppppppppppp pp p p ppppp</p>
-* Item 2
-  * Item 1a
-  * Item 2a
-     * Item 1b
-     * Item 2b
-```
-
-* Item 1 <br/>
-  ppp pp p ppppp pppppppp pppp p p p ppppppppppp p p  ppppp pppp pppppp pppppp ppppppp pp ppppppppp ppp p p p p pppp ppppp pppppp pp p p pppp
-* Item 2
-  * Item 1a
-    ppp pp p ppppp pppppppp pppp p p p ppppppppppp p p  ppppp pppp pppppp pppppp ppppppp pp ppppppppp ppp p p p p pppp ppppp pppppp pp p p pppp
-  * Item 2a
-     * Item 1b
-     * Item 2b
-   
-
-
-
 #### Original and Modified libraries/classes included, with licensing notes.   
 
-This following text describes the full _ _#include_ _ tree for LILLA code. Each class/library mentioned is preceded by a number representing the level of dependency:
+This following text describes the full * *#include* * tree for LILLA code. Each class/library mentioned is preceded by a number representing the level of dependency:
 
 * level-1: explicitely included in LILLA code<br/>
   * level-2: included in a level-1 element<br/>
@@ -74,9 +50,9 @@ This following text describes the full _ _#include_ _ tree for LILLA code. Each 
 
 and so on.</p>
 
-* 1 Arduino.h (header file)<br/>
+* 1 **Arduino.h** (header file)<br/>
 
-  * 2 WProgram.h<br/>
+  * 2 **WProgram.h**<br/>
     Copyright (c) 2017 PJRC.COM, LLC.<br/>
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the"Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
     distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -97,8 +73,8 @@ and so on.</p>
       You should have received a copy of the GNU General Public License and a copy of the GCC Runtime Library Exception along with this program; see the files COPYING3 and COPYING.RUNTIME respectively. If not, see <http://www.gnu.org/licenses/>.
 
       notes:<br/>
-      Licenza GNU GPL è una licenza libera, che permette di redistribuire e/o modificare il software, ma richiede che le stesse libertà siano mantenute per chi riceve il software. In altre parole il software modificato deve mantenere la stessa licenza GPL.
-      Se il progetto utilizza codice coperto dalla licenza GPLv3 con l'eccezione della GCC Runtime Library Exception 3.1, posso distribuire il software come closed source senza essere obbligato a rilasciare il codice sorgente del progetto.
+      1. La licenza GNU GPL è una licenza libera, che permette di redistribuire e/o modificare il software, ma richiede che le stesse libertà siano mantenute per chi riceve il software. In altre parole il software modificato deve mantenere la stessa licenza GPL.
+      2. Se il progetto utilizza codice coperto dalla licenza GPLv3 con l'eccezione della GCC Runtime Library Exception 3.1, posso distribuire il software come closed source senza essere obbligato a rilasciare il codice sorgente del progetto.
     
     * 3 string.h<br/>
       Copyright (C) 2002-2024 Free Software Foundation, Inc. (see above for licensing)<br/>
@@ -132,7 +108,7 @@ and so on.</p>
 
 
 
-    
+
 
         2 AudioStream.h<br/>
              Copyright (c) 2017 PJRC.COM, LLC. (see above for licensing)
