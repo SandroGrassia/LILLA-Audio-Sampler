@@ -79,9 +79,10 @@ Actually more versions are in progress of design.
                             SOFTWARE.
         
                             notes:
-                            1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non sono pubblici,
-                            non ci sono commenti leggibili; 
-                            2. Il software NON consente di utilizzare un'altra piattaforma diversa del Teensy 4.1.
+                            1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non
+                            sono pubblici, non ci sono commenti leggibili; 
+                            2. Il software NON consente di utilizzare un'altra piattaforma diversa dal
+                               Teensy 4.1.
 
 
         3 stdlib.h  Copyright (C) 2002-2024 Free Software Foundation, Inc.
@@ -103,8 +104,13 @@ Actually more versions are in progress of design.
                     <http://www.gnu.org/licenses/>.
 
                         notes:
-                        Licenza GNU GPL è una licenza libera, che permette di redistribuire e/o modificare il software, ma richiede che le stesse libertà siano mantenute per chi riceve il software. In altre parole il software modificato deve mantenere la stessa licenza GPL.
-                        Se il progetto utilizza codice coperto dalla licenza GPLv3 con l'eccezione della GCC Runtime Library Exception 3.1, posso distribuire il software come closed source senza essere obbligato a rilasciare il codice sorgente del progetto.
+                        Licenza GNU GPL è una licenza libera, che permette di redistribuire e/o modificare
+                        il software, ma richiede che le stesse libertà siano mantenute per chi riceve il
+                        software. In altre parole il software modificato deve mantenere la stessa licenza
+                        GPL.
+                        Se il progetto utilizza codice coperto dalla licenza GPLv3 con l'eccezione della
+                        GCC Runtime Library Exception 3.1, posso distribuire il software come closed
+                        source senza essere obbligato a rilasciare il codice sorgente del progetto.
 
 
             3 string.h  Copyright (C) 2002-2024 Free Software Foundation, Inc. (see above for licensing)
@@ -136,8 +142,8 @@ Actually more versions are in progress of design.
                             THE SOFTWARE.
 
                             notes:
-                            1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non sono pubblici,
-                            non ci sono commenti leggibili
+                            1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non
+                            sono pubblici, non ci sono commenti leggibili
 
         2 AudioStream.h     Copyright (c) 2017 PJRC.COM, LLC. (see above for licensing)
             3 stdio.h       Copyright (C) 2002-2024 Free Software Foundation, Inc. (see above for licensing)
@@ -171,12 +177,12 @@ Actually more versions are in progress of design.
         published by the Free Software Foundation.
 
         notes:
-        GNU General Public License version 2 (GPL): usando software con licenza GPL in un progetto closed source devo
-        rilasciare l'intero codice sorgente del tuo progetto sotto GPL.
-        GNU Lesser General Public License version 2.1 (LGPL): se utilizzo la libreria senza modificarla, devo permettere
-        agli utenti di sostituire la libreria con una versione modificata. In pratica, questo significa che il software
-        deve essere collegato dinamicamente alla libreria, in modo che gli utenti possano facilmente sostituirla con una
-        versione diversa se lo desiderano.
+        GNU General Public License version 2 (GPL): usando software con licenza GPL in un progetto closed
+        source devo rilasciare l'intero codice sorgente del tuo progetto sotto GPL.
+        GNU Lesser General Public License version 2.1 (LGPL): se utilizzo la libreria senza modificarla,
+        devo permettere agli utenti di sostituire la libreria con una versione modificata. In pratica,
+        questo significa che il software deve essere collegato dinamicamente alla libreria, in modo che
+        gli utenti possano facilmente sostituirla con una versione diversa se lo desiderano.
 
         2 Arduino.h     (see above)
         2 DMAChannel.h  (see above)
@@ -202,21 +208,24 @@ Actually more versions are in progress of design.
                 Modified 2012 by Todd Krein (todd@krein.org) to implement repeated starts
 
                 notes:
-                GNU General Public License version 2 (GPL): usando software con licenza GPL in un progetto closed source devo
-                rilasciare l'intero codice sorgente del tuo progetto sotto GPL.
-                GNU Lesser General Public License version 2.1 (LGPL): se utilizzo la libreria senza modificarla, devo permettere
-                agli utenti di sostituire la libreria con una versione modificata. In pratica, questo significa che il software
-                deve essere collegato dinamicamente alla libreria, in modo che gli utenti possano facilmente sostituirla con una
-                versione diversa se lo desiderano.
+                GNU General Public License version 2 (GPL): usando software con licenza GPL in un
+                progetto closed source devo rilasciare l'intero codice sorgente del tuo progetto
+                sotto GPL.
+                GNU Lesser General Public License version 2.1 (LGPL): se utilizzo la libreria senza
+                modificarla, devo permettere agli utenti di sostituire la libreria con una versione
+                modificata. In pratica, questo significa che il software deve essere collegato
+                dinamicamente alla libreria, in modo che gli utenti possano facilmente sostituirla
+                con una versione diversa se lo desiderano.
 
         2 WireIMXRT.h   Copyright (c) 2014-2017, Paul Stoffregen, paul@pjrc.com (see above for licensing)
     
     1 EEPROM.h  Copyright (c) 2015 Paul Stoffregen <paul@pjrc.com> (see above for licensing)
         2 stddef.h          (see above)
         2 stdint.h          (see above)
-        2 avr_functions.h   Copyright (c) 2017 PJRC.COM, LLC. (see above for licensing)           
-            3 inttypes.h    Copyright (C) 2006-2019 Free Software Foundation, Inc. (see above for licensing)               
-                4 tr1/cinttypes Copyright (C) 2006-2019 Free Software Foundation, Inc. (see above for licensing)
+        2 avr_functions.h Copyright (c) 2017 PJRC.COM, LLC. (see above for licensing)           
+            3 inttypes.h  Copyright (C) 2006-2019 Free Software Foundation, Inc. (see above for licensing)               
+                4 tr1/cinttypes Copyright (C) 2006-2019 Free Software Foundation, Inc. (see above
+                                for licensing)
 
     1 SD.h      Copyright (c) 2020, Paul Stoffregen, paul@pjrc.com (see above for licensing)               
         2 Arduino.h     (see above)
@@ -239,8 +248,8 @@ Actually more versions are in progress of design.
                     DEALINGS IN THE SOFTWARE.
 
                     notes:
-                    Il codice è pubblicato in forma di main e classi compilate; i sorgenti non sono pubblici,
-                    non ci sono commenti leggibili. 
+                    Il codice è pubblicato in forma di main e classi compilate; i sorgenti non sono
+                    pubblici, non ci sono commenti leggibili. 
 
             3 common/SysCall.h  Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
                 4 stdint.h      (see above)    
@@ -257,10 +266,13 @@ Actually more versions are in progress of design.
                         6 stddef.h      (see above)
                         6 SdFatConfig.h (see above)
                             7 stdint.h      (see above)
-                            7 avr/io.h      Copyright (c) 2015 Paul Stoffregen <paul@pjrc.com> (see above for licensing)   
-                                8 avr_emulation.h   Copyright (c) 2019 PJRC.COM, LLC. (see above for licensing)
+                            7 avr/io.h      Copyright (c) 2015 Paul Stoffregen <paul@pjrc.com> (see above
+                                            for licensing)   
+                                8 avr_emulation.h   Copyright (c) 2019 PJRC.COM, LLC. (see above for
+                                                    licensing)
                     5 SdCardInterface.h     Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
-                        6 common/FsBlockDeviceInterface.h   Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
+                        6 common/FsBlockDeviceInterface.h   Copyright (c) 2011-2021 Bill Greiman
+                                                            (see above for licensing)
                             7 stdint.h  (see above)
                             7 stddef.h  (see above)
                         6 SdCardInfo.h  Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
@@ -273,7 +285,8 @@ Actually more versions are in progress of design.
                     5 common/SysCall.h      (see above)
                     5 SdCardInfo.h          (see above)
                     5 SdCardInterface.h     (see above)
-                    5 SpiDriver/SdSpiDriver.h   Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
+                    5 SpiDriver/SdSpiDriver.h   Copyright (c) 2011-2021 Bill Greiman (see above for
+                                                licensing)
                         6 common/SysCall.h      (see above)
             3 ExFatLib/ExFatLib.h   Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
                 4 ExFatVolume.h     Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
@@ -296,32 +309,36 @@ Actually more versions are in progress of design.
                                     <http://www.gnu.org/licenses/>.
 
                                     notes:
-                                    il software è concesso in licenza sotto la GNU General Public License (GPL) versione 3
-                                    con l'aggiunta di un'eccezione specifica, nota come GCC Runtime Library Exception,
-                                    versione 3.1. Questa eccezione è importante perché modifica alcuni degli obblighi imposti
-                                    dalla GPL, rendendo più flessibile l'utilizzo del software in progetti closed source.
-                                    L'eccezione della Runtime Library di GCC è progettata per consentire l'uso delle librerie
-                                    di runtime di GCC in un contesto più ampio senza richiedere che tutto il software collegato
-                                    a tali librerie sia rilasciato sotto la GPL. In altre parole, se utilizzi una libreria di
-                                    runtime di GCC coperta da questa eccezione in un progetto closed source, non sei obbligato
-                                    a rilasciare il codice sorgente del tuo progetto sotto la GPL, a condizione di rispettare
+                                    il software è concesso in licenza sotto la GNU General Public License
+                                    (GPL) versione 3 con l'aggiunta di un'eccezione specifica, nota come
+                                    GCC Runtime Library Exception, versione 3.1. Questa eccezione è importante
+                                    perché modifica alcuni degli obblighi imposti dalla GPL, rendendo più
+                                    flessibile l'utilizzo del software in progetti closed source.
+                                    L'eccezione della Runtime Library di GCC è progettata per consentire
+                                    l'uso delle librerie di runtime di GCC in un contesto più ampio senza
+                                    richiedere che tutto il software collegato a tali librerie sia rilasciato
+                                    sotto la GPL.
+                                    In altre parole, se utilizzi una libreria di runtime di GCC coperta da questa
+                                    eccezione in un progetto closed source, non sei obbligato a rilasciare il
+                                    codice sorgente del tuo progetto sotto la GPL, a condizione di rispettare
                                     determinate condizioni.
                                     
                                     Dettagli dell'Eccezione:
-                                    Linking Permesso: La GCC Runtime Library Exception permette di collegare dinamicamente o
-                                    staticamente il proprio software con le librerie di runtime di GCC senza che l'intero
-                                    software finale debba essere rilasciato sotto GPL. Questo significa che puoi utilizzare
-                                    le librerie di runtime di GCC in un progetto closed source senza dover rendere open source
-                                    l'intero progetto.
+                                    Linking Permesso: La GCC Runtime Library Exception permette di collegare
+                                    dinamicamente o staticamente il proprio software con le librerie di runtime
+                                    di GCC senza che l'intero software finale debba essere rilasciato sotto GPL.
+                                    Questo significa che puoi utilizzare le librerie di runtime di GCC in un
+                                    progetto closed source senza dover rendere open source l'intero progetto.
                                     
-                                    Distribuzione: Quando distribuisci il software che include le librerie di runtime di GCC,
-                                    non sei obbligato a rilasciare il codice sorgente del tuo progetto principale sotto GPL.
-                                    Tuttavia, devi comunque rispettare i termini della GPL per la distribuzione delle librerie
-                                    stesse, mantenendo gli avvisi di copyright e la licenza.
+                                    Distribuzione: Quando distribuisci il software che include le librerie di
+                                    runtime di GCC, non sei obbligato a rilasciare il codice sorgente del tuo
+                                    progetto principale sotto GPL.
+                                    Tuttavia, devi comunque rispettare i termini della GPL per la distribuzione
+                                    delle librerie stesse, mantenendo gli avvisi di copyright e la licenza.
 
-                                    Modifiche alle Librerie: Se modifichi le librerie di runtime di GCC, le modifiche devono
-                                    essere rilasciate sotto la GPL. Tuttavia, il tuo software che si collega alle librerie
-                                    (senza modificarle) può rimanere closed source.
+                                    Modifiche alle Librerie: Se modifichi le librerie di runtime di GCC, le
+                                    modifiche devono essere rilasciate sotto la GPL. Tuttavia, il tuo software
+                                    che si collega alle librerie (senza modificarle) può rimanere closed source.
 
                         6 string.h  Copyright (c) 2006 The NetBSD Foundation, Inc. All rights reserved.
                                     This code is derived from software contributed to The NetBSD Foundation
@@ -347,9 +364,10 @@ Actually more versions are in progress of design.
                                     POSSIBILITY OF SUCH DAMAGE.
 
                                     notes:
-                                    devo mantenere intatti gli avvisi di copyright e le condizioni della licenza sia nel codice 
-                                    sorgente che nei binari distribuiti, e assicurarti che queste informazioni siano incluse
-                                    nella documentazione o nei materiali distribuiti con il software.
+                                    devo mantenere intatti gli avvisi di copyright e le condizioni della licenza
+                                    sia nel codice sorgente che nei binari distribuiti, e assicurarti che queste
+                                    informazioni siano incluse nella documentazione o nei materiali distribuiti
+                                    con il software.
 
                         6 common/FsDateTime.h   Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
                             7 stdint.h              (see above)
@@ -367,9 +385,12 @@ Actually more versions are in progress of design.
                             7 stdint.h      (see above)
                         6 ExFatPartition.h  Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
                             7 SysCall.h     (see above)
-                            7 common/FsBlockDevice.h    Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
-                            7 common/FsCache.h          Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
-                            7 common/FsStructs.h        Copyright (c) 2011-2021 Bill Greiman   (see above for licensing)                    
+                            7 common/FsBlockDevice.h    Copyright (c) 2011-2021 Bill Greiman (see above for
+                                                        licensing)
+                            7 common/FsCache.h          Copyright (c) 2011-2021 Bill Greiman (see above for
+                                                        licensing)
+                            7 common/FsStructs.h        Copyright (c) 2011-2021 Bill Greiman   (see above for
+                                                        licensing)                    
                 4 ExFatFormatter.h  Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
                     5 common/FsBlockDevice.h    (see above)          
             3 FatLib/FatLib.h   Copyright (c) 2011-2022Bill Greiman (see above for licensing)
@@ -487,9 +508,9 @@ Actually more versions are in progress of design.
                                 BSD license, all text here must be included in any redistribution.
 
                                 notes:
-                                Chi modifica un programma protetto da licenze BSD può ridistribuirlo usando la stessa
-                                o qualunque altra licenza (anche non libera), senza avere l'obbligo di redistribuire
-                                le modifiche apportate al codice sorgente.
+                                Chi modifica un programma protetto da licenze BSD può ridistribuirlo usando
+                                la stessa o qualunque altra licenza (anche non libera), senza avere l'obbligo
+                                di redistribuire le modifiche apportate al codice sorgente.
 
         2 SPI.h (see above)
 
@@ -517,11 +538,13 @@ Actually more versions are in progress of design.
                         SOFTWARE.
 
                         notes:
-                        1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non sono pubblici,
-                        non ci sono commenti leggibili; 
-                        2. Il software NON consente di utilizzare un'altra piattaforma diversa del Teensy 4.1.
+                        1. Il codice è pubblicato in forma di main e classi compilate; i sorgenti non
+                           sono pubblici, non ci sono commenti leggibili; 
+                        2. Il software NON consente di utilizzare un'altra piattaforma diversa del
+                           Teensy 4.1.
 
-    1 output_noiseshaped_pwm.h    Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com  (see above for licensing)
+    1 output_noiseshaped_pwm.h  Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com  (see above for
+                                licensing)
         2 Arduino.h       (see above)
         2 AudioStream.h   (see above)
         2 DMAChannel.h    (see above)
