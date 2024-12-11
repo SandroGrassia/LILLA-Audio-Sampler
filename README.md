@@ -41,7 +41,8 @@ Actually more versions are in progress of design.
 
 
 ```git
-* Item 1
+* Item 1</p>
+pippo
 * Item 2
   * Item 1a
   * Item 2a
