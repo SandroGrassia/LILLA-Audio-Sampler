@@ -42,7 +42,9 @@ Actually more versions are in progress of design.
 
 ```git
 * Item 1</p>
-pippo
+>pippo</p>
+>pippo</p>
+>pippo pppppppppppp pppppp ppppppppppppp pppppppppp ppppppp pppp pppppppppppp ppppppp ppppppppppp ppp p p p p ppppppppppppppp pp p p ppppp</p>
 * Item 2
   * Item 1a
   * Item 2a
