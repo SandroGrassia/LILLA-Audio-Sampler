@@ -63,7 +63,7 @@ and so on.</p>
     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     
     notes:<br/>
-    Il software per Lilla puo' essere eseguito solo su piattaforma Teensy 4.1.
+    Lilla software can run only on a Teensy 4.1 microcontroller.
 
     * 3 **stdlib.h**<br/>
       Copyright (C) 2002-2024 Free Software Foundation, Inc.<br/>
