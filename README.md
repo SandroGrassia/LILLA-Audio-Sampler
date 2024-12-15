@@ -36,8 +36,7 @@ Here are some shoots showcasing how the project has evolved since its startpoint
 </p>
 
 
-Latest version is LILLA 2023; PCB is realized in Hong Kong, components assembling is done in Italy, enclosure (aluminium sheet case crafted with laser cutter and CNC bender press - wooden parts are crafted with CNC milling machine) is made in Italy.
-Actually more versions are in progress of design.
+The latest version, LILLA 2024, is currently in the beta testing phase. The PCB is manufactured in Hong Kong, while component assembly is carried out in Italy. The enclosure is made in Italy and features an aluminum sheet case, crafted using a laser cutter and CNC bender press.
 
 
 #### Original and modified libraries/classes included, with licensing notes.   
