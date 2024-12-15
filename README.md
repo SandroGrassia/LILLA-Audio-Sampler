@@ -5,7 +5,7 @@
 **LILLA** is an audio sampler based on Teensy 4.1, designed and assembled in Italy.<br/> 
 [Website](https://www.lillasampler.it/)<br/> 
 [Facebook](https://www.facebook.com/Lilla.audio.sampler)<br/> 
-[Buy] (https://www.tindie.com/products/lillasampler/lilla-audio-sampler-2/)<br/> 
+[Buy](https://www.tindie.com/products/lillasampler/lilla-audio-sampler-2/)<br/> 
 
 Here are some shoots showcasing how the project has evolved since its startpoint, in 2018.
 <p align="center">
