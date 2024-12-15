@@ -289,10 +289,10 @@ and so on.</p>
               * 7 **stdint.h**<br/>
                     (see above)
 
-               * 7 **avr/io.h**<br/> 
+              * 7 **avr/io.h**<br/> 
                     Copyright (c) 2015 Paul Stoffregen <paul@pjrc.com> (see above for licensing)
 
-                 * 8 **avr_emulation.h**<br/>
+                * 8 **avr_emulation.h**<br/>
                     Copyright (c) 2019 PJRC.COM, LLC. (see above for licensing)
 
           * 5 **SdCardInterface.h**<br/>
@@ -304,22 +304,22 @@ and so on.</p>
               * 7 **stdint.h**<br/> 
                (see above)
 
-               * 7 **stddef.h**<br/> 
+              * 7 **stddef.h**<br/> 
                 (see above)
 
             * 6 **SdCardInfo.h**<br/>
               Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-               * 7 **common/SysCall.h**<br/>
+              * 7 **common/SysCall.h**<br/>
                  (see above)
 
-                 * 8 **stdint.h**<br/>
+                * 8 **stdint.h**<br/>
                        (see above)
 
-                 * 8 **stddef.h**<br/>
+                * 8 **stddef.h**<br/>
                        (see above)
                        
-                 * 8 **SdFatConfig.h**<br/>
+                * 8 **SdFatConfig.h**<br/>
                      (see above)
 
         * 4 **SdSpiCard.h**<br/>
@@ -346,13 +346,13 @@ and so on.</p>
     * 3 **ExFatLib/ExFatLib.h**<br/>
         Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-        * 4 **ExFatVolume.h**<br/>
+      * 4 **ExFatVolume.h**<br/>
             Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-          * 5 **ExFatFile.h**<br/>
+        * 5 **ExFatFile.h**<br/>
               Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-            * 6 **limits.h**<br/>
+          * 6 **limits.h**<br/>
                 Copyright (C) 1992-2019 Free Software Foundation, Inc.
                 This file is part of GCC. GCC is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3, or (at your option) any later version.<br/>
                 GCC is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.<br/>
@@ -373,7 +373,7 @@ and so on.</p>
 
                 Modifiche alle Librerie: Se modifichi le librerie di runtime di GCC, le modifiche devono essere rilasciate sotto la GPL. Tuttavia, il tuo software che si collega alle librerie (senza modificarle) può rimanere closed source.
 
-            * 6 **string.h**<br/>
+          * 6 **string.h**<br/>
                 Copyright (c) 2006 The NetBSD Foundation, Inc. All rights reserved.
                 This code is derived from software contributed to The NetBSD Foundation by Christos Zoulas.
                 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -384,129 +384,129 @@ and so on.</p>
                 notes:
                 occorre mantenere intatti gli avvisi di copyright e le condizioni della licenza sia nel codice sorgente che nei binari distribuiti, e assicurare che queste informazioni siano incluse nella documentazione o nei materiali distribuiti con il software.
 
-            * 6 **common/FsDateTime.h**<br/>
+          * 6 **common/FsDateTime.h**<br/>
                 Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **stdint.h**<br/>
+            * 7 **stdint.h**<br/>
                     (see above)
 
-                * 7 **CompileDateTime.h**<br/>
+            * 7 **CompileDateTime.h**<br/>
                     Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **SysCall.h**<br/>
+            * 7 **SysCall.h**<br/>
                     (see above)
 
-            * 6 **common/FsApiConstants.h**<br/>
+          * 6 **common/FsApiConstants.h**<br/>
                 Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **SysCall.h**<br/>
+            * 7 **SysCall.h**<br/>
                     (see above)
 
-                * 7 **fcntl.h**<br/>
+            * 7 **fcntl.h**<br/>
                     (??)
 
-            *  6 **common/FmtNumber.h**<br/>
+         *  6 **common/FmtNumber.h**<br/>
                  Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **math.h**<br/>
+            * 7 **math.h**<br/>
                     (see above)  
 
-                * 7 **stdint.h**<br/>  
+            * 7 **stdint.h**<br/>  
                     (see above)
 
-                * 7 **stddef.h**<br/>
+            * 7 **stddef.h**<br/>
                     (see above)
-            * 6 **common/FsName.h**<br/> 
+          * 6 **common/FsName.h**<br/> 
                 Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **SysCall.h**<br/>  
+            * 7 **SysCall.h**<br/>  
                     (see above)
 
-                * 7 **stdint.h**<br/>  
+            * 7 **stdint.h**<br/>  
                     (see above)
 
-            * 6 **ExFatPartition.h**<br/> 
+          * 6 **ExFatPartition.h**<br/> 
                 Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **SysCall.h**<br/>  
+            * 7 **SysCall.h**<br/>  
                     (see above)
 
-                * 7 **common/FsBlockDevice.h**<br/> 
+            * 7 **common/FsBlockDevice.h**<br/> 
                     Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **common/FsCache.h**<br/> 
+            * 7 **common/FsCache.h**<br/> 
                     Copyright (c) 2011-2021 Bill Greiman (see above for licensing)
 
-                * 7 **common/FsStructs.h**<br/>
+            * 7 **common/FsStructs.h**<br/>
                     Copyright (c) 2011-2021 Bill Greiman   (see above for licensing) 
 
-            *  4 **ExFatFormatter.h**<br/>
-                 Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
+      * 4 **ExFatFormatter.h**<br/>
+                Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
 
-                * 5 **common/FsBlockDevice.h**<br/>
-                    (see above) 
+           * 5 **common/FsBlockDevice.h**<br/>
+                (see above) 
 
-      * 3 **FatLib/FatLib.h**<br/> 
+    * 3 **FatLib/FatLib.h**<br/> 
           Copyright (c) 2011-2022Bill Greiman (see above for licensing)
 
-            * 4 **FatVolume.h**<br/> 
-                Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
+      * 4 **FatVolume.h**<br/> 
+          Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
 
-            * 4 **FatFormatter.h**<br/> 
-                Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
+      * 4 **FatFormatter.h**<br/> 
+          Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
 
-        * 3 **FsLib/FsLib.h**<br/>  
+    * 3 **FsLib/FsLib.h**<br/>  
+          Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
+
+      * 4 **FsVolume.h**<br/> 
             Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
 
-            * 4 **FsVolume.h**<br/> 
+        * 5 **FsNew.h**<br/>  
                 Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
 
-                * 5 **FsNew.h**<br/>  
-                    Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
-
-                    * 6 **stddef.h**<br/>ù
-                        (see above)
-
-                    * 6 **stdint.h**<br/> 
-                        (see above)
-
-                * 5 **FatLib/FatLib.h**<br/>
+          * 6 **stddef.h**<br/>ù
                     (see above)
 
-                * 5 **ExFatLib/ExFatLib.h**<br/> 
-                    (see above)   
-
-            * 4 **FsFile.h**<br/> 
-                Copyright (c) 2011-2024 Bill Greiman (see above for licensing)
-
-                * 5 **FsNew.h**<br/> 
-                   (see above)
-
-                * 5 **FatLib/FatLib.h**<br/>
+          * 6 **stdint.h**<br/> 
                     (see above)
 
-                * 5 **ExFatLib/ExFatLib.h**<br/>
-                    (see above)
+        * 5 **FatLib/FatLib.h**<br/>
+                (see above)
 
-            * 4 **FsFormatter.h**<br/> 
-                Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
+        * 5 **ExFatLib/ExFatLib.h**<br/> 
+                (see above)   
 
-                * 5 **FatLib/FatLib.h**<br/> 
-                    (see above)
+      * 4 **FsFile.h**<br/> 
+            Copyright (c) 2011-2024 Bill Greiman (see above for licensing)
 
-                * 5 **ExFatLib/ExFatLib.h**<br/>  
-                    (see above) 
+        * 5 **FsNew.h**<br/> 
+              (see above)
 
-      * 3 **sdios.h**<br/>
+        * 5 **FatLib/FatLib.h**<br/>
+              (see above)
+
+        * 5 **ExFatLib/ExFatLib.h**<br/>
+              (see above)
+
+      * 4 **FsFormatter.h**<br/> 
+            Copyright (c) 2011-2022 Bill Greiman (see above for licensing)
+
+        * 5 **FatLib/FatLib.h**<br/> 
+              (see above)
+
+        * 5 **ExFatLib/ExFatLib.h**<br/>  
+              (see above) 
+
+    * 3 **sdios.h**<br/>
           (see above)
 
-    * 2 **FS.h**<br/>
+  * 2 **FS.h**<br/>
         Copyright (c) 2021 PJRC.COM, LLC. (see above for licensing)
 
 * 1 **SerialFlash.h**<br/>
     Copyright (C) 2015, Paul Stoffregen, paul@pjrc.com (see above for licensing)
 
-    *  2 **Arduino.h**<br/>
+    * 2 **Arduino.h**<br/>
          (see above)
 
     * 2 **SPI.h**<br/>  
