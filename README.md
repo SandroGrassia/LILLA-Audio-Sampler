@@ -150,8 +150,8 @@ and so on.</p>
   * 2 **DMAChannel.h**<br/>
       (see above)
 
-            * 3 **imxrt.h**<br/>
-            (see above)
+    * 3 **imxrt.h**<br/>
+      (see above)
 
 
 * 1 **record_queue.h**<br/>
