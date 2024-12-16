@@ -173,8 +173,8 @@ and so on.</p>
     SPI Master library for arduino. This file is free software; you can redistribute it and/or modify it under the terms of either the GNU General Public License version 2 or the GNU Lesser General Public License version 2.1, both as published by the Free Software Foundation.<br/>
 
     notes:<br/>
-    GNU General Public License version 2 (GPL): usando software con licenza GPL in un progetto closed source devo rilasciare l'intero codice sorgente del tuo progetto sotto GPL. GNU Lesser General Public License version 2.1 (LGPL): se utilizzo la libreria senza modificarla,
-    devo permettere agli utenti di sostituire la libreria con una versione modificata. In pratica, questo significa che il software deve essere collegato dinamicamente alla libreria, in modo che gli utenti possano facilmente sostituirla con una versione diversa se lo desiderano.<br/>
+    GNU General Public License version 2 (GPL): La LGPL è una licenza pensata specificamente per librerie software, con l'obiettivo di offrire una maggiore flessibilità rispetto alla GPL. La versione 2.1 è una delle più utilizzate di questa licenza.
+    La LGPL permette che software proprietari possano collegarsi (linkare) a librerie rilasciate con questa licenza, senza dover rendere il software proprietario stesso open source.<br/>
 
   * 2 **Arduino.h**<br/>
       (see above)
@@ -208,8 +208,8 @@ and so on.</p>
     Modified 2012 by Todd Krein (todd@krein.org) to implement repeated starts
 
     notes:<br/>
-    GNU General Public License version 2 (GPL): usando software con licenza GPL in un progetto closed source devo rilasciare l'intero codice sorgente del tuo progetto sotto GPL.<br/>
-    GNU Lesser General Public License version 2.1 (LGPL): se utilizzo la libreria senza modificarla, devo permettere agli utenti di sostituire la libreria con una versione modificata. In pratica, questo significa che il software deve essere collegato dinamicamente alla libreria, in modo che gli utenti possano facilmente sostituirla con una versione diversa se lo desiderano.<br/>
+    GNU General Public License version 2 (GPL): La LGPL è una licenza pensata specificamente per librerie software, con l'obiettivo di offrire una maggiore flessibilità rispetto alla GPL. La versione 2.1 è una delle più utilizzate di questa licenza.
+    La LGPL permette che software proprietari possano collegarsi (linkare) a librerie rilasciate con questa licenza, senza dover rendere il software proprietario stesso open source.<br/>
 
   * 2 **WireIMXRT.h**<br/>
       Copyright (c) 2014-2017, Paul Stoffregen, paul@pjrc.com (see above for licensing)
