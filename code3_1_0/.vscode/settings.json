@@ -1,0 +1,24 @@
+{
+    "files.associations": {
+        "memory": "cpp",
+        "limits": "cpp",
+        "type_traits": "cpp",
+        "system_error": "cpp",
+        "array": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "random": "cpp",
+        "*.tcc": "cpp",
+        "cmath": "cpp",
+        "compare": "cpp",
+        "new": "cpp",
+        "numeric": "cpp",
+        "algorithm": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "*.tpp": "cpp",
+        "cstddef": "cpp"
+    },
+    "cmake.options.statusBarVisibility": "icon"
+}
