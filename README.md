@@ -7,7 +7,7 @@
 [Facebook](https://www.facebook.com/Lilla.audio.sampler)<br/> 
 [Buy](https://www.tindie.com/products/lillasampler/lilla-audio-sampler-2/)<br/> 
 
-Here are some shoots showcasing how the project has evolved since its startpoint, in 2018.
+Here are some shoots showcing how the project has evolved since it began in 2018.
 <p align="center">
 <img width="400" src="/pics/story_0.jpg")
 </p>
