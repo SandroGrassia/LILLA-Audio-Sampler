@@ -30,7 +30,7 @@ public:
     Adafruit_ILI9341 *_tft = nullptr;
 
     void Update(bool with_led = true); // avanza il metronomo e i led
-    void Setup(const int &LOOP_time);
+    void Setup(const int LOOP_time);
     void Leds_off(void); // spegne tutti i led
     void Led_ON(int led); // accende il led e assegna beat
     void Set_beat(int value); // assegna il beat attuale

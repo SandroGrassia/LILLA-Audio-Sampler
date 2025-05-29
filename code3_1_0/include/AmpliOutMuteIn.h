@@ -77,8 +77,8 @@ public:
     AmpliOutMuteIn(void) : AudioStream(4, inputQueueArray) {}
 
     virtual void update(void);
-    void gain(unsigned int channel, float value);
+    void gain(int channel, float value);
     void gain(float value);
-    void Mute(unsigned int channel);
-    void unmute(unsigned int channel);
+    void Mute(int channel);
+    void unmute(int channel);
 };

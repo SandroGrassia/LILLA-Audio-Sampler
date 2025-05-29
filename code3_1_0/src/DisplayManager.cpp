@@ -51,7 +51,7 @@ void DisplayManager::Lilla_cover_slow(void)
 }
 
 FLASHMEM
-void DisplayManager::Show_Session_number(const bool change_session)
+void DisplayManager::Show_Session_number(bool change_session)
 {
     tft.setCursor(x_pos(12 + 18), y_pos(0));
     tft.setTextColor(TEXT_COLOR);
@@ -62,7 +62,7 @@ void DisplayManager::Show_Session_number(const bool change_session)
 }
 
 FLASHMEM
-void DisplayManager::Session_volume(const bool change_vol)
+void DisplayManager::Session_volume(bool change_vol)
 {
     tft.setCursor(x_pos(41), y_pos(0));
     tft.setTextColor(TEXT_COLOR);
@@ -71,7 +71,7 @@ void DisplayManager::Session_volume(const bool change_vol)
 }
 
 FLASHMEM
-void DisplayManager::Session_volume_value(const bool change_vol)
+void DisplayManager::Session_volume_value(bool change_vol)
 {
     Cancel_text_reset_cursor(x_pos(47.5), y_pos(0), 4);
     tft.setTextColor(ILI9341_YELLOW); // tft.setTextColor(change_vol ? ILI9341_YELLOW : ILI9341_WHITE);
@@ -79,7 +79,7 @@ void DisplayManager::Session_volume_value(const bool change_vol)
 }
 
 FLASHMEM
-void DisplayManager::Loop_rec_advice(const int track, const bool on)
+void DisplayManager::Loop_rec_advice(int track, bool on)
 {
     if (on)
     {
@@ -94,7 +94,7 @@ void DisplayManager::Loop_rec_advice(const int track, const bool on)
     }
 }
 
-void DisplayManager::Popup(const String text, const uint16_t text_color, const uint16_t filler_color)
+void DisplayManager::Popup(String text, uint16_t text_color, uint16_t filler_color)
 {
     L_POPUP = x_pos(text.length() + 4); // lunghezza
     H_POPUP = y_pos(3);                 // altezza
@@ -108,22 +108,22 @@ void DisplayManager::Popup(const String text, const uint16_t text_color, const u
     tft.print(text);
 }
 
-void DisplayManager::Board(const float col, const float row, const int chars)
+void DisplayManager::Board(float col, float row, int chars)
 {
     tft.fillRect(x_pos(col) - 4, y_pos(row) - 2, (6 * chars) + 7, 11, 0x9000); // fillRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_t heigh, uint16_t color);
 }
 
-void DisplayManager::Frame(const float col, const float row, const int chars, const bool print)
+void DisplayManager::Frame(float col, float row, int chars, bool print)
 {
     tft.drawRect(x_pos(col) - 4, y_pos(row) - 4, (6 * chars) + 7, 15, (print ? FRAME_COLOR : ILI9341_BLACK)); // drawRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t color)
 }
 
-void DisplayManager::Instrument_frame_on_position(const float position, const bool print)
+void DisplayManager::Instrument_frame_on_position(float position, bool print)
 {
     tft.drawRect(4, Instrument_Y_POSITION(position) - 4, 311, 15, (print ? FRAME_COLOR : ILI9341_BLACK)); // drawRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t color)
 }
 
-void DisplayManager::Led_instrument_PERFORMANCE(const uint8_t instrument)
+void DisplayManager::Led_instrument_PERFORMANCE(uint8_t instrument)
 {
     if (Lilla_state == PERFORMANCE || Lilla_state == MIDI_LOOP)
     {
@@ -135,7 +135,7 @@ void DisplayManager::Led_instrument_PERFORMANCE(const uint8_t instrument)
     }
 }
 
-void DisplayManager::Led_instrument_SOUND_EDIT(const uint8_t instrument)
+void DisplayManager::Led_instrument_SOUND_EDIT(uint8_t instrument)
 {
     if (Players_statistics.Read_total_Players_per_instrument(instrument) == 0)
         tft.drawBitmap(x_pos(22) - 4, y_pos(0), led_pic, 8, 8, (MX_mute[instrument] ? RED_OFF : GREEN_OFF));
@@ -144,7 +144,7 @@ void DisplayManager::Led_instrument_SOUND_EDIT(const uint8_t instrument)
     return;
 }
 
-void DisplayManager::Led_instrument_INSTRUMENT_VCF(const uint8_t instrument)
+void DisplayManager::Led_instrument_INSTRUMENT_VCF(uint8_t instrument)
 {
     if (Lilla_state_0 == PERFORMANCE)
     {
@@ -183,14 +183,14 @@ void DisplayManager::Led_instrument_LIVE_SAMPLING(void)
     return;
 }
 
-void DisplayManager::Led_tuning_tone(const int session)
+void DisplayManager::Led_tuning_tone(int session)
 {
     if (Lilla_state == PERFORMANCE)
         tft.drawBitmap(X_LED, Instrument_Y_POSITION(Session[session].instruments), led_pic, 8, 8, (TT_playing ? ILI9341_RED : RED_OFF));
 }
 
 FLASHMEM
-void DisplayManager::Performance_page(const bool change_session, const bool change_vol)
+void DisplayManager::Performance_page(bool change_session, bool change_vol)
 {
     instrument_editing_flag = false;
     Session_header(change_session, change_vol);
@@ -202,7 +202,7 @@ void DisplayManager::Performance_page(const bool change_session, const bool chan
 FLASHMEM
 void DisplayManager::Show_Performance(void)
 {
-    Board(0, 0, 11); // Display.Board(const float   col, float row, int chars)
+    Board(0, 0, 11); // Display.Board(float   col, float row, int chars)
     tft.setCursor(x_pos(0), y_pos(0));
     tft.setTextColor(ILI9341_WHITE);
     tft.print("PERFORMANCE");
@@ -343,7 +343,7 @@ void DisplayManager::Lowpass_filter(void)
 }
 
 FLASHMEM
-void DisplayManager::Show_sound(const uint8_t session, const uint8_t instrument)
+void DisplayManager::Show_sound(uint8_t session, uint8_t instrument)
 {
     tft.fillScreen(ILI9341_BLACK);
     if (Lilla_state_0 == MIDI_LOOP)
@@ -429,7 +429,7 @@ void DisplayManager::Show_sound(const uint8_t session, const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::File(const uint8_t instrument)
+void DisplayManager::File(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(43), y_pos(0), 7);
     tft.setTextColor((file_midi_ch_flag ? ILI9341_YELLOW : ILI9341_WHITE));
@@ -437,14 +437,14 @@ void DisplayManager::File(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Midi_channel(const uint8_t instrument)
+void DisplayManager::Midi_channel(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(12.5), y_pos(4.9), 2);
     tft.setTextColor((!file_midi_ch_flag ? ILI9341_YELLOW : ILI9341_WHITE));
     tft.print(Preset[instrument].midi_channel + 1);
 }
 FLASHMEM
-void DisplayManager::Pitch(const uint8_t instrument)
+void DisplayManager::Pitch(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(23.5), y_pos(4.9), 5);
     tft.setTextColor(ILI9341_YELLOW);
@@ -452,7 +452,7 @@ void DisplayManager::Pitch(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Gain_sound(const uint8_t session, const uint8_t instrument)
+void DisplayManager::Gain_sound(uint8_t session, uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(35.5), y_pos(4.9), 4);
     tft.setTextColor(ILI9341_YELLOW);
@@ -460,7 +460,7 @@ void DisplayManager::Gain_sound(const uint8_t session, const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Pan(const uint8_t instrument)
+void DisplayManager::Pan(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(45.5), y_pos(4.9), 4);
     tft.setTextColor(ILI9341_YELLOW);
@@ -472,7 +472,7 @@ void DisplayManager::Pan(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Attack(const uint8_t instrument)
+void DisplayManager::Attack(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(3.5), y_pos(5.9), 10);
     tft.setTextColor(ILI9341_YELLOW);
@@ -493,7 +493,7 @@ void DisplayManager::Attack(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Decay(const uint8_t instrument)
+void DisplayManager::Decay(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(21.5), y_pos(5.9), 4);
     tft.setTextColor(ILI9341_YELLOW);
@@ -502,7 +502,7 @@ void DisplayManager::Decay(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Sustain(const uint8_t instrument)
+void DisplayManager::Sustain(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(34.5), y_pos(5.9), 4);
     tft.setTextColor(ILI9341_YELLOW);
@@ -511,7 +511,7 @@ void DisplayManager::Sustain(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Release(const uint8_t instrument)
+void DisplayManager::Release(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(45.5), y_pos(5.9), 5);
     tft.setTextColor(ILI9341_YELLOW);
@@ -520,7 +520,7 @@ void DisplayManager::Release(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Play_mode(const uint8_t instrument)
+void DisplayManager::Play_mode(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(9.5), y_pos(6.9), 13);
     tft.setTextColor(ILI9341_YELLOW);
@@ -530,7 +530,7 @@ void DisplayManager::Play_mode(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Noclick(const uint8_t instrument, const bool value)
+void DisplayManager::Noclick(uint8_t instrument, bool value)
 {
     Cancel_text_reset_cursor(x_pos(38.5), y_pos(6.9), 4);
     tft.setTextColor((value ? ILI9341_YELLOW : ILI9341_WHITE));
@@ -569,7 +569,7 @@ void DisplayManager::Trim_step(void)
 }
 
 FLASHMEM
-void DisplayManager::Pitch_voices_max(const uint8_t instrument) // max pitch related to which media is read
+void DisplayManager::Pitch_voices_max(uint8_t instrument) // max pitch related to which media is read
 {
     Cancel_text_reset_cursor(x_pos(44.5), y_pos(15), 8);
     tft.setTextColor(ILI9341_WHITE);
@@ -642,7 +642,7 @@ void DisplayManager::LOOP_page(void)
 FLASHMEM
 void DisplayManager::Loop_loop_id(void)
 {
-    Cancel_text(x_pos(22), y_pos(0), 5); // Cancel_text(const int X, const int Y, int N)
+    Cancel_text(x_pos(22), y_pos(0), 5); // Cancel_text(int X, int Y, int N)
     tft.setCursor(x_pos(22.5), y_pos(0));
     tft.setTextColor(ILI9341_YELLOW);
     if (LOOP_id < 0)
@@ -658,7 +658,7 @@ void DisplayManager::Loop_menu(void)
 {
     uint8_t position = 0; // position on display
 
-    Cancel_text(x_pos(0), y_pos(1), 27); // Cancel_text(const int X, const int Y, int N)
+    Cancel_text(x_pos(0), y_pos(1), 27); // Cancel_text(int X, int Y, int N)
     tft.setTextColor(MENU_COLOR);
     for (uint8_t element = 0; element < 4; ++element) // menu element
     {
@@ -680,7 +680,7 @@ void DisplayManager::Loop_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::Frame_loop_menu(const uint8_t position, const bool fresh) // after Loop_menu() use fresh = true
+void DisplayManager::Frame_loop_menu(uint8_t position, bool fresh) // after Loop_menu() use fresh = true
 {
     static int8_t position_0 = 0;
     static int8_t XpML_0 = 0;
@@ -721,14 +721,14 @@ void DisplayManager::Delete_all_frame_loop_menu(void)
 FLASHMEM
 void DisplayManager::Loop_midi_loop_title(void)
 {
-    Board(0, 0, 9); // Board(const float   col, float row, int chars)
+    Board(0, 0, 9); // Board(float col, float row, int chars)
     tft.setCursor(x_pos(0), y_pos(0));
     tft.setTextColor(ILI9341_WHITE);
     tft.print("MIDI LOOP");
 }
 
 FLASHMEM
-void DisplayManager::Loop_track_data(const int track)
+void DisplayManager::Loop_track_data(int track)
 {
     // Numero
     Cancel_text_reset_cursor(x_pos(Loop_LOOPS_X + 7 * track), y_pos(Loop_HEAD_R), 5);
@@ -783,28 +783,28 @@ void DisplayManager::Unity(String A)
     tft.setTextColor(ILI9341_ORANGE);
     tft.print(A);
 }
-int DisplayManager::y_pos(const float row)
+int DisplayManager::y_pos(float row)
 {
     return 4 + (15.0 * row);
 }
-int DisplayManager::x_pos(const float col)
+int DisplayManager::x_pos(float col)
 {
     return 4 + (6.0 * col);
 }
-void DisplayManager::Delete_row(const float row)
+void DisplayManager::Delete_row(float row)
 {
     tft.fillRect(0, y_pos(row) - 4, 320, 15, ILI9341_BLACK); // fillRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t color);
 }
-void DisplayManager::Cancel_text(const int X, const int Y, int N)
+void DisplayManager::Cancel_text(int X, int Y, int N)
 {
     tft.fillRect(X, Y, (N * 6), 8, ILI9341_BLACK); // fillRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t color);
 }
-void DisplayManager::Cancel_text_reset_cursor(const int X, const int Y, int N)
+void DisplayManager::Cancel_text_reset_cursor(int X, int Y, int N)
 {
     Cancel_text(X, Y, N);
     tft.setCursor(X, Y);
 }
-void DisplayManager::Logo(const float light)
+void DisplayManager::Logo(float light)
 {
     tft.drawBitmap(0 + Logo_position_DX, 42 + Logo_position_DY, LOGO_0, 168, 49, Calc_color(ILI9341_YELLOW, light));
     tft.drawBitmap(0 + Logo_position_DX, 14 + Logo_position_DY, LOGO_1, 8, 26, Calc_color(ILI9341_RED, light));
@@ -813,7 +813,7 @@ void DisplayManager::Logo(const float light)
     tft.drawBitmap(88 + Logo_position_DX, 0 + Logo_position_DY, LOGO_4, 8, 40, Calc_color(ILI9341_MAGENTA, light));
     tft.drawBitmap(-1 + Logo_position_DX, 100 + Logo_position_DY, audio_sampler, 168, 18, Calc_color(ILI9341_WHITE, light));
 }
-void DisplayManager::Cover_text(const float light)
+void DisplayManager::Cover_text(float light)
 {
     tft.setTextColor(Calc_color(TEXT_COLOR, light)); // 16-bit ('565') color settings
     tft.setCursor(x_pos(13), y_pos(12));
@@ -865,7 +865,7 @@ void DisplayManager::Delay_page()
 
     if (Lilla_state_0 == PERFORMANCE)
     {
-        Board(0, 0, 17); // DISPLAY_board(const float col, float row, int chars)
+        Board(0, 0, 17); // DISPLAY_board(float col, float row, int chars)
         tft.setCursor(x_pos(0), y_pos(0));
         tft.setTextColor(ILI9341_WHITE);
         tft.print("PERFORMANCE ");
@@ -875,7 +875,7 @@ void DisplayManager::Delay_page()
 
     else if (Lilla_state_0 == LIVE_SAMPLING)
     {
-        Board(0, 0, 15); // DISPLAY_board(const float col, float row, int chars)
+        Board(0, 0, 15); // DISPLAY_board(float col, float row, int chars)
         tft.setCursor(x_pos(0), y_pos(0));
         tft.setTextColor(ILI9341_WHITE);
         tft.print("RING TAPE ");
@@ -1062,7 +1062,7 @@ void DisplayManager::D_modulation_phase_LR(void)
     tft.setTextColor(ILI9341_ORANGE);
     tft.print("deg");
 }
-inline uint8_t DisplayManager::Id_sound(const uint8_t session, const uint8_t instrument)
+inline uint8_t DisplayManager::Id_sound(uint8_t session, uint8_t instrument)
 {
     return Session[session].Instrument[instrument].id_sound;
 }
@@ -1104,11 +1104,11 @@ void DisplayManager::DS_confirm_EXIT_from_DS(void)
     tft.print("YES");
 }
 FLASHMEM
-void DisplayManager::DS_page(const uint8_t instrument, const int recording)
+void DisplayManager::DS_page(uint8_t instrument, int recording)
 {
     tft.fillScreen(ILI9341_BLACK);
 
-    Board(0, 0, 7); // Display.Board(const float   col, float row, int chars)
+    Board(0, 0, 7); // Display.Board(float   col, float row, int chars)
     tft.setTextColor(ILI9341_WHITE);
     tft.setCursor(x_pos(0), y_pos(0));
     tft.print("SAMPLER");
@@ -1175,7 +1175,7 @@ void DisplayManager::DS_sampler_IO(void)
     DS_sampler_txt(false);
     DS_show_gain();
 }
-void DisplayManager::DS_bar(const uint8_t channel, int value) // 0 <= value <= BAR_ELEMENTS
+void DisplayManager::DS_bar(uint8_t channel, int value) // 0 <= value <= BAR_ELEMENTS
 {
     static int value_old[2] = {0, 0};
     int X0 = (channel == 0 ? DS_VUMETER_BAR_X : DS_VUMETER_BAR_X + DS_VUMETER_BAR_DX);
@@ -1204,7 +1204,7 @@ void DisplayManager::DS_bar(const uint8_t channel, int value) // 0 <= value <= B
     }
     value_old[channel] = value;
 }
-uint16_t DisplayManager::DS_calc_bar_color(const float value) // 16-bit ('565') color settings
+uint16_t DisplayManager::DS_calc_bar_color(float value) // 16-bit ('565') color settings
 {
     const float soglia = 0.5;
     uint16_t red = (value >= soglia ? 31 : 31.0f * (value / soglia));                   // (value >= 0.5f ? 31: 31.0f * 2.0f * value)
@@ -1223,7 +1223,7 @@ uint16_t DisplayManager::DS_calc_bar_color(const float value) // 16-bit ('565') 
     return (red << 11) + (green << 5) + blue;
 }
 FLASHMEM
-void DisplayManager::DS_line_out(const bool visible)
+void DisplayManager::DS_line_out(bool visible)
 {
     tft.drawBitmap(DS_START_X + 37, DS_START_Y + 7, DS_freccia_gomito, 13, 23, (visible ? ILI9341_GREEN : GREEN_OFF));
     tft.setCursor(DS_START_X + 55, DS_START_Y + 23);
@@ -1232,7 +1232,7 @@ void DisplayManager::DS_line_out(const bool visible)
 }
 
 FLASHMEM
-void DisplayManager::DS_sampler_frame(const bool visible)
+void DisplayManager::DS_sampler_frame(bool visible)
 {
     tft.drawBitmap(DS_START_X + 31, DS_START_Y + 4, DS_freccia, 19, 7, (visible ? ILI9341_GREEN : ILI9341_BLACK));
     tft.drawRoundRect(DS_START_X + 50, DS_START_Y, 51, 15, 3, (visible ? ILI9341_GREEN : ILI9341_BLACK));
@@ -1274,14 +1274,14 @@ void DisplayManager::DS_hide_recording()
     Cancel_text(x_pos(0), y_pos(12), 18);
 }
 FLASHMEM
-void DisplayManager::DS_advice_delete(const bool value)
+void DisplayManager::DS_advice_delete(bool value)
 {
     tft.setTextColor((value ? ILI9341_YELLOW : ILI9341_BLACK));
     tft.setCursor(x_pos(3.5), y_pos(8));
     tft.print("PLEASE WAIT");
 }
 FLASHMEM
-void DisplayManager::DS_advice_no_conversion(const int DS_export, const bool value)
+void DisplayManager::DS_advice_no_conversion(int DS_export, bool value)
 {
     tft.setTextColor((value ? TEXT_COLOR : ILI9341_BLACK));
     tft.setCursor(x_pos(0), y_pos(8));
@@ -1294,7 +1294,7 @@ void DisplayManager::DS_advice_no_conversion(const int DS_export, const bool val
         tft.print(".RAW NAMESPACE IS FULL");
 }
 FLASHMEM
-void DisplayManager::DS_conversion_options(const int file_L_RAW, const int file_R_RAW, const int DS_export)
+void DisplayManager::DS_conversion_options(int file_L_RAW, int file_R_RAW, int DS_export)
 {
     tft.fillRect(0, 120, 320, 120, ILI9341_BLACK); // cancella Recording e grafica
     tft.setTextColor(TEXT_COLOR);
@@ -1331,7 +1331,7 @@ void DisplayManager::DS_conversion_options(const int file_L_RAW, const int file_
     }
 }
 FLASHMEM
-void DisplayManager::DS_export_options(const int file_L_RAW, const int file_R_RAW, const int DS_export)
+void DisplayManager::DS_export_options(int file_L_RAW, int file_R_RAW, int DS_export)
 {
 
     tft.fillRect(0, 120, 320, 120, ILI9341_BLACK); // cancella Recording e grafica
@@ -1369,7 +1369,7 @@ void DisplayManager::DS_export_options(const int file_L_RAW, const int file_R_RA
     }
 }
 FLASHMEM
-void DisplayManager::DS_Recording_description(const int recording, const bool led)
+void DisplayManager::DS_Recording_description(int recording, bool led)
 {
     // RECORDING
     tft.setCursor((led ? x_pos(1.5) : x_pos(0)), y_pos(8));
@@ -1440,7 +1440,7 @@ void DisplayManager::DS_recording_seconds(void)
     Unity("sec");
 }
 FLASHMEM
-void DisplayManager::DS_update_recording_seconds(const float value)
+void DisplayManager::DS_update_recording_seconds(float value)
 {
     row = 11;
     if (Recording[recording].stereo)
@@ -1511,7 +1511,7 @@ void DisplayManager::DS_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::DS_frame_menu(const uint8_t position)
+void DisplayManager::DS_frame_menu(uint8_t position)
 {
     static uint8_t position_0 = 0;
     Frame(X_position_Menu_DS[position_0], Y_position_Menu_DS[position_0], dimension_voice_Menu_DS[element_Menu_DS[position_0]], false);
@@ -1611,7 +1611,7 @@ FLASHMEM
 void DisplayManager::LS_Ring_Tape(void)
 {
     //("012345678901234567890"); // Size 1: 21 chars
-    Board(0, 0, 12); // Display.Board(const float & col, float row, int chars)
+    Board(0, 0, 12); // Display.Board(float & col, float row, int chars)
     tft.setTextColor(ILI9341_WHITE);
     tft.setCursor(x_pos(0), y_pos(0));
     tft.print("LIVE SAMPLER");
@@ -1763,7 +1763,7 @@ void DisplayManager::Show_LS_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::Frame_LS_menu(const uint8_t position)
+void DisplayManager::Frame_LS_menu(uint8_t position)
 {
     Delete_all_frame_LS_menu();
     Frame(X_position_Menu_LS[position], 1, dimension_voice_Menu_LS[element_Menu_LS[position]], true);
@@ -1789,7 +1789,7 @@ void DisplayManager::Midi_monitor_page(void)
 {
     tft.fillScreen(ILI9341_BLACK);
 
-    Board(0, 0, 12); // Display.Board(const float col, float row, int chars)
+    Board(0, 0, 12); // Display.Board(float col, float row, int chars)
     tft.setCursor(x_pos(0), y_pos(0));
     tft.setTextColor(ILI9341_WHITE);
     tft.print("MIDI MONITOR");
@@ -1816,7 +1816,7 @@ void DisplayManager::Midi_monitor_frame(void)
 }
 
 FLASHMEM
-void DisplayManager::Midi_monitor_data(const uint8_t incoming_midi_channel, uint8_t incoming_midi_message, int8_t incoming_note_number, int8_t incoming_velocity, int32_t incoming_midi_value, int8_t incoming_number)
+void DisplayManager::Midi_monitor_data(uint8_t incoming_midi_channel, uint8_t incoming_midi_message, int8_t incoming_note_number, int8_t incoming_velocity, int32_t incoming_midi_value, int8_t incoming_number)
 {
     const char message_name[12][20] = {{"NoteOn"}, {"NoteOff"}, {"PitchBend"}, {"AfterTouchPoly"}, {"ControlChange"}, {"ProgramChange"}, {"AfterTouchChange"}, {"SystemExclusive"}, {"Unknown"}};
 
@@ -1863,7 +1863,7 @@ void DisplayManager::MX_page(void)
 #define MX_Y0 3
     tft.fillScreen(ILI9341_BLACK);
 
-    Board(0, 0, 5); // Display.Board(const float   col, float row, int chars)
+    Board(0, 0, 5); // Display.Board(float   col, float row, int chars)
     tft.setCursor(x_pos(0), y_pos(0));
     tft.setTextColor(ILI9341_WHITE);
     tft.print("MIXER");
@@ -1920,7 +1920,7 @@ void DisplayManager::MX_MONITOR_volume(void)
 }
 
 FLASHMEM
-void DisplayManager::MX_source_values(const uint8_t source)
+void DisplayManager::MX_source_values(uint8_t source)
 {
     if (source == 8)
         MX_source_values_write(source);
@@ -1929,7 +1929,7 @@ void DisplayManager::MX_source_values(const uint8_t source)
 }
 
 FLASHMEM
-void DisplayManager::MX_source_values_jump(const uint8_t old_source, const uint8_t new_source)
+void DisplayManager::MX_source_values_jump(uint8_t old_source, uint8_t new_source)
 {
     MX_source = new_source;
 
@@ -1938,7 +1938,7 @@ void DisplayManager::MX_source_values_jump(const uint8_t old_source, const uint8
 }
 
 FLASHMEM
-void DisplayManager::MX_source_values_write(const uint8_t source)
+void DisplayManager::MX_source_values_write(uint8_t source)
 {
     int local_id_sound;
     if (source == 8)
@@ -2006,7 +2006,7 @@ void DisplayManager::MX_source_values_write(const uint8_t source)
 }
 
 FLASHMEM
-void DisplayManager::MX_source_values_edit(const uint8_t source)
+void DisplayManager::MX_source_values_edit(uint8_t source)
 {
     Cancel_text(x_pos(MX_X0 + 0.5 + source * 5), y_pos(MX_Y0 + 1), 1); // Mute
     Cancel_text(x_pos(MX_X0 - 1 + source * 5), y_pos(MX_Y0 + 2), 4);   // Gain
@@ -2018,7 +2018,7 @@ void DisplayManager::MX_source_values_edit(const uint8_t source)
 }
 
 FLASHMEM
-void DisplayManager::Session_header(const bool change_session, const bool change_vol)
+void DisplayManager::Session_header(bool change_session, bool change_vol)
 {
     tft.fillScreen(ILI9341_BLACK);
     Show_Performance();
@@ -2028,7 +2028,7 @@ void DisplayManager::Session_header(const bool change_session, const bool change
 }
 
 FLASHMEM
-void DisplayManager::Session_volume_color(const bool change_session, const bool change_vol)
+void DisplayManager::Session_volume_color(bool change_session, bool change_vol)
 {
     Show_Session_number(change_session);
     Session_volume(change_vol);
@@ -2071,7 +2071,7 @@ void DisplayManager::Instruments_header(void)
 }
 
 FLASHMEM
-void DisplayManager::Show_Instrument_description(const uint8_t session, const uint8_t instrument, const bool editing)
+void DisplayManager::Show_Instrument_description(uint8_t session, uint8_t instrument, bool editing)
 {
     uint8_t position = position_of_Instrument[instrument];
 
@@ -2115,7 +2115,7 @@ void DisplayManager::Show_Instrument_description(const uint8_t session, const ui
 }
 
 FLASHMEM
-void DisplayManager::All_Instrument(const uint8_t session)
+void DisplayManager::All_Instrument(uint8_t session)
 {
     tft.fillRect(0, Instrument_Y_POSITION(0) - 4, 320, 240, ILI9341_BLACK);
     for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; instrument++)
@@ -2126,7 +2126,7 @@ void DisplayManager::All_Instrument(const uint8_t session)
 }
 
 FLASHMEM
-void DisplayManager::Instrument_TT(const uint8_t session)
+void DisplayManager::Instrument_TT(uint8_t session)
 {
     uint8_t position = Session[session].instruments;
     if (tuning_tone_flag)
@@ -2164,7 +2164,7 @@ void DisplayManager::Instrument_TT(const uint8_t session)
 }
 
 FLASHMEM
-void DisplayManager::Volume_TT(const uint8_t session)
+void DisplayManager::Volume_TT(uint8_t session)
 {
     uint8_t position = Session[session].instruments;
 
@@ -2174,13 +2174,13 @@ void DisplayManager::Volume_TT(const uint8_t session)
 }
 
 FLASHMEM
-void DisplayManager::Delete_Instrument(const int position)
+void DisplayManager::Delete_Instrument(int position)
 {
     tft.fillRect(5, Instrument_Y_POSITION(position), 307, 7, ILI9341_BLACK);
 }
 
 FLASHMEM
-void DisplayManager::Note(const uint8_t note_number)
+void DisplayManager::Note(uint8_t note_number)
 {
     tft.print(note_name[note_number % 12]);
     tft.print((int)(note_number / 12.0f) + first_octave);
@@ -2214,7 +2214,7 @@ void DisplayManager::Performance_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::Frame_performance_menu(const uint8_t position, const bool fresh)
+void DisplayManager::Frame_performance_menu(uint8_t position, bool fresh)
 {
     static uint8_t position_0 = 0;
     if (!fresh)
@@ -2264,9 +2264,9 @@ void DisplayManager::Confirm_session_change_popup(void)
 }
 
 FLASHMEM
-void DisplayManager::Confirm_session_change_popup_frame(const uint8_t value)
+void DisplayManager::Confirm_session_change_popup_frame(uint8_t value)
 {
-    Confirm_frame(X_POPUP + x_pos(2), Y_POPUP + Y_POPUP_OPT, 4, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, const bool   print)
+    Confirm_frame(X_POPUP + x_pos(2), Y_POPUP + Y_POPUP_OPT, 4, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, bool   print)
     Confirm_frame(X_POPUP + x_pos(8), Y_POPUP + Y_POPUP_OPT, 2, false);
     Confirm_frame(X_POPUP + x_pos(12), Y_POPUP + Y_POPUP_OPT, 3, false);
     switch (value)
@@ -2285,7 +2285,7 @@ void DisplayManager::Confirm_session_change_popup_frame(const uint8_t value)
     }
 }
 
-void DisplayManager::Confirm_frame(int X, int Y, uint8_t chars, const bool print)
+void DisplayManager::Confirm_frame(int X, int Y, uint8_t chars, bool print)
 {
     tft.drawRect(X - 4.0, Y - 4.0, (6 * chars) + 7, 15, (print ? ILI9341_WHITE : ILI9341_RED)); // drawRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t color)
 }
@@ -2326,9 +2326,9 @@ void DisplayManager::Confirm_session_delete_popup(void)
 }
 
 FLASHMEM
-void DisplayManager::Confirm_session_delete_popup_frame(const uint8_t value)
+void DisplayManager::Confirm_session_delete_popup_frame(uint8_t value)
 {
-    Confirm_frame(X_POPUP + x_pos(5.5), Y_POPUP + Y_POPUP_OPT, 2, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, const bool   print)
+    Confirm_frame(X_POPUP + x_pos(5.5), Y_POPUP + Y_POPUP_OPT, 2, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, bool   print)
     Confirm_frame(X_POPUP + x_pos(9.5), Y_POPUP + Y_POPUP_OPT, 3, false);
     switch (value)
     {
@@ -2347,7 +2347,7 @@ void DisplayManager::Settings_page(void)
 {
     tft.fillScreen(ILI9341_BLACK);
 
-    Board(0, 0, 5); // Display.Board(const float   col, float row, int chars)
+    Board(0, 0, 5); // Display.Board(float   col, float row, int chars)
     tft.setCursor(x_pos(0), y_pos(0));
     tft.setTextColor(ILI9341_WHITE);
     tft.print("SETUP");
@@ -2429,7 +2429,7 @@ void DisplayManager::Optimization(void)
 }
 
 FLASHMEM
-void DisplayManager::Settings_frame(const int8_t value)
+void DisplayManager::Settings_frame(int8_t value)
 {
     Frame(9, 2, 5, false);   // First octave
     Frame(13, 3, 2, false);  // First octave
@@ -2535,7 +2535,7 @@ void DisplayManager::Show_CC_lowpass_filter(void)
 }
 
 FLASHMEM
-void DisplayManager::Frame_CC_page_menu(const int value)
+void DisplayManager::Frame_CC_page_menu(int value)
 {
     Frame(0, 1, 6, false); // Return
     for (uint8_t n = 0; n < 9; n++)
@@ -2548,9 +2548,9 @@ void DisplayManager::Frame_CC_page_menu(const int value)
 }
 
 FLASHMEM
-void DisplayManager::Import_raw_files_frame(const uint8_t value)
+void DisplayManager::Import_raw_files_frame(uint8_t value)
 {
-    Frame(0, 1, 4, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, const bool   print)
+    Frame(0, 1, 4, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, bool   print)
     Frame(5, 1, 6, false);
     switch (value)
     {
@@ -2642,9 +2642,9 @@ void DisplayManager::Config_import_REBOOT_popup(void)
 }
 
 FLASHMEM
-void DisplayManager::Confirm_config_import_frame(const uint8_t value)
+void DisplayManager::Confirm_config_import_frame(uint8_t value)
 {
-    Confirm_frame(X_POPUP + X_POPUP_OPT, Y_POPUP + Y_POPUP_OPT, 2, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, const bool   print)
+    Confirm_frame(X_POPUP + X_POPUP_OPT, Y_POPUP + Y_POPUP_OPT, 2, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, bool   print)
     Confirm_frame(X_POPUP + X_POPUP_OPT + x_pos(4), Y_POPUP + Y_POPUP_OPT, 3, false);
     switch (value)
     {
@@ -2798,7 +2798,7 @@ void DisplayManager::SOUND_EDIT_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::Frame_SOUND_EDIT_menu(const uint8_t position)
+void DisplayManager::Frame_SOUND_EDIT_menu(uint8_t position)
 {
     if (Lilla_state_0 != MIDI_LOOP)
     {
@@ -2823,7 +2823,7 @@ void DisplayManager::Delete_all_frame_SOUND_EDIT_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::Instrument_VCF_page(const uint8_t session, const uint8_t instrument)
+void DisplayManager::Instrument_VCF_page(uint8_t session, uint8_t instrument)
 {
     uint8_t id_sound = Session[session].Instrument[instrument].id_sound;
 
@@ -2869,7 +2869,7 @@ void DisplayManager::Instrument_VCF_page(const uint8_t session, const uint8_t in
     Show_effects();
     Show_VCF_solo();
 
-    Board(0, Instrument_VCF_TXT_Y + 1.8, 9); // Display.Board(const float   col, float row, int chars)
+    Board(0, Instrument_VCF_TXT_Y + 1.8, 9); // Display.Board(float   col, float row, int chars)
     tft.setCursor(x_pos(0), y_pos(Instrument_VCF_TXT_Y + 1.8));
     tft.setTextColor(ILI9341_WHITE);
     tft.print("VCF + LFO");
@@ -2907,7 +2907,7 @@ void DisplayManager::Instrument_VCF_page(const uint8_t session, const uint8_t in
     Led_instrument_INSTRUMENT_VCF(instrument);
 }
 FLASHMEM
-void DisplayManager::Show_VCF_gain(const uint8_t id_sound)
+void DisplayManager::Show_VCF_gain(uint8_t id_sound)
 {
     Cancel_text_reset_cursor(x_pos(47.5), y_pos(0), 4);
     tft.setTextColor((Lilla_state_0 == LIVE_SAMPLING ? ILI9341_WHITE : ILI9341_YELLOW));
@@ -2926,7 +2926,7 @@ void DisplayManager::Show_VCF_solo(void)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_filter_type(const uint8_t instrument)
+void DisplayManager::Show_VCF_filter_type(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(12), y_pos(Instrument_VCF_TXT_Y + 3), 13);
     tft.setTextColor(ILI9341_YELLOW);
@@ -2955,7 +2955,7 @@ void DisplayManager::Show_VCF_filter_type(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_cutoff(const uint8_t instrument)
+void DisplayManager::Show_VCF_cutoff(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(19), y_pos(Instrument_VCF_TXT_Y + 4), 7);
     tft.setTextColor(ILI9341_YELLOW);
@@ -2965,7 +2965,7 @@ void DisplayManager::Show_VCF_cutoff(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_resonance(const uint8_t instrument)
+void DisplayManager::Show_VCF_resonance(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(10), y_pos(Instrument_VCF_TXT_Y + 5), 4);
     tft.setTextColor(ILI9341_YELLOW);
@@ -2973,7 +2973,7 @@ void DisplayManager::Show_VCF_resonance(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_lfo_type(const uint8_t instrument)
+void DisplayManager::Show_VCF_lfo_type(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(Instrument_VCF_TXT_X + 11), y_pos(Instrument_VCF_TXT_Y + 3), 9);
     tft.setTextColor(ILI9341_YELLOW);
@@ -3002,7 +3002,7 @@ void DisplayManager::Show_VCF_lfo_type(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_lfo_freq_time(const uint8_t instrument)
+void DisplayManager::Show_VCF_lfo_freq_time(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(Instrument_VCF_TXT_X + 14), y_pos(Instrument_VCF_TXT_Y + 4), 7);
     tft.setTextColor(ILI9341_YELLOW);
@@ -3014,7 +3014,7 @@ void DisplayManager::Show_VCF_lfo_freq_time(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_lfo_index(const uint8_t instrument)
+void DisplayManager::Show_VCF_lfo_index(uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(Instrument_VCF_TXT_X + 10), y_pos(Instrument_VCF_TXT_Y + 5), 4);
     tft.setTextColor(ILI9341_YELLOW);
@@ -3023,7 +3023,7 @@ void DisplayManager::Show_VCF_lfo_index(const uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_pan(const uint8_t id_sound)
+void DisplayManager::Show_VCF_pan(uint8_t id_sound)
 {
     Cancel_text_reset_cursor(259, Instrument_VCF_TXT_Y + 93, 2);
     if (Sound[id_sound].pan == 0)
@@ -3137,7 +3137,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_directory_assente(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_consistenza_presente(const unsigned long SD_raw_volume, const int SD_raw_files, const int raw_files_volume, const int flash_raw_files)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_consistenza_presente(unsigned long SD_raw_volume, int SD_raw_files, int raw_files_volume, int flash_raw_files)
 {
     tft.setCursor(x_pos(0), y_pos(3));
     tft.setTextColor(TEXT_COLOR);
@@ -3187,7 +3187,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_consistenza_presente(const 
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_ultimo_avviso(const float erasing_time_ms)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_ultimo_avviso(float erasing_time_ms)
 {
     tft.setCursor(x_pos(0), y_pos(10));
     tft.setTextColor(TEXT_COLOR);
@@ -3239,7 +3239,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_percentuale_iniziale(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_avanzamento(const unsigned char barcount)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_avanzamento(unsigned char barcount)
 {
     tft.drawLine(x_pos(0) + barcount, FileCopy_BAR_POS_Y, x_pos(0) + barcount, FileCopy_BAR_POS_Y + 5, ILI9341_YELLOW);
     tft.setCursor(x_pos(0) + barcount + 10, FileCopy_BAR_POS_Y);
@@ -3264,7 +3264,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_sfondo_elenco(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_da_copiare(const int row, const char *filename, const unsigned long length)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_da_copiare(int row, const char *filename, unsigned long length)
 {
     tft.setCursor(x_pos(0), y_pos(row));
     tft.setTextColor(TEXT_COLOR);
@@ -3301,7 +3301,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_copia_completata(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_copiato(const int row, const char *filename, const uint32_t filesize)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_copiato(int row, const char *filename, uint32_t filesize)
 {
     tft.setCursor(x_pos(0), y_pos(row));
     tft.setTextColor(ILI9341_WHITE);
@@ -3311,7 +3311,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_copiato(const int row,
     tft.print("KB");
 }
 
-void DisplayManager::Show_LS_ring_tape_wave(const int id_sound)
+void DisplayManager::Show_LS_ring_tape_wave(int id_sound)
 {
 
     int id_file = Sound[id_sound].file;
@@ -3470,7 +3470,7 @@ void DisplayManager::LS_draw_XY_lines(void)
     }
 }
 
-uint16_t DisplayManager::Get_LS_wave_color(const int point)
+uint16_t DisplayManager::Get_LS_wave_color(int point)
 {
     uint16_t green;
     int position;
@@ -3488,7 +3488,7 @@ uint16_t DisplayManager::Get_LS_wave_color(const int point)
     return (31 << 11) + (green << 5); // (red << 11) + (green << 5) + blue
 }
 
-void DisplayManager::Show_wave(const uint8_t instrument)
+void DisplayManager::Show_wave(uint8_t instrument)
 {
     uint8_t id_sound = Session[session].Instrument[instrument].id_sound;
     int yp, yn, y0;
@@ -3623,12 +3623,12 @@ void DisplayManager::Show_wave(const uint8_t instrument)
     tft.drawRGBBitmap(WAVE_X0, WAVE_MAX, canvas.getBuffer(), canvas.width(), canvas.height());
 }
 
-void DisplayManager::Loop_led(const int Xled, const int Yled, const bool ONled)
+void DisplayManager::Loop_led(int Xled, int Yled, bool ONled)
 {
     tft.drawBitmap(Xled, Yled, led_pic, 8, 8, ONled ? GREEN_ON : GREEN_OFF);
 }
 
-void DisplayManager::Loop_led_metronomo(const int Xled, const int Yled, const bool ONled)
+void DisplayManager::Loop_led_metronomo(int Xled, int Yled, bool ONled)
 {
     tft.drawBitmap(Xled, Yled, led_pic, 8, 8, ONled ? RED_ON : RED_OFF);
 }

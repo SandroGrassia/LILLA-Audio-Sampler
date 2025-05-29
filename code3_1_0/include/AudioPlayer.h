@@ -39,7 +39,7 @@ private:
     volatile bool idle = true;
 
     /*
-    Power_on e idle
+    power_on and idle
 
     Get_ready_to_play() sets power_on=true, than Player waits for next update() to start playing (idle=false);
     When Player starts playing, idle is set idle=false;
@@ -58,6 +58,9 @@ private:
     ADSR_gain _____|***********************|________
     EOF      ____________________________________!__
 
+    state   0000000111111111111111111222222000000000
+
+
 
     ** ADSR_gain=0 comes first:
     play     ______!________________________________
@@ -69,6 +72,9 @@ private:
     ADSR_gain______|**************%_________________
     EOF      ____________________________________!__
 
+    state   0000000111111111111111100000000000000000
+
+
 
     ** End-Of-File comes first:
     play     ______!________________________________
@@ -79,6 +85,9 @@ private:
 
     ADSR    _______|*************************|______
     EOF      _________________%_____________________
+
+    state   0000000111111111110000000000000000000000
+
     */
 
     float *p_vibrato_array;

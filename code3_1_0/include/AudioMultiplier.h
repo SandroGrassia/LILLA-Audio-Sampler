@@ -12,11 +12,11 @@
 
 class AudioMultiplier : public AudioStream
 {
-public:
-    AudioMultiplier(void) : AudioStream(2, inputQueueArray) {}
-    
-    virtual void update(void);
-
 private:
     audio_block_t *inputQueueArray[2] = {nullptr};
+
+public:
+    AudioMultiplier(void) : AudioStream(2, inputQueueArray) {}
+
+    virtual void update(void);
 };

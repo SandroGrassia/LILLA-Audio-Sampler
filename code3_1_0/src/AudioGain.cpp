@@ -39,7 +39,7 @@ void AudioGain::Set_gain(float value)
 }
 void AudioGain::Mute(void)
 {
-    gain_runtime_mem = gain_runtime;
+    gain_runtime_0 = gain_runtime;
     float gain_diff = -gain_runtime;
     if (abs(gain_diff) > 0.002f)
     {
@@ -54,7 +54,7 @@ void AudioGain::Mute(void)
 }
 void AudioGain::Unmute(void)
 {
-    float gain_diff = gain_runtime_mem - gain_runtime;
+    float gain_diff = gain_runtime_0 - gain_runtime;
     if (abs(gain_diff) > 0.002f)
     {
         gain_flag = true;

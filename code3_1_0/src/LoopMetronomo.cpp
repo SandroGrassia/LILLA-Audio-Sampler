@@ -6,7 +6,7 @@
 
 #include "LoopMetronomo.h"
 
-void LoopMetronomo::Setup(const int &LOOP_time)
+void LoopMetronomo::Setup(const int LOOP_time)
 {
     // calcola i valori LOOP_metro_delta_ms
     for (int i = 0; i < (LOOP_metro_leds - 1); ++i)

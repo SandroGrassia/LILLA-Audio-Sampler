@@ -7,7 +7,7 @@
 #pragma once
 #include <Arduino.h>
 
-#pragma region 
+
 
 // RELEASE SOFTWARE
 extern String FIRMWARE_VERSION; // definita in main.cpp
@@ -634,12 +634,6 @@ extern bool led_flag;
 // STAMPA
 void PRINT(String who, String what, float value);
 
-
-
-
-
-
-#pragma endregion
 
 
 /*

@@ -38,21 +38,21 @@ private:
 public:
     EepromManager(void) {}
 
-    void Save_CC_lowpass_filter(const uint8_t CC_lowpass_filter);
+    void Save_CC_lowpass_filter(uint8_t CC_lowpass_filter);
     void Read_CC_lowpass_filter(uint8_t &CC_lowpass_filter);
-    void Save_optimization(const uint8_t optimization);
+    void Save_optimization(uint8_t optimization);
     void Read_optimization(uint8_t &optimization);
-    void Save_CC_Sound_gain(const uint8_t instrument, const uint8_t CC_Sg_instrument);
-    void Read_CC_Sound_gain(const uint8_t instrument, uint8_t &CC_Sg_instrument);
+    void Save_CC_Sound_gain(uint8_t instrument, uint8_t CC_Sg_instrument);
+    void Read_CC_Sound_gain(uint8_t instrument, uint8_t &CC_Sg_instrument);
     void Copy_session_delay_data_from_Eeprom_to_Ram(Delay_data_struct &Delay_data);
-    void Save_Delay_to_Eeprom(const Delay_data_struct Delay_data);
+    void Save_Delay_to_Eeprom(Delay_data_struct Delay_data);
     void Read_first_octave(int8_t &first_octave);
-    void Save_first_octave(const int8_t first_octave);
-    void Save_Sound(const uint8_t id_sound);
-    void Read_Sound(const uint8_t id_sound, Sound_struct &Sound_id_sound);
-    void Save_Session(const uint8_t session, const Session_struct Session_session);
-    void Read_Session(const uint8_t session);
-    void Save_DS_Recording(const int recording);
+    void Save_first_octave(int8_t first_octave);
+    void Save_Sound(uint8_t id_sound);
+    void Read_Sound(uint8_t id_sound, Sound_struct &Sound_id_sound);
+    void Save_Session(uint8_t session, Session_struct Session_session);
+    void Read_Session(uint8_t session);
+    void Save_DS_Recording(int recording);
     void Save_DS_Recording(const int &recording, const EEPROM_VFS_Recording &EEPROM_Rec_recording);
     void Read_DS_Recording(const int &recording, EEPROM_VFS_Recording &EEPROM_Rec_recording);
     void Save_setup_file(File &file);              // File e' l'oggetto file incluso in FS.h

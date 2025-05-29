@@ -38,7 +38,7 @@ void AmpliOutMuteIn::update(void)
     }
 }
 
-void AmpliOutMuteIn::gain(unsigned int channel, float value)
+void AmpliOutMuteIn::gain(int channel, float value)
 {
     if (muted[channel])
     {
@@ -78,14 +78,14 @@ void AmpliOutMuteIn::gain(float value)
     }
 }
 
-void AmpliOutMuteIn::Mute(unsigned int channel)
+void AmpliOutMuteIn::Mute(int channel)
 {
     gain_runtime_mem[channel] = gain_runtime[channel];
     gain(channel, 0.0);
     muted[channel] = true;
 }
 
-void AmpliOutMuteIn::unmute(unsigned int channel)
+void AmpliOutMuteIn::unmute(int channel)
 {
     muted[channel] = false;
     gain(channel, gain_runtime_mem[channel]);

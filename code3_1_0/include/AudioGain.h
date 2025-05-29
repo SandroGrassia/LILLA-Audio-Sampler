@@ -50,7 +50,7 @@ private:
 
     bool gain_flag = false;
     float gain_runtime = 0.5f;
-    float gain_runtime_mem = 0.5f;
+    float gain_runtime_0 = 0.5f;
     float gain_delta = 0;
     int gain_step = 0;
     int gain_samples = 0;

@@ -6,7 +6,7 @@
 
 #include "EepromManager.h"
 
-void EepromManager::Save_CC_lowpass_filter(const uint8_t CC_lowpass_filter)
+void EepromManager::Save_CC_lowpass_filter(uint8_t CC_lowpass_filter)
 {
     Eeprom_writeAnything(LOCATION_CC_SETTINGS + 8, CC_lowpass_filter);
 }
@@ -16,7 +16,7 @@ void EepromManager::Read_CC_lowpass_filter(uint8_t &CC_lowpass_filter)
     Eeprom_readAnything(LOCATION_CC_SETTINGS + 8, CC_lowpass_filter); // Eeprom_readAnything(LOCATION_CC_SETTINGS + 8, CC_lowpass_filter);
 }
 
-void EepromManager::Save_optimization(const uint8_t optimization)
+void EepromManager::Save_optimization(uint8_t optimization)
 {
     Eeprom_writeAnything(LOCATION_OPTIMIZATION, optimization);
 }
@@ -26,12 +26,12 @@ void EepromManager::Read_optimization(uint8_t &optimization)
     Eeprom_readAnything(LOCATION_OPTIMIZATION, optimization);
 }
 
-void EepromManager::Save_CC_Sound_gain(const uint8_t instrument, const uint8_t CC_Sg_instrument)
+void EepromManager::Save_CC_Sound_gain(uint8_t instrument, uint8_t CC_Sg_instrument)
 {
     Eeprom_writeAnything(LOCATION_CC_SETTINGS + instrument, CC_Sg_instrument);
 }
 
-void EepromManager::Read_CC_Sound_gain(const uint8_t instrument, uint8_t &CC_Sg_instrument)
+void EepromManager::Read_CC_Sound_gain(uint8_t instrument, uint8_t &CC_Sg_instrument)
 {
     Eeprom_readAnything(LOCATION_CC_SETTINGS + instrument, CC_Sg_instrument);
 }
@@ -41,7 +41,7 @@ void EepromManager::Copy_session_delay_data_from_Eeprom_to_Ram(Delay_data_struct
     Eeprom_readAnything(LOCATION_DELAY, delay_data);
 }
 
-void EepromManager::Save_Delay_to_Eeprom(const Delay_data_struct Delay_data)
+void EepromManager::Save_Delay_to_Eeprom(Delay_data_struct Delay_data)
 {
     Eeprom_writeAnything(LOCATION_DELAY, Delay_data);
 }
@@ -51,22 +51,22 @@ void EepromManager::Read_first_octave(int8_t &first_octave)
     Eeprom_readAnything(LOCATION_FIRST_OCTAVE, first_octave);
 }
 
-void EepromManager::Save_first_octave(const int8_t first_octave)
+void EepromManager::Save_first_octave(int8_t first_octave)
 {
     Eeprom_writeAnything(LOCATION_FIRST_OCTAVE, first_octave);
 }
 
-void EepromManager::Save_Sound(const uint8_t id_sound)
+void EepromManager::Save_Sound(uint8_t id_sound)
 {
     Eeprom_writeAnything(Get_location_of_Sound(id_sound), Sound[id_sound]);
 }
 
-void EepromManager::Read_Sound(const uint8_t id_sound, Sound_struct &Sound_id_sound)
+void EepromManager::Read_Sound(uint8_t id_sound, Sound_struct &Sound_id_sound)
 {
     Eeprom_readAnything(Get_location_of_Sound(id_sound), Sound_id_sound);
 }
 
-void EepromManager::Save_Session(const uint8_t session, const Session_struct Session_session)
+void EepromManager::Save_Session(uint8_t session, Session_struct Session_session)
 {
     EEPROM_Session.used = Session_session.used;
     EEPROM_Session.instruments = Session_session.instruments;
@@ -89,7 +89,7 @@ void EepromManager::Save_Session(const uint8_t session, const Session_struct Ses
     Eeprom_writeAnything(GET_location_of_Session(session), EEPROM_Session);
 }
 
-void EepromManager::Read_Session(const uint8_t session)
+void EepromManager::Read_Session(uint8_t session)
 {
     Eeprom_readAnything(GET_location_of_Session(session), EEPROM_Session);
 
@@ -119,7 +119,7 @@ void EepromManager::Read_Session(const uint8_t session)
     }
 }
 
-void EepromManager::Save_DS_Recording(const int recording)
+void EepromManager::Save_DS_Recording(int recording)
 {
     Serial.println(F("*** Save_DS_Recording(int recording) ***"));
     if (recording >= 0 && recording < RECORDINGS)

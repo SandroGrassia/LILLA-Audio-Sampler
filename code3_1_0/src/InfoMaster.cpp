@@ -7,7 +7,7 @@
 #include "InfoMaster.h"
 
 // Samples in mono recording or in Left channel's recording
-int InfoMaster::DS_recording_samples(const int recording)
+int InfoMaster::DS_recording_samples(int recording)
 {
     int first_packet = Recording[recording].first_packet;
     int packets = Recording[recording].packets;
@@ -55,7 +55,7 @@ int InfoMaster::DS_recording_samples(const int recording)
     return (value >> 1); // return samples_available;
 }
 
-int InfoMaster::Raw_file_samples(const int file_id)
+int InfoMaster::Raw_file_samples(int file_id)
 {
     int result;
     LillaSerialFlashFile rawfile; // SerialFlashFile rawfile;
@@ -73,7 +73,7 @@ int InfoMaster::Raw_file_samples(const int file_id)
     }
 }
 
-int16_t *InfoMaster::Sound_620_samples_array(const int file_id, const uint32_t A, const uint32_t B)
+int16_t *InfoMaster::Sound_620_samples_array(int file_id, uint32_t A, uint32_t B)
 {
     for (int i = 0; i < 2 * WAVE_WIDTH; i++)
         samples_620_array[i] = 0;
@@ -133,7 +133,7 @@ void InfoMaster::LS_restart_antiflicker(void)
 }
 
 // Live Sampling
-int16_t *InfoMaster::LS_620_samples_array(const int file_id, const int A_window_sample, const int B_window_sample)
+int16_t *InfoMaster::LS_620_samples_array(int file_id, int A_window_sample, int B_window_sample)
 {  
     int A_window_sample_local = A_window_sample;
     int samples_to_read; // numero di campioni da leggere per una riga verticale della window
@@ -282,7 +282,7 @@ int16_t *InfoMaster::LS_620_samples_array(const int file_id, const int A_window_
 }
 
 
-void InfoMaster::Read_samples(const int file_id, int16_t *destination, int seek_in, const int samples_in) // samples_in <= BASKET_INFO
+void InfoMaster::Read_samples(int file_id, int16_t *destination, int seek_in, int samples_in) // samples_in <= BASKET_INFO
 {
     int first_byte;
     int total_bytes = samples_in * 2;

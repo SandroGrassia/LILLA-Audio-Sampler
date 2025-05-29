@@ -48,7 +48,7 @@ private:
 public:
     Router_16x3(void) : AudioStream(CH_IN, inputQueueArray) {}
 
-    virtual void update(void);      // execution: 17.5micros @600MHz
+    virtual void update(void); // execution: 17.5micros @600MHz
     int routing_table[CH_IN] = {0}; // assign each Instrument to each channel
     uint8_t routing_MX[CH_IN] = {3};
 };

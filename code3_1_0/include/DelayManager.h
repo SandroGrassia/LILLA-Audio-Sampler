@@ -40,8 +40,6 @@ private:
     static constexpr double d1 = 1.6107672804431383;
     static constexpr double d2 = -0.6561000000000001;
 
-
-
     /*
     enum Delay_parameters
     {
