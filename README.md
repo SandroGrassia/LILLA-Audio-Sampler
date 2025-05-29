@@ -36,6 +36,9 @@ Here are some shoots showcasing how the project has evolved since its startpoint
 <img width="400" src="/pics/story_6.jpg")
 </p>
 
+<p align="center">
+<img width="400" src="/pics/story_7.jpg")
+</p>
 
 The PCB is manufactured in Hong Kong, while component assembly is carried out in Italy. The enclosure is made in Italy and features an aluminum sheet case, crafted using a laser cutter and CNC bender press.
 The latest version is **LILLA 2025**. 
