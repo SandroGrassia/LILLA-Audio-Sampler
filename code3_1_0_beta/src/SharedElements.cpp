@@ -326,33 +326,101 @@ void Calc_Delay_values(Delay_data_struct data)
     Delay_values.modulation_depth = Calc_delay_depth(data.modulation_depth);
     Delay_values.modulation_frequency = Calc_delay_frequency(data.modulation_frequency);
     Delay_values.modulation_phase_LR = data.modulation_phase_LR;
-    Delay_values.track_gain = Delay_feedback(data.track_gain); // feedback
+    Delay_values.loop_gain = Delay_feedback(data.loop_gain); // feedback
 
     if (true)
+        Print_Delay_values(Delay_values);
+}
+
+FLASHMEM
+void Print_Delay_values(Delay_values_struct Delay_values)
+{
+    Serial.println();
+    Serial.println("Print Delay_values");
+    Serial.print("Delay_values.samples: ");
+    Serial.println(Delay_values.samples);
+    Serial.print("Delay_values.samples_LR: ");
+    Serial.println(Delay_values.samples_LR);
+    Serial.print("Delay_values.modulation_source: ");
+    Serial.println(Delay_values.modulation_source);
+    Serial.print("Delay_values.modulation_depth: ");
+    Serial.println(Delay_values.modulation_depth);
+    Serial.print("Delay_values.modulation_frequency: ");
+    Serial.println(Delay_values.modulation_frequency);
+    Serial.print("Delay_values.modulation_phase_LR: ");
+    Serial.println(Delay_values.modulation_phase_LR);
+    Serial.print("Delay_values.loop_gain: ");
+    Serial.println(Delay_values.loop_gain);
+    for (int i = 0; i < INSTRUMENTS_MAX; ++i)
     {
-        Serial.println("Calc_Delay_values(Delay_data_struct data) - Delay_values: ");
-        Serial.println(Delay_values.samples);
-        Serial.println(Delay_values.samples_LR);
-        Serial.println(Delay_values.modulation_source);
-        Serial.println(Delay_values.modulation_depth);
-        Serial.println(Delay_values.modulation_frequency);
-        Serial.println(Delay_values.modulation_phase_LR);
-        Serial.println(Delay_values.track_gain); // feedback
-        Serial.println("***********************");
+        Serial.print("Delay_values.instrument_route[");
+        Serial.print(i);
+        Serial.print("]: ");
+        Serial.println(Delay_values.instrument_route[i]);
     }
+    Serial.println();
+}
+
+FLASHMEM
+void Print_Delay_data(const byte *data)
+{       
+        Serial.println();
+        Serial.println(F("Print Delay_data"));
+        byte data_LSB;
+        byte data_MSB;
+        int16_t result_int;
+        uint16_t result_uint;
+        int i = 0;
+
+        Serial.print("uint16_t samples: ");
+        data_LSB = *(data + i++);
+        data_MSB = *(data + i++);
+        result_uint = data_MSB << 8 | data_LSB;
+        Serial.println(result_uint);
+
+        Serial.print("int16_t samples_LR: ");
+        data_LSB = *(data + i++);
+        data_MSB = *(data + i++);
+        result_int = data_MSB << 8 | data_LSB;
+        Serial.println(result_int);
+
+        Serial.print("instrument_route: ");
+        Serial.println(*(data + i++));
+
+        Serial.print("modulation: ");
+        Serial.println(*(data + i++));
+
+        Serial.print("depth: ");
+        Serial.println(*(data + i++));
+
+        Serial.print("frequency: ");
+        Serial.println(*(data + i++));
+
+        Serial.print("uint16_t phase_LR: ");
+        data_LSB = *(data + i++);
+        data_MSB = *(data + i++);
+        result_uint = data_MSB << 8 | data_LSB;
+        Serial.println(result_uint);
+
+        Serial.print("uint16_t loop_gain: ");
+        data_LSB = *(data + i++);
+        data_MSB = *(data + i++);
+        result_uint = data_MSB << 8 | data_LSB;
+        Serial.println(result_uint);
+        Serial.println();
 }
 
 void Calc_delay_routing(uint8_t value)
 {
     for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+    {
+        Delay_values.instrument_route[i] = (bitRead(value, i) == 1 ? true : false);
+        if (false)
         {
-            Delay_values.instrument_route[i] = (bitRead(value, i) == 1 ? true : false);
-            if(true)
-            {
-                Serial.print("Calc_delay_routing(uint8_t value) - Delay_values.instrument_route[i]: ");
-                Serial.println(Delay_values.instrument_route[i]);
-            }
+            Serial.print("Calc_delay_routing(uint8_t value) - Delay_values.instrument_route[i]: ");
+            Serial.println(Delay_values.instrument_route[i]);
         }
+    }
 }
 
 void Turn_ON_Delay(bool ON) // switch on/off Delay (using Instrument routing)
@@ -382,7 +450,7 @@ float Calc_delay_samples_LR(int value) // 0 --> 50
     return value * 44.1;
 }
 
-float Calc_delay_depth(uint8_t &value)
+float Calc_delay_depth(uint8_t value)
 {
     const float read_depth_array[40] = {
         0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0,
@@ -392,7 +460,7 @@ float Calc_delay_depth(uint8_t &value)
     return read_depth_array[value] / 100.0f; // 0 <= value <= 39
 }
 
-float Calc_delay_frequency(uint8_t &value)
+float Calc_delay_frequency(uint8_t value)
 {
     return (value * value / 90.0f); // 0 <= value <= 90
 }
@@ -406,11 +474,11 @@ float LOOP_stretch = 1.0;
 // Menu
 int Loop_menu_max;
 uint8_t choice_loop_menu;
-const char Menu_Loop_char[4][12] = {{"NEW"}, {"SAVE"}, {"SAVE_AS_NEW"},{"DELETE"}};
+const char Menu_Loop_char[4][12] = {{"NEW"}, {"SAVE"}, {"SAVE_AS_NEW"}, {"DELETE"}};
 const uint8_t dimension_voice_Menu_Loop[4] = {3, 4, 11, 6};
 uint8_t X_position_Menu_Loop[4]; // argument is position
 bool Menu_Loop[4];
-uint8_t element_Menu_Loop[4]; // argument is position
+uint8_t element_Menu_Loop[4];  // argument is position
 uint8_t position_Menu_Loop[4]; // argument is element
 
 // LOOP play/stop
@@ -445,14 +513,12 @@ bool LOOP_metronomo_flag_IN[2] = {false, false}; // accendi led_0, switch led de
 // LOOP salvataggio su SD
 int LOOP_id;
 
-
 // MIXER
 uint8_t MX_source = 0; // 0-->7: Sound 8: InputDevice
 uint8_t PWM_volume = VOLUME_1;
 uint8_t MAIN_volume = VOLUME_1;
 uint8_t MX_routing_source[9] = {3, 3, 3, 3, 3, 3, 3, 3, 3}; // 0-->7: Sound 8: InputDevice; 1 --> source routed to PWM output (monitor); 2 --> source routed to Audio Board output;  3 --> source routed to both
 bool MX_mute[9] = {false, false, false, false, false, false, false, false, false};
-
 
 // MIDI MONITOR
 uint8_t MM_midi_channel = 0;

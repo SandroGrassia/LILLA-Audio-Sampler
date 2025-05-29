@@ -271,7 +271,8 @@ public:
     void Confirm_config_export_popup(void);
     void Config_export_SD_error_popup(void);
     void Config_export_save_popup(void);
-    void Confirm_config_reset_popup(void);
+    void Confirm_factory_reset_popup(void);
+    void Factory_reset_wait_popup(void);
     void Config_reset_popup(void);
     void Copy_raw_files_SD_to_Flash_chip_titolo(void); // importa i file RAW dalla scheda SD
     void Copy_raw_files_SD_to_Flash_chip_attesa_SD(void); // attesa 10sec scheda SD

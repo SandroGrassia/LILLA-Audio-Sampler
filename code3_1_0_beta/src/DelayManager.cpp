@@ -117,17 +117,17 @@ bool DelayManager::New_values(const Delay_data_struct *data)
         flag[MODULATION_PHASE_LR] = true;
         run_flag = true;
     }
-    if (Delay_data_required.track_gain != Delay_data.track_gain)
+    if (Delay_data_required.loop_gain != Delay_data.loop_gain)
     {
         if (false)
         {
-            Serial.print(Delay_data.track_gain);
+            Serial.print(Delay_data.loop_gain);
             Serial.print(" - ");
-            Serial.print(Delay_data_required.track_gain);
-            Serial.println(" old-new track_gain");
+            Serial.print(Delay_data_required.loop_gain);
+            Serial.println(" old-new loop_gain");
         }
 
-        Start_LPF(LOOP_GAIN, Delay_data.track_gain, Delay_data_required.track_gain);
+        Start_LPF(LOOP_GAIN, Delay_data.loop_gain, Delay_data_required.loop_gain);
         flag[LOOP_GAIN] = true;
         run_flag = true;
     }
@@ -285,20 +285,20 @@ void DelayManager::Update(void)
 
         if (flag[LOOP_GAIN])
         {
-            Delay_data.track_gain = round(New_value(LOOP_GAIN));
-            Delay_data.track_gain = constrain(Delay_data.track_gain, Delay_data_limits[LOOP_GAIN][0], Delay_data_limits[LOOP_GAIN][1]);
+            Delay_data.loop_gain = round(New_value(LOOP_GAIN));
+            Delay_data.loop_gain = constrain(Delay_data.loop_gain, Delay_data_limits[LOOP_GAIN][0], Delay_data_limits[LOOP_GAIN][1]);
 
             // calcola nuovo valore
-            Delay_values.track_gain = Delay_feedback(Delay_data.track_gain);
+            Delay_values.loop_gain = Delay_feedback(Delay_data.loop_gain);
 
             // trasmetti nuovo valore
-            _D_gain_L_n->Set_gain(Delay_values.track_gain);
-            _D_gain_R_n->Set_gain(Delay_values.track_gain);
+            _D_gain_L_n->Set_gain(Delay_values.loop_gain);
+            _D_gain_R_n->Set_gain(Delay_values.loop_gain);
 
             if (false)
             {
-                Serial.print(F("Delay_values.track_gain: "));
-                Serial.println(Delay_values.track_gain);
+                Serial.print(F("Delay_values.loop_gain: "));
+                Serial.println(Delay_values.loop_gain);
             }
             run_flag = true;
         }

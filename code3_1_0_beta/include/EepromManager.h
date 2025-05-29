@@ -8,8 +8,8 @@
 
 #include <Arduino.h>
 #include "SharedElements.h"
-#include <EEPROM.h> // accesso alla EEPROM virtuale
-#include <SD.h>     // accesso alla EEPROM virtuale
+#include <EEPROM.h>
+#include <SD.h>
 #include <FS.h>
 
 class EepromManager

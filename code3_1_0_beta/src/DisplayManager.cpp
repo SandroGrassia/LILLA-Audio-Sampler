@@ -992,7 +992,7 @@ void DisplayManager::D_read_gain(void) // feedback
 {
     Cancel_text_reset_cursor(x_pos(8.5), y_pos(Delay_ROW_BASE + 2), 8);
     tft.setTextColor(ILI9341_YELLOW);
-    tft.print(-Delay_feedback(Delay_data.track_gain) * 100);
+    tft.print(-Delay_feedback(Delay_data.loop_gain) * 100);
     tft.print("%");
 }
 FLASHMEM
@@ -2585,12 +2585,28 @@ void DisplayManager::Confirm_config_import_popup(void)
     tft.print(" WILL DELETE PATCHES, SOUNDS AND RECORDINGS!"); // 43
     tft.setCursor(X_POPUP + x_pos(1), Y_POPUP + Y_POPUP_TXT + 30);
     //       ("01234567890123456789012345678901234567891098765"); // 45 char
-    tft.print("         DO YOU REALLY WANT TO PROCEED?");
+    tft.print("        DO YOU REALLY WANT TO PROCEED?");
     tft.setTextColor(ILI9341_YELLOW);
     tft.setCursor(X_POPUP + X_POPUP_OPT, Y_POPUP + Y_POPUP_OPT);
     tft.print("NO");
     tft.setCursor(X_POPUP + X_POPUP_OPT + x_pos(4), Y_POPUP + Y_POPUP_OPT);
     tft.print("YES");
+}
+
+FLASHMEM
+void DisplayManager::Factory_reset_wait_popup(void)
+{
+    L_POPUP = x_pos(38);
+    H_POPUP = y_pos(3);
+    Y_POPUP = (240 - H_POPUP) / 2;
+    X_POPUP = (320 - L_POPUP) / 2;
+    Y_POPUP_TXT = 20; // Prima riga testo
+
+    tft.fillRoundRect(X_POPUP, Y_POPUP, L_POPUP, H_POPUP, 4, ILI9341_BLACK);
+    tft.setCursor(X_POPUP + x_pos(0), Y_POPUP + Y_POPUP_TXT);
+    tft.setTextColor(ILI9341_WHITE);
+    //       ("01234567890123456789012345678901234567");
+    tft.print("    PLEASE WAIT - DO NOT SWITCH OFF");
 }
 
 FLASHMEM
@@ -2674,8 +2690,8 @@ void DisplayManager::Confirm_config_export_popup(void)
 
     tft.setCursor(X_POPUP + x_pos(1), Y_POPUP + Y_POPUP_TXT);
     tft.setTextColor(ILI9341_WHITE);
-    //           ("012345678901234567890123456789012345678901234567890");
-    tft.print("       WARNING: EXPORT CONFIGURATION TO SD");
+    //       ("012345678901234567890123456789012345678901234567890");
+    tft.print("        WARNING: EXPORT CONFIGURATION TO SD");
     tft.setCursor(X_POPUP, Y_POPUP + Y_POPUP_TXT + 15);
     tft.print("  WILL DELETE A PREVIOUS CONFIGURATION FILE SAVED"); // 43
     tft.setCursor(X_POPUP, Y_POPUP + Y_POPUP_TXT + 30);
@@ -2699,8 +2715,8 @@ void DisplayManager::Config_export_SD_error_popup(void)
 
     tft.setCursor(X_POPUP, Y_POPUP + Y_POPUP_TXT);
     tft.setTextColor(ILI9341_YELLOW);
-    //           ("012345678901234567890123456");
-    tft.print("  INSUFFCIENT SPACE IN SD");
+    //       ("012345678901234567890123456");
+    tft.print(" INSUFFICIENT SPACE IN SD");
 }
 
 FLASHMEM
@@ -2715,12 +2731,12 @@ void DisplayManager::Config_export_save_popup(void)
     tft.fillRoundRect(X_POPUP, Y_POPUP, L_POPUP, H_POPUP, 4, ILI9341_BLACK);
     tft.setCursor(X_POPUP, Y_POPUP + Y_POPUP_TXT);
     tft.setTextColor(ILI9341_WHITE);
-    //           ("01234567890123456789012345678901234567890123456789");
+    //       ("01234567890123456789012345678901234567890123456789");
     tft.print("  CONFIGURATION SAVED: SD/LILLASET/lillaold.txt");
 }
 
 FLASHMEM
-void DisplayManager::Confirm_config_reset_popup(void)
+void DisplayManager::Confirm_factory_reset_popup(void)
 {
     L_POPUP = x_pos(49);
     H_POPUP = y_pos(5.2);
@@ -2728,17 +2744,17 @@ void DisplayManager::Confirm_config_reset_popup(void)
     X_POPUP = (320 - L_POPUP) / 2;
     tft.fillRoundRect(X_POPUP, Y_POPUP, L_POPUP, H_POPUP, 4, ILI9341_RED);
 
-    Y_POPUP_TXT = 10; // Prima riga testo
+    Y_POPUP_TXT = 15; // Prima riga testo
     Y_POPUP_OPT = Y_POPUP_TXT + 50;
     X_POPUP_OPT = x_pos(19);
 
     tft.setCursor(X_POPUP + x_pos(1), Y_POPUP + Y_POPUP_TXT);
     tft.setTextColor(ILI9341_WHITE);
     //       ("0123456789012345678901234567890123456789012345678");
-    tft.print(" WARNING: FACTORY RESET WILL RESET ALL SETTINGS");
-    tft.setCursor(X_POPUP, Y_POPUP + Y_POPUP_TXT + 15.5);
-    tft.print("AND MAY REQUIRE MINUTES: DO NOT SWITCH POWER OFF"); // 43
-    tft.setCursor(X_POPUP, Y_POPUP + Y_POPUP_TXT + 30);
+    tft.print("      WARNING: FACTORY RESET WILL DELETE");
+    tft.setCursor(X_POPUP + x_pos(1), Y_POPUP + Y_POPUP_TXT + 15);
+    tft.print("      ALL PATCHES, SOUNDS AND RECORDINGS!");
+    tft.setCursor(X_POPUP + x_pos(1), Y_POPUP + Y_POPUP_TXT + 30);
     tft.print("        DO YOU REALLY WANT TO PROCEED?");
     tft.setTextColor(ILI9341_YELLOW);
     tft.setCursor(X_POPUP + X_POPUP_OPT, Y_POPUP + Y_POPUP_OPT);
@@ -3051,10 +3067,10 @@ void DisplayManager::Make_VFS_presentazione(void)
 
     tft.setCursor(x_pos(0), y_pos(2));
     tft.setTextColor(ILI9341_YELLOW);
-    // tft.print("012345678901234567890 234 X 432 98765432109876543210"); // max 52 char
-    tft.print("PLEASE ASSIGN THE MEMORY SPACE FOR RECORDINGS (AND");
+    //        "012345678901234567890 234 X 432 98765432109876543210"; // max 52 char
+    tft.print(" PLEASE ASSIGN THE MEMORY SPACE FOR RECORDINGS (AND");
     tft.setCursor(x_pos(0), y_pos(3));
-    tft.print("THE CONSEQUENT SPACE FOR RAW FILES EXPORT)");
+    tft.print("     THE CONSEQUENT SPACE FOR RAW FILES EXPORT)");
 
     tft.setCursor(x_pos(0), y_pos(5));
     tft.setTextColor(TEXT_COLOR);

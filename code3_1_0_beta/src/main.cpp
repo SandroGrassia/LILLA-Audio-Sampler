@@ -405,7 +405,7 @@ void Update_sessions(void);
 uint8_t Get_first_Session_existing(void);
 uint8_t Get_next_Session_existing(void);
 uint8_t Get_previous_Session_existing(void);
-void Ask_if_exit_from_PERFORMANCE(void);
+void Ask_if_change_Session(void);
 void Ask_if_delete_this_SESSION(void);
 bool Verify_is_Session_original(const int session);
 void Select_performance_menu_elements(void);
@@ -696,7 +696,7 @@ uint32_t big_result;
 
 // Switch
 void Switch_to_PERFORMANCE_session_old(void);
-void Jump_to_PERFORMANCE_session(uint8_t next_session);
+void Jump_to_Session(uint8_t next_session);
 void Rebuild_session_old(void);
 void Golive_with_PERFORMANCE(const int session);
 void Switch_from_MIDI_LOOP_to_PERFORMANCE(void);       // si fermano i track
@@ -1260,12 +1260,12 @@ void loop()
     // PANIC
     if (Read_pushbutton(15))
     {
-        Delay_data.track_gain = 0;
-        Delay_values.track_gain = Delay_feedback(Delay_data.track_gain);
+        Delay_data.loop_gain = 0;
+        Delay_values.loop_gain = Delay_feedback(Delay_data.loop_gain);
 
         AudioNoInterrupts();
-        D_gain_L_n.Set_gain(Delay_values.track_gain);
-        D_gain_R_n.Set_gain(Delay_values.track_gain);
+        D_gain_L_n.Set_gain(Delay_values.loop_gain);
+        D_gain_R_n.Set_gain(Delay_values.loop_gain);
         Players_Manager.Stop_all_players();
         if (Lilla_state == MIDI_LOOP)
             for (int i = 0; i < TRACKS; ++i)
@@ -1619,7 +1619,7 @@ void loop()
             {
                 if (!Verify_is_Session_original(session))
                 {
-                    Ask_if_exit_from_PERFORMANCE();
+                    Ask_if_change_Session();
                     if (action == 0) // Exit: remain in this session
                     {
                         Serial.println("Remain on this Session");
@@ -1639,7 +1639,7 @@ void loop()
                             Read_all_Sounds();
                         }
 
-                        Jump_to_PERFORMANCE_session(session_change);
+                        Jump_to_Session(session_change);
 
                         // Session Delay: look for delay_<session> in SD
                         if (Archive.Copy_session_Delay_data_from_SD_to_Eeprom(session))
@@ -1659,7 +1659,7 @@ void loop()
 
                 else
                 {
-                    Jump_to_PERFORMANCE_session(session_change);
+                    Jump_to_Session(session_change);
 
                     // Session Delay: look for delay_<session> in SD
                     if (Archive.Copy_session_Delay_data_from_SD_to_Eeprom(session))
@@ -1932,7 +1932,7 @@ void loop()
                         Update_sessions();
                         Read_all_Sounds();
 
-                        Jump_to_PERFORMANCE_session(Get_first_Session_existing());
+                        Jump_to_Session(Get_first_Session_existing());
                     }
                     else
                     {
@@ -3570,14 +3570,14 @@ void loop()
         }
 
         // Change feddback (gain tap 0)
-        if (Read_encoder(12, Delay_data.track_gain, Delay_data_limits[LOOP_GAIN][1], Delay_data_limits[LOOP_GAIN][0], 1))
+        if (Read_encoder(12, Delay_data.loop_gain, Delay_data_limits[LOOP_GAIN][1], Delay_data_limits[LOOP_GAIN][0], 1))
         {
-            Delay_values.track_gain = Delay_feedback(Delay_data.track_gain);
-            Serial.println(Delay_values.track_gain);
+            Delay_values.loop_gain = Delay_feedback(Delay_data.loop_gain);
+            Serial.println(Delay_values.loop_gain);
 
             AudioNoInterrupts();
-            D_gain_L_n.Set_gain(Delay_values.track_gain);
-            D_gain_R_n.Set_gain(Delay_values.track_gain);
+            D_gain_L_n.Set_gain(Delay_values.loop_gain);
+            D_gain_R_n.Set_gain(Delay_values.loop_gain);
             AudioInterrupts();
 
             Display.D_read_gain();
@@ -6480,7 +6480,7 @@ void loop()
         {
             switch (SET_menu)
             {
-            case 2: // switch to CC Settings
+            case 3: // switch to CC Settings
                 Lilla_state = CC_SETTINGS;
                 display_wait = false;
                 for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; instrument++)
@@ -6496,7 +6496,7 @@ void loop()
                 // case 3: // USB access to SD card - funzionalita' MTP
                 // break;
 
-            case 3: // import RAW files from SD
+            case 4: // import RAW files from SD
                 AudioNoInterrupts();
                 Players_Manager.Stop_all_players();
                 AudioInterrupts();
@@ -6514,7 +6514,7 @@ void loop()
                 }
                 break;
 
-            case 4: // importa il Setup da file lilla.txt (su SD)
+            case 5: // Setup (all EEPROM) import from lilla.txt (in SD)
                 Display.Confirm_config_import_popup();
                 Display.Confirm_config_import_frame(0);
                 Ask_if_IMPORT_EXPORT_setup();
@@ -6545,20 +6545,19 @@ void loop()
                 else
                 {
                     Display.Config_import_REBOOT_popup();
-                    // delay(6000);
 
                     Lilla_File = SD.open("/LILLASET/lilla.txt"); // apertura file esistente
                     Archive.Save_setup_file(Lilla_File);
                     Lilla_File.close();
                     Serial.println("Lilla setup has been copied from lilla.txt to EEPROM");
 
-                    // ora e' necessario cancellare eventuali Recording importati
+                    // eventually imported Recordings MUST be deleted
                     DS_seed_all_Recordings();
                     Bootstrap_setup();
                 }
                 break;
 
-            case 5: // Export setup (all EEPROM content) to SD card file lillaold.txt
+            case 6: // Setup (all EEPROM content) export to SD card (lillaold.txt)
                 Display.Confirm_config_export_popup();
                 Display.Confirm_config_import_frame(0);
                 Ask_if_IMPORT_EXPORT_setup();
@@ -6613,8 +6612,8 @@ void loop()
                 }
                 break;
 
-            case 6: // Factory reset
-                Display.Confirm_config_reset_popup();
+            case 7: // Factory reset
+                Display.Confirm_factory_reset_popup();
                 Display.Confirm_config_import_frame(0);
                 Ask_if_FACTORY_RESET();
                 if (result == 0)
@@ -6623,6 +6622,8 @@ void loop()
                     Display.Settings_frame(SET_menu);
                     break;
                 }
+                Display.Factory_reset_wait_popup();
+
                 delay(3000); // per ripensamenti last minute!
                 Factory_setup_Eeprom();
                 Bootstrap_setup();
@@ -7158,7 +7159,7 @@ void Rebuild_session_old(void)
 }
 
 FLASHMEM
-void Ask_if_exit_from_PERFORMANCE(void)
+void Ask_if_change_Session(void)
 {
     confirmation = false;
     action = 0;
@@ -7211,7 +7212,7 @@ void Ask_if_delete_this_SESSION(void)
     }
 }
 
-void Jump_to_PERFORMANCE_session(uint8_t next_session)
+void Jump_to_Session(uint8_t next_session)
 {
     AudioNoInterrupts();
     Players_Manager.Release_softly_all_players(session);
@@ -10075,7 +10076,7 @@ void Factory_setup_Eeprom(void)
 
     // definisci un Sound[0] al solo scopo di salvarlo su EEPROM
     Sound[0].used = true;
-    Sound[0].file = 1;
+    Sound[0].file = 0;
     Sound[0].mode = 0;
     Sound[0].pitch = 0;
     Sound[0].A = 0;
@@ -10098,15 +10099,15 @@ void Factory_setup_Eeprom(void)
     // salva su EEPROM l'opzione 1 per optimization
     Archive.Save_optimization(1); // 0: extension  1: polyphony
 
-    // assegna i parametri per il Delay al solo scopo di salvarli su EEPROM
-    Delay_data.instrument_route = 0b00000000; // all Instruments are NOT routed to Delay
+    // assegna i parametri per il Delay al solo scopo di salvarli su EEPROM 
     Delay_data.samples = 20;                  // value ; 0 --> 99
     Delay_data.samples_LR = 0;                // value L/R ; -10 --> 10
+    Delay_data.instrument_route = 0b00000000; // all Instruments are NOT routed to Delay
     Delay_data.modulation_source = 0;         // 0: none 1:LFO(sinus) 2:input_1
     Delay_data.modulation_depth = 30;         // 0 --> 40 modulation depth
     Delay_data.modulation_frequency = 12;     // 0 --> 40 only for waveform
     Delay_data.modulation_phase_LR = 0;       // 0 --> 359 only for waveform
-    Delay_data.track_gain = 5;
+    Delay_data.loop_gain = 5;
     Archive.Save_Delay_to_Eeprom(Delay_data);
 
     // cancella il contenute dei packet sulla Flash aggiuntiva
@@ -11717,7 +11718,8 @@ void Bootstrap_setup(void)
     Serial.print(F("Flash available for more .raw files (kB): "));
     Serial.println((Get_flash_size() - Get_flash_occupation() - FLASH_FREE_SPACE) / 1024);
     Serial.println();
-
+    
+    // Print EEPROM
     Serial.println("Print_EEPROM_content()");
     Archive.Print_EEPROM_content();
 
@@ -11799,7 +11801,7 @@ void Bootstrap_setup(void)
         Delay_data.modulation_depth = 30;
         Delay_data.modulation_frequency = 12;
         Delay_data.modulation_phase_LR = 0;
-        Delay_data.track_gain = 5;
+        Delay_data.loop_gain = 5;
     }
 
     // Salva i parametri per il Delay su EEPROM
@@ -11815,8 +11817,8 @@ void Bootstrap_setup(void)
     Delay_R.Set_delay_modulation_source(Delay_values.modulation_source); // 0:none 1:LFO  2:input_1
     Delay_L.Set_delay_modulation_gain(Delay_values.modulation_depth);
     Delay_R.Set_delay_modulation_gain(Delay_values.modulation_depth);
-    D_gain_L_n.Set_gain(Delay_values.track_gain);
-    D_gain_R_n.Set_gain(Delay_values.track_gain);
+    D_gain_L_n.Set_gain(Delay_values.loop_gain);
+    D_gain_R_n.Set_gain(Delay_values.loop_gain);
 
     LFO_D[0].Set_amplitude(1000); //  modulation depth is set in Delay(0), not here.
     LFO_D[1].Set_amplitude(1000); //  modulation depth is set in Delay(1), not here.

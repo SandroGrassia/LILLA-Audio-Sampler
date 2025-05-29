@@ -375,44 +375,19 @@ String EepromManager::Filename_session_delay(int session)
 void EepromManager::Copy_Delay_data_from_RAM_to_SD(File &file) // private
 {
     const byte *data = (const byte *)(const void *)&Delay_data;
-    for (int i = 0; i < delay_data_dim; ++i)
+    for (int i = 0; i < Delay_data_dim; ++i)
     {
         file.println(*(data + i));
     }
 
-    if (false)
-    {
-        Serial.println(F("EepromManager::Copy_Delay_data_from_RAM_to_SD(File &file) - Print Delay_data:"));
-        const byte *data = (const byte *)(const void *)&Delay_data;
-        int i = 0;
-        Serial.print("(2 bytes) samples: ");
-        Serial.print(*(data + i++));
-        Serial.println(*(data + i++));
-        Serial.print("(2 bytes) samples_LR: ");
-        Serial.print(*(data + i++));
-        Serial.println(*(data + i++));
-        Serial.print("instrument_route: ");
-        Serial.println(*(data + i++));
-        Serial.print("modulation: ");
-        Serial.println(*(data + i++));
-        Serial.print("depth: ");
-        Serial.println(*(data + i++));
-        Serial.print("frequency: ");
-        Serial.println(*(data + i++));
-        Serial.print("(2 bytes) phase_LR: ");
-        Serial.print(*(data + i++));
-        Serial.println(*(data + i++));
-        Serial.print("(2 bytes) loop_gain: ");
-        Serial.print(*(data + i++));
-        Serial.println(*(data + i++));
-        Serial.println();
-    }
+    if (true)
+        Print_Delay_data(data);
 }
 
 void EepromManager::Copy_Delay_data_from_Eeprom_to_SD(File &file) // private
 {
     uint8_t x;
-    for (int location = LOCATION_DELAY; location < LOCATION_DELAY + delay_data_dim; ++location)
+    for (int location = LOCATION_DELAY; location < LOCATION_DELAY + Delay_data_dim; ++location)
     {
         x = EEPROM.read(location);
         delayMicroseconds(100); // important not to block the process

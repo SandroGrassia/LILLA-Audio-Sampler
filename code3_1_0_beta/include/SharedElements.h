@@ -200,7 +200,10 @@ struct Session_struct
     uint8_t instruments;
     Instrument_struct Instrument[8];
 } __attribute__((__packed__)); // https://cs50.stackexchange.com/questions/22297/i-am-getting-an-unexpected-sizeof-error
+
 extern Session_struct Session[SESSIONS_MAX + 1]; // last used by Direct Sampling for "preascolto" and Live Sampling
+static constexpr uint8_t size_of_Session = sizeof(Session[0]);
+
 struct Instrument_filter_values_struct
 {
     uint8_t use;          // 0/1
@@ -212,6 +215,7 @@ struct Instrument_filter_values_struct
     uint8_t periodic;     // 0: aperiodic -> 1: periodic
     float frequency_time; // 0 --> 20
 };
+
 struct Sound_struct // 22 bytes
 {
     bool used;
@@ -435,19 +439,19 @@ enum Delay_parameters
 static constexpr int Delay_LPF_items = 6; // Delay_LPF_items trattati con il LPF, da SAMPLES a LOOP_GAIN
 static constexpr int Delay_items = 8; // tutti i parametri 
 
-struct Delay_data_struct // delay_data_dim byte
+struct Delay_data_struct // Delay_data_dim byte
 { 
     uint16_t samples;
-    uint16_t samples_LR;
+    int16_t samples_LR;
     uint8_t instrument_route;
     uint8_t modulation_source;
     uint8_t modulation_depth;
     uint8_t modulation_frequency;
     uint16_t modulation_phase_LR;
-    uint16_t track_gain;
+    uint16_t loop_gain;
 };
 
-static constexpr int delay_data_dim = sizeof(Delay_data_struct);
+static constexpr int Delay_data_dim = sizeof(Delay_data_struct);
 static constexpr int Delay_samples_max = 99;
 static constexpr int Delay_samples_LR_max = 99;
 static constexpr int Delay_depth_max = 99;
@@ -466,7 +470,7 @@ static constexpr int Delay_data_limits[Delay_LPF_items][2] = {
 
 struct Delay_values_struct
 {
-    float track_gain;
+    float loop_gain;
     float samples;
     float samples_LR;
     bool instrument_route[INSTRUMENTS_MAX];
@@ -481,15 +485,16 @@ extern const int PROGMEM delay_samples_table[100];
 extern Delay_data_struct Delay_data;
 float Delay_feedback(int8_t value);
 
-
 // funzioni
 void Calc_Delay_values(Delay_data_struct data);
 void Turn_ON_Delay(bool ON);
 void Calc_delay_routing(uint8_t value);
 float Calc_delay_samples(int value);
 float Calc_delay_samples_LR(int value);
-float Calc_delay_depth(uint8_t &value);
-float Calc_delay_frequency(uint8_t &value);
+float Calc_delay_depth (uint8_t value);
+float Calc_delay_frequency(uint8_t value);
+void Print_Delay_data(const byte *data); // data is a pointer to the first byte of the struct Delay_data
+void Print_Delay_values(Delay_values_struct Delay_values);
 
 // MIDI LOOP
 static constexpr int NO_TRACK = -1; // track virtuale per note suonate da tastiera nello stato MIDI_LOOP
