@@ -36,7 +36,7 @@ void EepromManager::Read_CC_Sound_gain(uint8_t instrument, uint8_t &CC_Sg_instru
     Eeprom_readAnything(LOCATION_CC_SETTINGS + instrument, CC_Sg_instrument);
 }
 
-void EepromManager::Copy_session_delay_data_from_Eeprom_to_Ram(Delay_data_struct &delay_data)
+void EepromManager::Copy_session_Delay_data_from_Eeprom_to_Ram(Delay_data_struct &delay_data)
 {
     Eeprom_readAnything(LOCATION_DELAY, delay_data);
 }

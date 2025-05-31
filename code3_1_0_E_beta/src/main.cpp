@@ -9,7 +9,7 @@
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0_beta 31/05/2025";
+String FIRMWARE_VERSION = "3.1.0_beta 1/06/2025";
 
 // **********************************************************
 // **************       VERSIONE LILLA         **************
@@ -336,7 +336,7 @@ static constexpr int ENCODERS = 26;
 static constexpr int PUSHBUTTONS = 36;
 
 // microseconds between send address and read value
-static constexpr int PAUSE_MUX = 10; 
+static constexpr int PAUSE_MUX = 10;
 
 // pin del T41 dedicati al bus address dei MUX
 static constexpr int MUX_S0_pin = 37;
@@ -427,8 +427,8 @@ void Update_Instruments_positions(void); // posizione di tutti gli Instrument su
 bool Verify_if_Instrument_original(uint8_t I);
 void Macro_Instrument_editing(void);
 void Map_one_Instrument_for_all_notes(uint8_t instrument);
-void Drop_Instrument(uint8_t instrument); // drop the instrument from the session ONLY IF instruments > 1
-uint8_t Clone_Instrument(uint8_t instrument); // insert ONE new instrument BELOW instrument
+void Drop_Instrument(uint8_t instrument);        // drop the instrument from the session ONLY IF instruments > 1
+uint8_t Clone_Instrument(uint8_t instrument);    // insert ONE new instrument BELOW instrument
 void Update_all_maps_Instrument_for_notes(void); // aggiorna la mappatura tra tutte le coppie midi_channel/note_number e relativi Instrument
 void Reset_all_maps_Instrument_for_notes(void);
 void Reset_map_Instrument_for_notes(uint8_t instrument);
@@ -1654,7 +1654,7 @@ void loop()
                             Serial.println(F("Smooth changing of delay values COULD start..."));
 
                             Delay_data_struct delay_final;
-                            Archive.Copy_session_delay_data_from_Eeprom_to_Ram(delay_final);
+                            Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(delay_final);
 
                             AudioNoInterrupts();
                             Delay_manager.New_values(&delay_final); // call using AudioNoInterrupt()
@@ -1674,7 +1674,7 @@ void loop()
                         Serial.println(F("Smooth changing of delay values COULD start..."));
 
                         Delay_data_struct delay_final;
-                        Archive.Copy_session_delay_data_from_Eeprom_to_Ram(delay_final);
+                        Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(delay_final);
 
                         AudioNoInterrupts();
                         Delay_manager.New_values(&delay_final); // call using AudioNoInterrupt()
@@ -6180,8 +6180,8 @@ void loop()
                 switch (choice_loop_menu)
                 {
 
-                case 0: // New
-                    LOOP_stop_and_reset_runnig_loop_data(); // LOOP_track_run[track] = false; LOOP_metronomo_run == false; LOOP_metronomo_flag_IN[1] = false;        
+                case 0:                                     // New
+                    LOOP_stop_and_reset_runnig_loop_data(); // LOOP_track_run[track] = false; LOOP_metronomo_run == false; LOOP_metronomo_flag_IN[1] = false;
                     LOOP_id = -1;
                     LOOP_original = true;
                     LOOP_run_button_state = true;
@@ -6219,15 +6219,15 @@ void loop()
                 case 3: // Delete
                     Delete_midi_loop_from_SD(LOOP_id);
 
-                     //new
-                    LOOP_stop_and_reset_runnig_loop_data(); // LOOP_track_run[track] = false; LOOP_metronomo_run == false; LOOP_metronomo_flag_IN[1] = false;    
+                    // new
+                    LOOP_stop_and_reset_runnig_loop_data(); // LOOP_track_run[track] = false; LOOP_metronomo_run == false; LOOP_metronomo_flag_IN[1] = false;
                     LOOP_id = -1;
                     LOOP_original = true;
                     LOOP_run_button_state = true;
                     Golive_with_MIDI_LOOP(true);
                     break;
                 }
-            }              
+            }
 
             // Change tempo
 #ifdef PCB_2022
@@ -6951,7 +6951,7 @@ void Delete_one_map_Instrument_for_notes(uint8_t instrument)
     }
 }
 
-void Update_all_maps_Instrument_for_notes() 
+void Update_all_maps_Instrument_for_notes()
 {
     Reset_all_maps_Instrument_for_notes();
     for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
@@ -7083,7 +7083,7 @@ uint8_t Get_previous_Session_existing(void)
     } while (1);
 }
 
-void Update_Instruments_positions(void) 
+void Update_Instruments_positions(void)
 {
     uint8_t position = 0;
     for (uint8_t i = 0; i < INSTRUMENTS_MAX; ++i)
@@ -7380,7 +7380,7 @@ uint32_t Calc_trim_step(uint8_t value)
     }
 }
 
-void Drop_Instrument(uint8_t instrument) 
+void Drop_Instrument(uint8_t instrument)
 {
     Sound[Session[session].Instrument[instrument].id_sound].used = false;
     Session[session].Instrument[instrument].used = false;
@@ -7546,7 +7546,7 @@ void Update_instruments_leds()
 // ******************************************       DIRECT_SAMPLING       ****************************************
 // ***************************************************************************************************************
 
-void DS_setup_DIRECT_SAMPLING_Session_and_Preset(void) 
+void DS_setup_DIRECT_SAMPLING_Session_and_Preset(void)
 {
     DS_set_DS_Sampling_Session();
     session = SESSIONS_MAX;
@@ -8537,7 +8537,7 @@ void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void)
                 Serial.println(F("Smooth changing of delay values COULD start..."));
 
                 Delay_data_struct delay_final;
-                Archive.Copy_session_delay_data_from_Eeprom_to_Ram(delay_final);
+                Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(delay_final);
 
                 AudioNoInterrupts();
                 Delay_manager.New_values(&delay_final); // call using AudioNoInterrupt()
@@ -8672,21 +8672,21 @@ void Golive_SETUP(void)
 // **********************************                MIDI_LOOP                  **********************************
 // ***************************************************************************************************************
 // Setup MIDI_LOOP
-    
+
 void LOOP_reset_all_data(void)
 {
     LOOP_time = 0;
     LOOP_stretch_int = 100;
     for (int track = 0; track < TRACKS; ++track)
     {
-        LOOP_events[track] = 0; // numero di eventi nel track
+        LOOP_events[track] = 0;        // numero di eventi nel track
         LOOP_track_run[track] = false; // true --> il track va suonato
         LOOP_volume[track] = 1.0;
         LOOP_volume_int[track] = 20;
         LOOP_led_flag[track] = false;
-        LOOP_slide[track] = 0; // slittamento temporale
+        LOOP_slide[track] = 0;     // slittamento temporale
         LOOP_pitch_int[track] = 0; // slittamento pitch
-    }   
+    }
 }
 
 void LOOP_stop_all_midi_tracks(void) // to be called inside AudioNoInterrupt()
@@ -8714,7 +8714,7 @@ void LOOP_stop_and_reset_runnig_loop_data(void)
 
     // Interrompi i Player che eseguono note di qualsiasi track
     Players_Manager.Release_all_players_loop();
-    
+
     LOOP_reset_all_data();
 
     // ferma il metronomo
@@ -8726,7 +8726,7 @@ void LOOP_stop_and_reset_runnig_loop_data(void)
     AudioInterrupts();
 
     // switch off metronomo leds
-    LOOP_metronomo.Leds_off(); // va eseguito fuori da AudioNoInterrupt()    
+    LOOP_metronomo.Leds_off(); // va eseguito fuori da AudioNoInterrupt()
 }
 
 FLASHMEM
@@ -10070,7 +10070,7 @@ void Factory_setup_Eeprom(void)
     // salva su EEPROM l'opzione 1 per optimization
     Archive.Save_optimization(1); // 0: extension  1: polyphony
 
-    // assegna i parametri per il Delay al solo scopo di salvarli su EEPROM 
+    // assegna i parametri per il Delay al solo scopo di salvarli su EEPROM
     Delay_data.samples = 20;                  // value ; 0 --> 99
     Delay_data.samples_LR = 0;                // value L/R ; -10 --> 10
     Delay_data.instrument_route = 0b00000000; // all Instruments are NOT routed to Delay
@@ -11689,7 +11689,7 @@ void Bootstrap_setup(void)
     Serial.print(F("Flash available for more .raw files (kB): "));
     Serial.println((Get_flash_size() - Get_flash_occupation() - FLASH_FREE_SPACE) / 1024);
     Serial.println();
-    
+
     // Print EEPROM
     Serial.println("Print_EEPROM_content()");
     Archive.Print_EEPROM_content();
@@ -11756,14 +11756,12 @@ void Bootstrap_setup(void)
     Delay_L.DELAY_fifo = DELAY_fifo_L;
     Delay_R.DELAY_fifo = DELAY_fifo_R;
 
+    
     // Tenta l'import dei dati session delay da SD alla EEPROM
     Archive.Copy_session_Delay_data_from_SD_to_Eeprom(session);
 
-    // Leggi i parametri del Delay da EEPROM
-    Archive.Copy_session_delay_data_from_Eeprom_to_Ram(Delay_data);
-
     // Imposta i parametri per il Delay
-    if (false)
+    if (Read_pushbutton(35))
     {
         Delay_data.samples = 20;
         Delay_data.samples_LR = 0;
@@ -11773,10 +11771,13 @@ void Bootstrap_setup(void)
         Delay_data.modulation_frequency = 12;
         Delay_data.modulation_phase_LR = 0;
         Delay_data.loop_gain = 5;
+
+        // Salva i parametri per il Delay su EEPROM
+        Archive.Save_Delay_to_Eeprom(Delay_data);
     }
 
-    // Salva i parametri per il Delay su EEPROM
-    Archive.Save_Delay_to_Eeprom(Delay_data);
+    // Leggi i parametri del Delay da EEPROM
+    Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(Delay_data);
 
     // Calcola i valori del Delay
     Calc_Delay_values(Delay_data);

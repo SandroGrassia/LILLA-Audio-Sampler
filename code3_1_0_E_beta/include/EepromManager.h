@@ -44,7 +44,7 @@ public:
     void Read_optimization(uint8_t &optimization);
     void Save_CC_Sound_gain(uint8_t instrument, uint8_t CC_Sg_instrument);
     void Read_CC_Sound_gain(uint8_t instrument, uint8_t &CC_Sg_instrument);
-    void Copy_session_delay_data_from_Eeprom_to_Ram(Delay_data_struct &Delay_data);
+    void Copy_session_Delay_data_from_Eeprom_to_Ram(Delay_data_struct &Delay_data);
     void Save_Delay_to_Eeprom(Delay_data_struct Delay_data);
     void Read_first_octave(int8_t &first_octave);
     void Save_first_octave(int8_t first_octave);
