@@ -9,7 +9,7 @@
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0 28/05/2025";
+String FIRMWARE_VERSION = "3.1.0_beta 31/05/2025";
 
 // **********************************************************
 // **************       VERSIONE LILLA         **************
@@ -423,13 +423,13 @@ uint8_t last_edited_instrument;
 
 // functions
 void Update_instruments_leds(void);
-void Update_Instruments_positions(void);
+void Update_Instruments_positions(void); // posizione di tutti gli Instrument sul display
 bool Verify_if_Instrument_original(uint8_t I);
 void Macro_Instrument_editing(void);
 void Map_one_Instrument_for_all_notes(uint8_t instrument);
-void Drop_Instrument(uint8_t instrument);
+void Drop_Instrument(uint8_t instrument); // drop the instrument from the session ONLY IF instruments > 1
 uint8_t Clone_Instrument(uint8_t instrument); // insert ONE new instrument BELOW instrument
-void Update_all_maps_Instrument_for_notes(void);
+void Update_all_maps_Instrument_for_notes(void); // aggiorna la mappatura tra tutte le coppie midi_channel/note_number e relativi Instrument
 void Reset_all_maps_Instrument_for_notes(void);
 void Reset_map_Instrument_for_notes(uint8_t instrument);
 void Delete_one_map_Instrument_for_notes(uint8_t instrument);
@@ -1150,6 +1150,8 @@ void setup()
     {
         // Attenzione richiede 2/3 minuti per la cancellazione dei Packet!
         // Se la procedura si interrompe la EEPROM resta azzarata e Session[0] o Sound[0] NON saranno configurati correttamente!!
+
+        Display.Factory_reset_wait_popup();
         Factory_setup_Eeprom();
     }
 
@@ -6914,40 +6916,6 @@ void Calc_pitch_from_note(void)
     return;
 }
 
-/*
-  template <class T> FLASHMEM void WASTE(T& value)
-  {
-  value += 15;
-  }
-*/
-
-/*
-  char* NAME_file(int number)
-  {
-    String result;
-    if(number < FIRST_RECORDING_FILE)
-    {
-        result = number;
-        result.append(".raw");
-    }
-    else if(number < FIRST_LIVE_SAMPLING_FILE)
-    {
-        number -= FIRST_RECORDING_FILE;
-        result = number;
-        result.append(".raw");
-    }
-    else if(number == FIRST_LIVE_SAMPLING_FILE)
-        result = "Mono.liv";
-    else if(number == FIRST_LIVE_SAMPLING_FILE + 1)
-        result = "Left.liv";
-    else if(number == FIRST_LIVE_SAMPLING_FILE + 2)
-        result = "Right.liv";
-
-    char* mediator = (char*)result.c_str();
-    return mediator;
-  }
-*/
-
 template <class T>
 FLASHMEM void P(String &what, T &value)
 {
@@ -6983,7 +6951,7 @@ void Delete_one_map_Instrument_for_notes(uint8_t instrument)
     }
 }
 
-void Update_all_maps_Instrument_for_notes() // aggiorna la mappatura tra tutte le coppie midi_channel/note_number e relativi Instrument
+void Update_all_maps_Instrument_for_notes() 
 {
     Reset_all_maps_Instrument_for_notes();
     for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
@@ -7062,9 +7030,7 @@ void Read_all_Sessions(void)
 {
     for (uint8_t session = 0; session < SESSIONS_MAX; ++session)
     {
-        Archive.Read_Session(session); // Read_Session(const uint8_t &session, Session_struct &Session_session)
-        // Serial.print("Read_all_Sessions, session: ");
-        // Serial.println(session);
+        Archive.Read_Session(session);
     }
 }
 
@@ -7117,7 +7083,7 @@ uint8_t Get_previous_Session_existing(void)
     } while (1);
 }
 
-void Update_Instruments_positions(void) // posizione di tutti gli Instrument sul display
+void Update_Instruments_positions(void) 
 {
     uint8_t position = 0;
     for (uint8_t i = 0; i < INSTRUMENTS_MAX; ++i)
@@ -7230,7 +7196,7 @@ void Jump_to_Session(uint8_t next_session)
     AudioInterrupts();
 
     Lilla_state = PERFORMANCE;
-    session_original = true; // will be used EDITING session
+    session_original = true;
 
     Session_cache_P = Session[session];
     Copy_all_Sound_to_Sound_cache_P();
@@ -7414,14 +7380,14 @@ uint32_t Calc_trim_step(uint8_t value)
     }
 }
 
-void Drop_Instrument(uint8_t instrument) // drop the instrument from the session: instruments are MORE THAN 1
+void Drop_Instrument(uint8_t instrument) 
 {
     Sound[Session[session].Instrument[instrument].id_sound].used = false;
     Session[session].Instrument[instrument].used = false;
     Session[session].instruments--;
 }
 
-uint8_t Clone_Instrument(uint8_t instrument) // insert ONE new instrument BELOW instrument
+uint8_t Clone_Instrument(uint8_t instrument)
 {
     int new_instrument;
     for (new_instrument = 0; new_instrument < INSTRUMENTS_MAX; ++new_instrument)
@@ -7459,7 +7425,7 @@ void Update_instruments_leds()
                 {
                     if (Session[session].Instrument[instrument].used) // check if i is used
 
-                        // check if number of players playing i have changed from/to 0
+                        // check if number of players playing i has changed from/to 0
                         if ((Players_statistics.Read_total_Players_per_track_instrument_old(track, instrument) == 0 && Players_statistics.Read_total_Players_per_track_instrument(track, instrument) > 0) || (Players_statistics.Read_total_Players_per_track_instrument_old(track, instrument) > 0 && Players_statistics.Read_total_Players_per_track_instrument(track, instrument) == 0))
                         {
                             LOOP_led_set.led[track][instrument] = Players_statistics.Read_total_Players_per_track_instrument(track, instrument) > 0;
@@ -7580,7 +7546,7 @@ void Update_instruments_leds()
 // ******************************************       DIRECT_SAMPLING       ****************************************
 // ***************************************************************************************************************
 
-void DS_setup_DIRECT_SAMPLING_Session_and_Preset(void) // to be called inside AudioNoInterrupt()
+void DS_setup_DIRECT_SAMPLING_Session_and_Preset(void) 
 {
     DS_set_DS_Sampling_Session();
     session = SESSIONS_MAX;

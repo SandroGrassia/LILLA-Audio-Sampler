@@ -2597,17 +2597,40 @@ FLASHMEM
 void DisplayManager::Factory_reset_wait_popup(void)
 {
     L_POPUP = x_pos(38);
-    H_POPUP = y_pos(3);
+    H_POPUP = y_pos(3); // 64 pixel
+    Y_POPUP = (240 - H_POPUP) / 2;
+    X_POPUP = (320 - L_POPUP) / 2;
+    Y_POPUP_TXT = 10; // Prima riga testo
+
+    tft.fillRoundRect(X_POPUP, Y_POPUP, L_POPUP, H_POPUP, 4, ILI9341_YELLOW);
+    tft.setCursor(X_POPUP + x_pos(0), Y_POPUP + Y_POPUP_TXT);
+    tft.setTextColor(ILI9341_BLACK);
+    //       ("01234567890123456789012345678901234567");
+    tft.print("            FACTORY RESET");
+    tft.setCursor(X_POPUP + x_pos(0), Y_POPUP + Y_POPUP_TXT + y_pos(1));
+    tft.setTextColor(ILI9341_BLACK);
+    //       ("01234567890123456789012345678901234567");
+    tft.print("    PLEASE WAIT - DO NOT SWITCH OFF");
+}
+
+/*
+FLASHMEM
+void DisplayManager::Factory_reset_wait_popup(void)
+{
+    L_POPUP = x_pos(38);
+    H_POPUP = y_pos(3); // 64 pixel
     Y_POPUP = (240 - H_POPUP) / 2;
     X_POPUP = (320 - L_POPUP) / 2;
     Y_POPUP_TXT = 20; // Prima riga testo
 
-    tft.fillRoundRect(X_POPUP, Y_POPUP, L_POPUP, H_POPUP, 4, ILI9341_BLACK);
+    tft.fillRoundRect(X_POPUP, Y_POPUP, L_POPUP, H_POPUP, 4, ILI9341_YELLOW);
     tft.setCursor(X_POPUP + x_pos(0), Y_POPUP + Y_POPUP_TXT);
-    tft.setTextColor(ILI9341_WHITE);
+    tft.setTextColor(ILI9341_BLACK);
     //       ("01234567890123456789012345678901234567");
     tft.print("    PLEASE WAIT - DO NOT SWITCH OFF");
 }
+*/
+
 
 FLASHMEM
 void DisplayManager::SD_missing(uint16_t color)
