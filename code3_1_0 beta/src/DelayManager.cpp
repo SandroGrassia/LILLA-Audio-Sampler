@@ -318,7 +318,7 @@ void DelayManager::Update(void)
 // private
 bool DelayManager::Start_LPF(int item, double v_0, double v_1) // v_0: valore di partenza   v_1: valore desiderato
 {
-    if (item >= Delay_LPF_items)
+    if (item >= DELAY_LPF_ITEMS)
     {
         Serial.println(F("DelayManager::Start_LPF - errata inizializzazione!"));
         return false;
@@ -333,7 +333,7 @@ bool DelayManager::Start_LPF(int item, double v_0, double v_1) // v_0: valore di
 
 double DelayManager::New_value(int item)
 {
-    if (item >= Delay_LPF_items)
+    if (item >= DELAY_LPF_ITEMS)
     {
         Serial.println(F("DelayManager::New_value - item inesistente!"));
         return 0;

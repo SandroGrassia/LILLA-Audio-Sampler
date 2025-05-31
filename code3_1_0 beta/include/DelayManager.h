@@ -55,16 +55,16 @@ private:
     };
     */
 
-    double x[Delay_LPF_items];
-    double x_1[Delay_LPF_items];
-    double y_1[Delay_LPF_items];
-    double y_2[Delay_LPF_items];
+    double x[DELAY_LPF_ITEMS];
+    double x_1[DELAY_LPF_ITEMS];
+    double y_1[DELAY_LPF_ITEMS];
+    double y_2[DELAY_LPF_ITEMS];
 
     static constexpr int steps = 30;
     int step;
     
     bool run_flag = false;
-    bool flag[Delay_items];
+    bool flag[DELAY_ITEMS];
     
     bool Start_LPF(int item, double v_0, double v_1); // v_0: valore di partenza   v_1: valore desiderato
     double New_value(int item);

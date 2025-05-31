@@ -14,11 +14,6 @@ extern String FIRMWARE_VERSION; // definita in main.cpp
 
 
 
-// HARDWARE
-static constexpr int ENCODERS = 26;
-static constexpr int PUSHBUTTONS = 36;
-
-
 
 // ARCHITETTURA
 static constexpr int PLAYERS = 16;
@@ -131,7 +126,7 @@ struct EEPROM_VFS_Recording // 4 byte
     uint8_t info;
 };
 extern EEPROM_VFS_Recording EEPROM_Recording[RECORDINGS];
-static constexpr uint8_t size_of_EEPROM_Recording = sizeof(EEPROM_Recording[0]);
+static constexpr uint8_t SIZE_OF_EEPROM_RECORDING = sizeof(EEPROM_Recording[0]);
 struct VFS_Recording // runtime
 {
     int first_packet; // if stereo is Left channel's first packet (Right channel's first packet is .first_packet + 1)
@@ -202,7 +197,7 @@ struct Session_struct
 } __attribute__((__packed__)); // https://cs50.stackexchange.com/questions/22297/i-am-getting-an-unexpected-sizeof-error
 
 extern Session_struct Session[SESSIONS_MAX + 1]; // last used by Direct Sampling for "preascolto" and Live Sampling
-static constexpr uint8_t size_of_Session = sizeof(Session[0]);
+static constexpr uint8_t SIZE_OF_SESSION = sizeof(Session_struct);
 
 struct Instrument_filter_values_struct
 {
@@ -234,7 +229,7 @@ struct Sound_struct // 22 bytes
     uint8_t gain;
 } __attribute__((__packed__)); // https://cs50.stackexchange.com/questions/22297/i-am-getting-an-unexpected-sizeof-error
 extern Sound_struct Sound[SOUNDS_MAX + 2];       // last 2 used by Direct Sampling for "preascolto" and Live Sampling
-static constexpr uint8_t size_of_Sound = sizeof(Sound[0]);
+static constexpr uint8_t SIZE_OF_SOUND = sizeof(Sound_struct);
 
 
 
@@ -436,10 +431,10 @@ enum Delay_parameters
         MODULATION_SOURCE
     };
 
-static constexpr int Delay_LPF_items = 6; // Delay_LPF_items trattati con il LPF, da SAMPLES a LOOP_GAIN
-static constexpr int Delay_items = 8; // tutti i parametri 
+static constexpr int DELAY_ITEMS = 8; // all Delay parameters
+static constexpr int DELAY_LPF_ITEMS = 6; // parameters from SAMPLES to LOOP_GAIN are filtered with LPFs 
 
-struct Delay_data_struct // Delay_data_dim byte
+struct Delay_data_struct // DELAY_DATA_DIM byte
 { 
     uint16_t samples;
     int16_t samples_LR;
@@ -450,16 +445,9 @@ struct Delay_data_struct // Delay_data_dim byte
     uint16_t modulation_phase_LR;
     uint16_t loop_gain;
 };
+static constexpr int DELAY_DATA_DIM = sizeof(Delay_data_struct);
 
-static constexpr int Delay_data_dim = sizeof(Delay_data_struct);
-static constexpr int Delay_samples_max = 99;
-static constexpr int Delay_samples_LR_max = 99;
-static constexpr int Delay_depth_max = 99;
-static constexpr int Delay_frequency_max = 99;
-static constexpr int Delay_phase_LR_max = 99;
-static constexpr int Delay_loop_gain_max = 9;
-
-static constexpr int Delay_data_limits[Delay_LPF_items][2] = {
+static constexpr int Delay_data_limits[DELAY_LPF_ITEMS][2] = {
     {0, 99}, // SAMPLES
     {-10, 10}, // SAMPLES_LR
     {0, 39}, // MODULATION_DEPTH
@@ -608,7 +596,7 @@ void Reset_keys_state();
 static constexpr int LPF_MAX = 39;
 extern bool lowpass_flag;
 extern bool lowpass_direction;
-extern int lowpass;        // 0 <= lowpass_log_value <= 39
+extern int lowpass;  // 0 <= lowpass_log_value <= 39
 extern int lowpass_target; // 0 <= lowpass_log_value <= 39
 extern const int lowpass_value[40];
 extern bool display_lowpass_flag;

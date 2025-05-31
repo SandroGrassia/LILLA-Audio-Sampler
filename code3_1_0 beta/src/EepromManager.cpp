@@ -254,7 +254,7 @@ void EepromManager::Print_EEPROM_content(void)
 
     for (int i = LOCATION_RECORDING; i < LOCATION_SOUND; i++)
     {
-        if ((i - LOCATION_RECORDING) % size_of_EEPROM_Recording == 0)
+        if ((i - LOCATION_RECORDING) % SIZE_OF_EEPROM_RECORDING == 0)
             Serial.println();
 
         Serial.print(F("Recording - location "));
@@ -266,11 +266,11 @@ void EepromManager::Print_EEPROM_content(void)
 
     for (int i = LOCATION_SOUND; i < LOCATION_OPTIMIZATION; i++)
     {
-        if ((i - LOCATION_SOUND) % size_of_Sound == 0)
+        if ((i - LOCATION_SOUND) % SIZE_OF_SOUND == 0)
         {
             Serial.println();
             Serial.print("Sound ");
-            Serial.println((i - LOCATION_SOUND) / size_of_Sound);
+            Serial.println((i - LOCATION_SOUND) / SIZE_OF_SOUND);
         }
 
         Serial.print(F("location "));
@@ -313,7 +313,7 @@ void EepromManager::Print_EEPROM_content(void)
 
 int EepromManager::GET_location_of_DS_Recording(const int &recording)
 {
-    return (LOCATION_RECORDING + (recording * size_of_EEPROM_Recording));
+    return (LOCATION_RECORDING + (recording * SIZE_OF_EEPROM_RECORDING));
 }
 
 uint16_t EepromManager::GET_location_of_Session(const uint8_t &session)
@@ -324,8 +324,8 @@ uint16_t EepromManager::GET_location_of_Session(const uint8_t &session)
 uint16_t EepromManager::Get_location_of_Sound(const uint8_t &id_sound)
 {
     // Serial.print("GET_location_of_sound: ");
-    // Serial.println(LOCATION_SOUND + (id_sound * size_of_Sound));
-    return (LOCATION_SOUND + (id_sound * size_of_Sound));
+    // Serial.println(LOCATION_SOUND + (id_sound * SIZE_OF_SOUND));
+    return (LOCATION_SOUND + (id_sound * SIZE_OF_SOUND));
 }
 
 template <class T>
@@ -375,7 +375,7 @@ String EepromManager::Filename_session_delay(int session)
 void EepromManager::Copy_Delay_data_from_RAM_to_SD(File &file) // private
 {
     const byte *data = (const byte *)(const void *)&Delay_data;
-    for (int i = 0; i < Delay_data_dim; ++i)
+    for (int i = 0; i < DELAY_DATA_DIM; ++i)
     {
         file.println(*(data + i));
     }
@@ -387,7 +387,7 @@ void EepromManager::Copy_Delay_data_from_RAM_to_SD(File &file) // private
 void EepromManager::Copy_Delay_data_from_Eeprom_to_SD(File &file) // private
 {
     uint8_t x;
-    for (int location = LOCATION_DELAY; location < LOCATION_DELAY + Delay_data_dim; ++location)
+    for (int location = LOCATION_DELAY; location < LOCATION_DELAY + DELAY_DATA_DIM; ++location)
     {
         x = EEPROM.read(location);
         delayMicroseconds(100); // important not to block the process

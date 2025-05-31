@@ -331,7 +331,12 @@ DelayManager Delay_manager;
 // MUX4     MUX5      MUX6
 //                    MUX7
 
-static constexpr int PAUSE_MUX = 10; // microseconds between send address and read value
+// HARDWARE
+static constexpr int ENCODERS = 26;
+static constexpr int PUSHBUTTONS = 36;
+
+// microseconds between send address and read value
+static constexpr int PAUSE_MUX = 10; 
 
 // pin del T41 dedicati al bus address dei MUX
 static constexpr int MUX_S0_pin = 37;
