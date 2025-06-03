@@ -1,5 +1,5 @@
 <p align="center">
-<img width="500" src="/pics/logo_0.jpg")
+<img width="500" src="/doc/assets/images/logo_0.jpg")
 </p>
 
 **LILLA** is an audio sampler based on Teensy 4.1, designed and assembled in Italy.<br/> 
@@ -9,35 +9,35 @@
 
 Here are some shoots showing how the project has evolved since it began in 2018.
 <p align="center">
-<img width="400" src="/pics/story_0.jpg")
+<img width="400" src="/doc/assets/images/story_0.jpg")
 </p>
 
 <p align="center">
-<img width="400" src="/pics/story_1.jpg")
+<img width="400" src="/doc/assets/images/story_1.jpg")
 </p>
 
 <p align="center">
-<img width="400" src="/pics/story_2.jpg")
+<img width="400" src="/doc/assets/images/story_2.jpg")
 </p>
 
 <p align="center">
-<img width="400" src="/pics/story_3.jpg")
+<img width="400" src="/doc/assets/images/story_3.jpg")
 </p>
 
 <p align="center">
-<img width="400" src="/pics/story_4.jpg")
+<img width="400" src="/doc/assets/images/story_4.jpg")
 </p>
 
 <p align="center">
-<img width="400" src="/pics/story_5.jpg")
+<img width="400" src="/doc/assets/images/story_5.jpg")
 </p>
 
 <p align="center">
-<img width="400" src="/pics/story_6.jpg")
+<img width="400" src="/doc/assets/images/story_6.jpg")
 </p>
 
 <p align="center">
-<img width="400" src="/pics/story_7.jpg")
+<img width="400" src="/doc/assets/images/story_7.jpg")
 </p>
 
 The PCB is manufactured in Hong Kong, while component assembly is carried out in Italy. The enclosure, also made in Italy, consists of an aluminum sheet case, produced using a laser cutter and CNC bender press.
