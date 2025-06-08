@@ -9,7 +9,7 @@
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0_H 06/06/2025";
+String FIRMWARE_VERSION = "3.1.0_K beta 08/06/2025";
 
 // **********************************************************
 // **************       VERSIONE LILLA         **************
@@ -695,6 +695,9 @@ int Get_first_loop_id_free(void);
 int Get_next_loop_id_in_SD(int loop_id);
 int Get_previous_loop_id_in_SD(int loop_id);
 void LOOP_stop_and_reset_runnig_loop_data(void);
+
+// MIXER
+void Golive_MIXER(int instrument = -1);
 
 // EEPROM
 void Factory_setup_Eeprom(void);
@@ -8563,7 +8566,12 @@ void Switch_from_LIVE_SAMPLING_to_DIRECT_SAMPLING(void)
     {
         if (!LS_ask_if_exit_from_LS()) // false: remain
         {
-            if (Lilla_state == LIVE_SAMPLING)
+            if (Lilla_state == MIXER)
+            {
+                Golive_MIXER();
+            }
+
+            else if (Lilla_state == LIVE_SAMPLING)
             {
                 LS_refresh_LS_page();
             }
@@ -11228,7 +11236,7 @@ bool LS_ask_if_exit_from_LS(void)
             confirmation = true;
         }
     }
-    return (action == 0? false : true);
+    return (action == 0 ? false : true);
 }
 
 FLASHMEM
@@ -11563,10 +11571,33 @@ void Switch_to_MIXER()
         id_sound = Session[session].Instrument[instrument].id_sound;
     }
 
+    Golive_MIXER(instrument);
+}
+
+FLASHMEM
+void Golive_MIXER(int instrument)
+{
+    if (instrument < 0)
+    {
+        for (auto i = 0; i < INSTRUMENTS_MAX; ++i)
+        {
+            if (Session[session].Instrument[i].used)
+            {
+                instrument = i;
+            }
+        }
+
+        if (instrument < 0)
+        {
+            Serial.println(F("Golive_MIXER - ERROR: no instrument used!"));
+            return;
+        }
+    }
+
     Lilla_state = MIXER;
     MX_source = instrument;
-    Display.MX_page();
 
+    Display.MX_page();
     for (int source = 0; source < 9; ++source)
     {
         Display.MX_source_values(source);
