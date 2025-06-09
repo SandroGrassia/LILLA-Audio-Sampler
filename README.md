@@ -40,6 +40,6 @@ Here are some shoots showing how the project has evolved since it began in 2018.
 <img width="400" src="/doc/assets/images/story_7.jpg")
 </p>
 
-The PCB is manufactured in Hong Kong, while component assembly is carried out in Italy. The enclosure, also made in Italy, consists of an aluminum sheet case, produced using a laser cutter and CNC bender press.
+The PCB is manufactured in Hong Kong, while component assembly is carried out in Italy. The enclosure, also made in Italy, consists of an aluminum sheet case.
 The latest version is **LILLA 2025**. 
 
