@@ -35,6 +35,7 @@ private:
     void Copy_Delay_data_from_RAM_to_SD(File &file);
     void Copy_Delay_data_from_Eeprom_to_SD(File &file);
     void Copy_Delay_data_from_SD_to_Eeprom(File &file);
+    void Print_Delay_data_on_EEPROM(void);
 
 public:
     EepromManager(void) {}

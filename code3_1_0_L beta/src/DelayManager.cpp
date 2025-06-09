@@ -194,10 +194,12 @@ void DelayManager::Update(void)
             if (Delay_values.samples_LR >= 0) // Left channel
             {
                 Delay_L_ptr->Set_delay_central_value(Delay_values.samples + Delay_values.samples_LR);
+                Delay_R_ptr->Set_delay_central_value(Delay_values.samples);
             }
             else
             {
                 Delay_R_ptr->Set_delay_central_value(Delay_values.samples - Delay_values.samples_LR);
+                Delay_L_ptr->Set_delay_central_value(Delay_values.samples);
             }
 
             if (false)

@@ -75,5 +75,5 @@ float Calc_delay_samples(int value);
 float Calc_delay_samples_LR(int value);
 float Calc_delay_depth (uint8_t value);
 float Calc_delay_frequency(uint8_t value);
-void Print_Delay_data(const byte *data); // data is a pointer to the first byte of the struct Delay_data
+void Print_Delay_data(const Delay_data_struct &data);
 void Print_Delay_values(Delay_values_struct Delay_values);

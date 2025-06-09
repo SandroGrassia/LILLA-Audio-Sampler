@@ -154,38 +154,14 @@ void EepromManager::Save_setup_file(File &file)
     String x_txt;
     while (file.available())
     {
+        // leggi il byte x 
         x_txt = file.readStringUntil('\n'); // restituisce String - es: x_txt = "230" ossia i char "2" "3" "0" "\n"
-        x = x_txt.toInt();                  // conversione da String a uint8_t es: x = 230
+        x = x_txt.toInt();  // conversione da String a uint8_t es: x = 230
+        
+        // trascrivi x
         EEPROM.write(location, x);
         delayMicroseconds(100); // important not to block the process
         location++;
-    }
-
-    if (false)
-    {
-        int i = 0;
-        Serial.println(F("EepromManager::Save_setup_file(File &file) - Read EEPROM locations:"));
-        Serial.print("(2 bytes) samples: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) samples_LR: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("instrument_route: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("modulation: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("depth: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("frequency: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) phase_LR: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) loop_gain: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println();
     }
 }
 
@@ -194,36 +170,12 @@ void EepromManager::Copy_setup_from_Eeprom_to_SD(File &file)
     uint8_t x;
     for (uint16_t location = 0; location < EEPROM_BYTES; ++location)
     {
+        // leggi il byte x 
         x = EEPROM.read(location); // restituisce uint8_t es: x = 230
         delayMicroseconds(100);    // important not to block the process
-        file.println(String(x));   // es: String(x) = "230" ossia si salvano i tre digit con a capo 2 3 0 \n
-    }
 
-    if (false)
-    {
-        int i = 0;
-        Serial.println(F("EepromManager::Copy_setup_from_Eeprom_to_SD(File &file) - Read EEPROM locations:"));
-        Serial.print("(2 bytes) samples: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) samples_LR: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("instrument_route: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("modulation: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("depth: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("frequency: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) phase_LR: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) loop_gain: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println();
+         // trascrivi x
+        file.println(String(x));   // es: String(x) = "230" ossia si salvano i tre digit con a capo 2 3 0 \n
     }
 }
 
@@ -388,48 +340,22 @@ void EepromManager::Copy_Delay_data_from_RAM_to_SD(File &file) // private
     {
         file.println(*(data + i));
     }
-
-    if (true)
-    {
-        Print_Delay_data(data);
-    }
 }
 
 void EepromManager::Copy_Delay_data_from_Eeprom_to_SD(File &file) // private
 {
     uint8_t x;
-    for (int location = LOCATION_DELAY; location < LOCATION_DELAY + DELAY_DATA_DIM; ++location)
+    for (auto location = LOCATION_DELAY; location < LOCATION_DELAY + DELAY_DATA_DIM; ++location)
     {
         x = EEPROM.read(location);
         delayMicroseconds(100); // important not to block the process
         file.println(String(x));
-
-        if (false)
-        {
-            int i = 0;
-            Serial.println(F("EepromManager::Copy_Delay_data_from_Eeprom_to_SD(File &file) - Read EEPROM locations:"));
-            Serial.print("(2 bytes) samples: ");
-            Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.print("(2 bytes) samples_LR: ");
-            Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.print("instrument_route: ");
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.print("modulation: ");
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.print("depth: ");
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.print("frequency: ");
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.print("(2 bytes) phase_LR: ");
-            Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.print("(2 bytes) loop_gain: ");
-            Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-            Serial.println();
-        }
+    }
+    if (false)
+    {
+        Serial.println(F("EepromManager::Copy_Delay_data_from_Eeprom_to_SD(File &file) - Read EEPROM data:"));
+        Serial.println(file.name());
+        Print_Delay_data_on_EEPROM();
     }
 }
 
@@ -447,32 +373,61 @@ void EepromManager::Copy_Delay_data_from_SD_to_Eeprom(File &file) // private
         delayMicroseconds(100); // important not to block the process
         location++;
     }
-    if (false)
+    if (true)
     {
-        int i = 0;
-        Serial.println(F("EepromManager::Copy_Delay_data_from_SD_to_Eeprom(File &file)- Read EEPROM locations:"));
-        Serial.print("(2 bytes) samples: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) samples_LR: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("instrument_route: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("modulation: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("depth: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("frequency: ");
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) phase_LR: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.print("(2 bytes) loop_gain: ");
-        Serial.print(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println(EEPROM.read(LOCATION_DELAY + i++));
-        Serial.println();
+        Serial.println(F("EepromManager::Copy_Delay_data_from_SD_to_Eeprom(File &file)- Read EEPROM data:"));
+        Print_Delay_data_on_EEPROM();
     }
+}
+
+FLASHMEM
+void EepromManager::Print_Delay_data_on_EEPROM()
+{
+    uint8_t data_LSB;
+    uint8_t data_MSB;
+    int16_t result_int;
+    uint16_t result_uint;
+    auto i = 0;
+
+    Serial.println();
+    Serial.println(F("EepromManager::Print_Delay_data_on_EEPROM()"));
+
+    Serial.print("uint16_t samples: ");
+    data_LSB = EEPROM.read(LOCATION_DELAY + i++);
+    data_MSB = EEPROM.read(LOCATION_DELAY + i++);
+    result_uint = data_MSB << 8 | data_LSB;
+    Serial.println(result_uint);
+
+    Serial.print("int16_t samples_LR: ");
+    data_LSB = EEPROM.read(LOCATION_DELAY + i++);
+    data_MSB = EEPROM.read(LOCATION_DELAY + i++);
+    result_int = data_MSB << 8 | data_LSB;
+    Serial.println(result_int);
+
+    Serial.print("instrument_route: ");
+    Serial.println(EEPROM.read(LOCATION_DELAY + i++));
+
+    Serial.print("modulation: ");
+    Serial.println(EEPROM.read(LOCATION_DELAY + i++));
+
+    Serial.print("depth: ");
+    Serial.println(EEPROM.read(LOCATION_DELAY + i++));
+
+    Serial.print("frequency: ");
+    Serial.println(EEPROM.read(LOCATION_DELAY + i++));
+
+    Serial.print("uint16_t phase_LR: ");
+    data_LSB = EEPROM.read(LOCATION_DELAY + i++);
+    data_MSB = EEPROM.read(LOCATION_DELAY + i++);
+    result_uint = data_MSB << 8 | data_LSB;
+    Serial.println(result_uint);
+
+    Serial.print("uint16_t loop_gain: ");
+    data_LSB = EEPROM.read(LOCATION_DELAY + i++);
+    data_MSB = EEPROM.read(LOCATION_DELAY + i++);
+    result_uint = data_MSB << 8 | data_LSB;
+    Serial.println(result_uint);
+    Serial.println();
 }
 
 void EepromManager::Delete_Delay_data_in_SD(int session)
@@ -486,7 +441,7 @@ void EepromManager::Delete_Delay_data_in_SD(int session)
         {
             SD.remove(full_path_);
 
-            Serial.print(F("EepromManager::Copy_session_Delay_data_from_Eeprom_to_SD - existing "));
+            Serial.print(F("EepromManager::Delete_Delay_data_in_SD - existing "));
             Serial.print(full_path);
             Serial.println(" has been deleted.");
         }

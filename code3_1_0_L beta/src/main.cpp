@@ -9,7 +9,7 @@
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0_K beta 08/06/2025";
+String FIRMWARE_VERSION = "3.1.0_L(beta) 09/06/2025";
 
 // **********************************************************
 // **************       VERSIONE LILLA         **************
@@ -3738,10 +3738,12 @@ void loop()
             if (Delay_values.samples_LR >= 0) // Left channel
             {
                 Delay_L.Set_delay_central_value(Delay_values.samples + Delay_values.samples_LR);
+                Delay_R.Set_delay_central_value(Delay_values.samples);
             }
             else
             {
                 Delay_R.Set_delay_central_value(Delay_values.samples - Delay_values.samples_LR);
+                Delay_L.Set_delay_central_value(Delay_values.samples);
             }
             AudioInterrupts();
 
@@ -3898,30 +3900,11 @@ void loop()
 
                     if (true)
                     {
-                        Serial.println(F("main() - Delay_data saved in EEPROM - Delay_data:"));
-                        const byte *data = (const byte *)(const void *)&Delay_data;
-                        int i = 0;
-                        Serial.print("(2 bytes) samples: ");
-                        Serial.print(*(data + i++));
-                        Serial.println(*(data + i++));
-                        Serial.print("(2 bytes) samples_LR: ");
-                        Serial.print(*(data + i++));
-                        Serial.println(*(data + i++));
-                        Serial.print("instrument_route: ");
-                        Serial.println(*(data + i++));
-                        Serial.print("modulation: ");
-                        Serial.println(*(data + i++));
-                        Serial.print("dapth: ");
-                        Serial.println(*(data + i++));
-                        Serial.print("frequency: ");
-                        Serial.println(*(data + i++));
-                        Serial.print("(2 bytes) phase_LR: ");
-                        Serial.print(*(data + i++));
-                        Serial.println(*(data + i++));
-                        Serial.print("(2 bytes) loop_gain: ");
-                        Serial.print(*(data + i++));
-                        Serial.println(*(data + i++));
                         Serial.println();
+                        Serial.println(F("main() - Delay_data in RAM:"));
+                        Print_Delay_data(Delay_data);
+                        Serial.println(F("... has been saved in EEPROM."));
+
                     }
 
                     // Save Delay_data in delay_<session>.txt in SD

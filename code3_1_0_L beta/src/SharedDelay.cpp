@@ -77,51 +77,34 @@ void Print_Delay_values(Delay_values_struct Delay_values)
 }
 
 FLASHMEM
-void Print_Delay_data(const byte *data)
+void Print_Delay_data(const Delay_data_struct &data)
 {
     Serial.println();
-    Serial.println(F("Print Delay_data"));
-    byte data_LSB;
-    byte data_MSB;
-    int16_t result_int;
-    uint16_t result_uint;
-    int i = 0;
+    Serial.println(F("Print_Delay_data(Delay_data_struct Data):"));
 
-    Serial.print("uint16_t samples: ");
-    data_LSB = *(data + i++);
-    data_MSB = *(data + i++);
-    result_uint = data_MSB << 8 | data_LSB;
-    Serial.println(result_uint);
+    Serial.print("Delay_data.samples: ");
+    Serial.println(data.samples);
 
-    Serial.print("int16_t samples_LR: ");
-    data_LSB = *(data + i++);
-    data_MSB = *(data + i++);
-    result_int = data_MSB << 8 | data_LSB;
-    Serial.println(result_int);
+    Serial.print("Delay_data.samples_LR: ");
+    Serial.println(data.samples_LR);
 
-    Serial.print("instrument_route: ");
-    Serial.println(*(data + i++));
+    Serial.print("Delay_data.instrument_route: ");
+    Serial.println(data.instrument_route);
 
-    Serial.print("modulation: ");
-    Serial.println(*(data + i++));
+    Serial.print("Delay_data.modulation_source: ");
+    Serial.println(data.modulation_source);
 
-    Serial.print("depth: ");
-    Serial.println(*(data + i++));
+    Serial.print("Delay_data.modulation_depth: ");
+    Serial.println(data.modulation_depth);
 
-    Serial.print("frequency: ");
-    Serial.println(*(data + i++));
+    Serial.print("Delay_data.modulation_frequency: ");
+    Serial.println(data.modulation_frequency);
 
-    Serial.print("uint16_t phase_LR: ");
-    data_LSB = *(data + i++);
-    data_MSB = *(data + i++);
-    result_uint = data_MSB << 8 | data_LSB;
-    Serial.println(result_uint);
+    Serial.print("Delay_data.modulation_phase_LR: ");
+    Serial.println(data.modulation_phase_LR);
 
-    Serial.print("uint16_t loop_gain: ");
-    data_LSB = *(data + i++);
-    data_MSB = *(data + i++);
-    result_uint = data_MSB << 8 | data_LSB;
-    Serial.println(result_uint);
+    Serial.print("Delay_data.loop_gain: ");
+    Serial.println(data.loop_gain);
     Serial.println();
 }
 
