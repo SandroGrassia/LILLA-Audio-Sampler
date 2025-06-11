@@ -8,7 +8,7 @@
 
 void LoopLedSet::Update(int track) // richiede circa 1100 microsecondi
 {
-    for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+    for(auto i = 0; i < INSTRUMENTS_MAX; ++i)
     {
         if (Session[session].Instrument[i].used)
         {
@@ -19,16 +19,16 @@ void LoopLedSet::Update(int track) // richiede circa 1100 microsecondi
 
 void LoopLedSet::Update_all(void)
 {
-    for (int j = 0; j < TRACKS; ++j)
+    for(auto j = 0; j < TRACKS; ++j)
     {
         Update(j);
     }
 }
 void LoopLedSet::Switch_off_all(void)
 {
-    for (int j = 0; j < TRACKS; ++j)
+    for(auto j = 0; j < TRACKS; ++j)
     {
-        for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+        for(auto i = 0; i < INSTRUMENTS_MAX; ++i)
         {
             if (Session[session].Instrument[i].used)
             {
@@ -40,7 +40,7 @@ void LoopLedSet::Switch_off_all(void)
 }
 void LoopLedSet::Switch_off(int track)
 {
-    for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+    for(auto i = 0; i < INSTRUMENTS_MAX; ++i)
     {
         if (Session[session].Instrument[i].used)
         {
@@ -51,9 +51,9 @@ void LoopLedSet::Switch_off(int track)
 }
 void LoopLedSet::State_reset(void)
 {
-    for (int j = 0; j < TRACKS; ++j)
+    for(auto j = 0; j < TRACKS; ++j)
     {
-        for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+        for(auto i = 0; i < INSTRUMENTS_MAX; ++i)
         {
             led[j][i] = false;
         }

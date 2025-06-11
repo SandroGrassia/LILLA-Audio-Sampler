@@ -9,7 +9,7 @@
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0_L(beta) 09/06/2025";
+String FIRMWARE_VERSION = "3.1.0_M(beta) 12/06/2025";
 
 // **********************************************************
 // **************       VERSIONE LILLA         **************
@@ -1207,7 +1207,7 @@ void setup()
     // Loop infinito - test encoders, pushbuttons
     while (test_devices)
     {
-        for (int i = 0; i < ENCODERS; ++i)
+        for(auto i = 0; i < ENCODERS; ++i)
         {
             result = Read_encoder_simple(i);
             if (result == 1)
@@ -1224,7 +1224,7 @@ void setup()
             }
         }
 
-        for (int i = 0; i < PUSHBUTTONS; ++i)
+        for(auto i = 0; i < PUSHBUTTONS; ++i)
         {
             if (Read_pushbutton(i))
             {
@@ -1238,9 +1238,9 @@ void setup()
     while (test_mux)
     {
         mux_en = false;
-        for (int mux = 0; mux < 7; ++mux)
+        for(auto mux = 0; mux < 7; ++mux)
         {
-            for (int i = 0; i < 16; ++i)
+            for(auto i = 0; i < 16; ++i)
             {
                 Write_MUX_address(i);
                 delayMicroseconds(PAUSE_MUX);
@@ -1297,7 +1297,7 @@ void loop()
         Players_Manager.Stop_all_players();
         if (Lilla_state == MIDI_LOOP)
         {
-            for (int i = 0; i < TRACKS; ++i)
+            for(auto i = 0; i < TRACKS; ++i)
             {
                 LOOP_track_run[i] = false;
             }
@@ -1470,7 +1470,7 @@ void loop()
     {
         Serial.print("AudioProcessorUsage(): ");
         Serial.println(AudioProcessorUsage());
-        for (int player = 0; player < PLAYERS; ++player)
+        for(auto player = 0; player < PLAYERS; ++player)
         {
             Serial.print("Player[");
             Serial.print(player);
@@ -1857,7 +1857,7 @@ void loop()
                     if (new_session >= 0)
                     {
                         Sound_struct Sound_NEW[8];
-                        for (int I = 0; I < INSTRUMENTS_MAX; ++I)
+                        for(auto I = 0; I < INSTRUMENTS_MAX; ++I)
                         {
                             if (Session[session].Instrument[I].used)
                                 Sound_NEW[I] = Sound[Session[session].Instrument[I].id_sound];
@@ -1867,7 +1867,7 @@ void loop()
                         Session[session] = Session_cache_P; // 4: ora session è ripristinata, anche i relativi Sound sono stati ripristinati
 
                         // 5: Per ciascun Instrument utilizzato dalla Session_NEW creo un nuovo Sound
-                        for (int I = 0; I < INSTRUMENTS_MAX; ++I)
+                        for(auto I = 0; I < INSTRUMENTS_MAX; ++I)
                         {
                             if (Session[new_session].Instrument[I].used)
                             {
@@ -1917,7 +1917,7 @@ void loop()
                     if (new_session >= 0)
                     {
                         Sound_struct Sound_NEW[INSTRUMENTS_MAX];
-                        for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                        for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
                         {
                             if (Session[session].Instrument[instrument].used)
                             {
@@ -1929,7 +1929,7 @@ void loop()
                         Session[session] = Session_cache_P; // 4: ora session è ripristinata, anche i relativi Sound sono stati ripristinati
 
                         // 5: Create a new Sound for each Instrument in new_session
-                        for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                        for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
                         {
                             if (Session[new_session].Instrument[instrument].used)
                             {
@@ -3602,7 +3602,7 @@ void loop()
                     delay(2000);
 
                     Display.MX_page();
-                    for (int source = 0; source < 9; ++source)
+                    for(auto source = 0; source < 9; ++source)
                     {
                         Display.MX_source_values(source);
                     }
@@ -3964,7 +3964,7 @@ void loop()
 
                     AudioNoInterrupts();
                     // Ferma i track running
-                    for (int i = 0; i < TRACKS; ++i) // true --> il track va suonato
+                    for(auto i = 0; i < TRACKS; ++i) // true --> il track va suonato
                     {
                         LOOP_track_run[i] = false;
                     }
@@ -4008,7 +4008,7 @@ void loop()
 
                     AudioNoInterrupts();
                     // Ferma i track running
-                    for (int i = 0; i < TRACKS; ++i) // true --> il track va suonato
+                    for(auto i = 0; i < TRACKS; ++i) // true --> il track va suonato
                     {
                         LOOP_track_run[i] = false;
                     }
@@ -5081,7 +5081,7 @@ void loop()
                     if ((Get_flash_size() - Get_flash_occupation()) >= Recording[recording].bytes)
                     {
                         DS_export = -1; // no filename available;
-                        for (int i = 0; i < FIRST_RECORDING_FILE; ++i)
+                        for(auto i = 0; i < FIRST_RECORDING_FILE; ++i)
                         {
                             if (!SerialFlash.exists(name_file[i]))
                             {
@@ -5100,7 +5100,7 @@ void loop()
                     if ((Get_flash_size() - Get_flash_occupation()) >= (2 * Recording[recording].bytes))
                     {
                         DS_export = -1; // no filename available;
-                        for (int i = 0; i < FIRST_RECORDING_FILE; ++i)
+                        for(auto i = 0; i < FIRST_RECORDING_FILE; ++i)
                         {
                             if (!SerialFlash.exists(name_file[i]))
                             {
@@ -5111,7 +5111,7 @@ void loop()
                         }
                         if (DS_export == 1)
                         {
-                            for (int i = file_L_RAW + 1; i < FIRST_RECORDING_FILE; ++i)
+                            for(auto i = file_L_RAW + 1; i < FIRST_RECORDING_FILE; ++i)
                             {
                                 if (!SerialFlash.exists(name_file[i]))
                                 {
@@ -5125,7 +5125,7 @@ void loop()
                     else if ((Get_flash_size() - Get_flash_occupation()) >= Recording[recording].bytes)
                     {
                         DS_export = -1; // no filename available;
-                        for (int i = 0; i < FIRST_RECORDING_FILE; ++i)
+                        for(auto i = 0; i < FIRST_RECORDING_FILE; ++i)
                         {
                             if (!SerialFlash.exists(name_file[i]))
                             {
@@ -5417,7 +5417,7 @@ void loop()
                         else
                         {
                             // cerca nome/i libero/i per il/i nuovo/i file .raw su SD
-                            for (int i = 0; i < 100000; ++i)
+                            for(auto i = 0; i < 100000; ++i)
                             {
                                 DS_export_M_RAW = DS_export_directory;
                                 DS_export_M_RAW.concat(i);
@@ -5488,7 +5488,7 @@ void loop()
                                 for (packet = Recording[recording].first_packet; packet < (Recording[recording].first_packet + Recording[recording].packets - 1); ++packet)
                                 {
                                     source_file = SerialFlash.open(name_packet[packet]);
-                                    for (int i = 0; i < 256; ++i)
+                                    for(auto i = 0; i < 256; ++i)
                                     {
                                         source_file.read(buffer, 256);
                                         destination_file.write(buffer, 256);
@@ -5499,7 +5499,7 @@ void loop()
                                 packet = Recording[recording].first_packet + Recording[recording].packets - 1;
                                 source_file = SerialFlash.open(name_packet[packet]);
                                 last_blocks = (Recording[recording].bytes % PACKET_DIM) % 256;
-                                for (int i = 0; i < last_blocks; ++i)
+                                for(auto i = 0; i < last_blocks; ++i)
                                 {
                                     source_file.read(buffer, 256);
                                     destination_file.write(buffer, 256);
@@ -5518,7 +5518,7 @@ void loop()
                                 for (packet = Recording[recording].first_packet; packet < (Recording[recording].first_packet + 2 * (Recording[recording].packets - 1)); packet += 2)
                                 {
                                     source_file = SerialFlash.open(name_packet[packet]);
-                                    for (int i = 0; i < 256; ++i)
+                                    for(auto i = 0; i < 256; ++i)
                                     {
                                         source_file.read(buffer, 256);
                                         destination_file.write(buffer, 256);
@@ -5528,7 +5528,7 @@ void loop()
                                 packet = Recording[recording].first_packet + 2 * (Recording[recording].packets - 1);
                                 source_file = SerialFlash.open(name_packet[packet]);
                                 last_blocks = (Recording[recording].bytes % PACKET_DIM) % 256;
-                                for (int i = 0; i < last_blocks; ++i)
+                                for(auto i = 0; i < last_blocks; ++i)
                                 {
                                     source_file.read(buffer, 256);
                                     destination_file.write(buffer, 256);
@@ -5545,7 +5545,7 @@ void loop()
                                     for (packet = Recording[recording].first_packet + 1; packet < (Recording[recording].first_packet + 1 + 2 * (Recording[recording].packets - 1)); packet += 2)
                                     {
                                         source_file = SerialFlash.open(name_packet[packet]);
-                                        for (int i = 0; i < 256; ++i)
+                                        for(auto i = 0; i < 256; ++i)
                                         {
                                             source_file.read(buffer, 256);
                                             destination_file.write(buffer, 256);
@@ -5556,7 +5556,7 @@ void loop()
                                 packet = Recording[recording].first_packet + 1 + 2 * (Recording[recording].packets - 1);
                                 source_file = SerialFlash.open(name_packet[packet]);
                                 last_blocks = (Recording[recording].bytes % PACKET_DIM) % 256;
-                                for (int i = 0; i < last_blocks; ++i)
+                                for(auto i = 0; i < last_blocks; ++i)
                                 {
                                     source_file.read(buffer, 256);
                                     destination_file.write(buffer, 256);
@@ -5898,7 +5898,7 @@ void loop()
                 Display.Loop_time_stretched();
 
                 // update tracks infos on display
-                for (int i = 0; i < TRACKS; ++i)
+                for(auto i = 0; i < TRACKS; ++i)
                 {
                     Display.Loop_track_data(i);
                 }
@@ -5923,13 +5923,13 @@ void loop()
                 LOOP_restart_clock();
 
                 // set first event for each track
-                for (int track = 0; track < TRACKS; ++track)
+                for(auto track = 0; track < TRACKS; ++track)
                 {
                     LOOP_play_event[track] = 0;
                 }
 
                 // effettua l'ordinamento temporale degli eventi
-                for (int track = 0; track < TRACKS; ++track)
+                for(auto track = 0; track < TRACKS; ++track)
                 {
                     LOOP_set_time_order(track);
                 }
@@ -5938,7 +5938,7 @@ void loop()
                 LOOP_run_button_state = false;
 
                 // memorizza lo stato dei track prima di fermarli
-                for (int track = 0; track < TRACKS; ++track)
+                for(auto track = 0; track < TRACKS; ++track)
                 {
                     LOOP_run_memo[track] = LOOP_events[track] > 0;
                     LOOP_track_run[track] = false;
@@ -5950,7 +5950,7 @@ void loop()
         }
 
         // Learning
-        for (int track = 0; track < TRACKS; ++track)
+        for(auto track = 0; track < TRACKS; ++track)
         {
             // ricezione richiesta
             if (LOOP_run_button_state && Read_pushbutton(LOOP_UI_B + track))
@@ -5967,7 +5967,7 @@ void loop()
                         // Interrompi i Player che eseguono note di qualsiasi track
                         Players_Manager.Release_all_players_loop();
 
-                        for (int i = 0; i < TRACKS; ++i)
+                        for(auto i = 0; i < TRACKS; ++i)
                         {
                             // Interrompe la lettura
                             LOOP_track_run[i] = false;
@@ -6035,7 +6035,7 @@ void loop()
                 if (LOOP_learning_track == 0 || (LOOP_learning_track > 0 && LOOP_events[0] != 0))
                 {
                     // show (or delete) all tracks infos
-                    for (int L = 0; L < TRACKS; ++L)
+                    for(auto L = 0; L < TRACKS; ++L)
                     {
                         Display.Loop_track_data(L);
                     }
@@ -6193,7 +6193,7 @@ void loop()
                         Serial.println(" **************** ");
                         Serial.print("eventi:");
                         Serial.println(LOOP_events[LOOP_learning_track]);
-                        for (int i = 0; i < LOOP_events[LOOP_learning_track]; ++i)
+                        for(auto i = 0; i < LOOP_events[LOOP_learning_track]; ++i)
                         {
                             Serial.print(i);
                             Serial.print(" time:");
@@ -6208,7 +6208,7 @@ void loop()
                             Serial.println(LOOP_element[LOOP_learning_track][i].note_on ? "NoteOn" : "NoteOff");
                         }
                         Serial.print("Ordine temporale degli eventi: ");
-                        for (int i = 0; i < LOOP_events[LOOP_learning_track]; ++i)
+                        for(auto i = 0; i < LOOP_events[LOOP_learning_track]; ++i)
                         {
                             Serial.print(LOOP_time_order[LOOP_learning_track][i]);
                             Serial.print(" - ");
@@ -6316,7 +6316,7 @@ void loop()
                     Serial.println(jump);
 
                     AudioNoInterrupts();
-                    for (int i = 0; i < LOOP_events[track]; ++i)
+                    for(auto i = 0; i < LOOP_events[track]; ++i)
                     {
                         LOOP_element[track][i].time = (LOOP_element[track][i].time + jump) % LOOP_time;
                     }
@@ -6345,7 +6345,7 @@ void loop()
                         int jump = LOOP_time - LOOP_slide[track];
 
                         AudioNoInterrupts();
-                        for (int i = 0; i < LOOP_events[track]; ++i)
+                        for(auto i = 0; i < LOOP_events[track]; ++i)
                         {
                             LOOP_element[track][i].time = (LOOP_element[track][i].time + jump) % LOOP_time;
                         }
@@ -6554,7 +6554,7 @@ void loop()
 
                     AudioNoInterrupts();
 
-                    for (int track = 0; track < TRACKS; ++track)
+                    for(auto track = 0; track < TRACKS; ++track)
                     // memorizza lo stato dei track prima di fermarli
                     {
                         LOOP_run_memo[track] = LOOP_track_run[track];
@@ -6593,7 +6593,7 @@ void loop()
                     // il led 0 e' gia' acceso, riavvia il metronomo
                     LOOP_metronomo.metro_time = 0 + LOOP_metronomo.Read_metro_delta_ms();
                     LOOP_metronomo_run = true;
-                    for (int track = 0; track < TRACKS; ++track)
+                    for(auto track = 0; track < TRACKS; ++track)
                     {
                         if (LOOP_run_memo[track])
                         {
@@ -7186,7 +7186,7 @@ void Compile_tables(void)
 void Calc_pitch_from_note(void)
 {
     float keys = (key_step + 1) * 12;
-    for (int note = 0; note < 128; ++note)
+    for(auto note = 0; note < 128; ++note)
     {
         pitch_from_note[note] = pow(2.0f, (note - 60.0f) / keys); // array used to translate note number to pitch value
     }
@@ -7234,7 +7234,7 @@ void Delete_one_map_Instrument_for_notes(uint8_t instrument)
 void Update_all_maps_Instrument_for_notes()
 {
     Reset_all_maps_Instrument_for_notes();
-    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
     {
         if (Session[session].Instrument[instrument].used)
         {
@@ -7737,12 +7737,12 @@ void Update_instruments_leds()
 {
     if (Lilla_state == MIDI_LOOP)
     {
-        for (int track = 0; track < TRACKS; ++track)
+        for(auto track = 0; track < TRACKS; ++track)
         {
             // Richiesta di aggiornare i LED del track
             if (LOOP_led_flag[track])
             {
-                for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument) // check raw/instrument i
+                for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument) // check raw/instrument i
                 {
                     if (Session[session].Instrument[instrument].used) // check if i is used
                     {
@@ -8061,7 +8061,7 @@ void DS_convert_file_L(int file_L_RAW, int bytes) // bytes = blocks_per_file * 2
             for (packet = Recording[recording].first_packet; packet < (Recording[recording].first_packet + Recording[recording].packets - 1); ++packet)
             {
                 SerialFlashFile source_file = SerialFlash.open(name_packet[packet]);
-                for (int i = 0; i < 256; ++i)
+                for(auto i = 0; i < 256; ++i)
                 {
                     source_file.read(buffer, 256);
                     destination_file.write(buffer, 256);
@@ -8072,7 +8072,7 @@ void DS_convert_file_L(int file_L_RAW, int bytes) // bytes = blocks_per_file * 2
         packet = Recording[recording].first_packet + Recording[recording].packets - 1;
         SerialFlashFile source_file = SerialFlash.open(name_packet[packet]);
         last_blocks = (Recording[recording].bytes % PACKET_DIM) % 256;
-        for (int i = 0; i < last_blocks; ++i)
+        for(auto i = 0; i < last_blocks; ++i)
         {
             source_file.read(buffer, 256);
             destination_file.write(buffer, 256);
@@ -8089,7 +8089,7 @@ void DS_convert_file_L(int file_L_RAW, int bytes) // bytes = blocks_per_file * 2
             for (packet = Recording[recording].first_packet; packet < (Recording[recording].first_packet + 2 * (Recording[recording].packets - 1)); packet += 2)
             {
                 SerialFlashFile source_file = SerialFlash.open(name_packet[packet]);
-                for (int i = 0; i < 256; ++i)
+                for(auto i = 0; i < 256; ++i)
                 {
                     source_file.read(buffer, 256);
                     destination_file.write(buffer, 256);
@@ -8100,7 +8100,7 @@ void DS_convert_file_L(int file_L_RAW, int bytes) // bytes = blocks_per_file * 2
         packet = Recording[recording].first_packet + 2 * (Recording[recording].packets - 1);
         SerialFlashFile source_file = SerialFlash.open(name_packet[packet]);
         last_blocks = (Recording[recording].bytes % PACKET_DIM) % 256;
-        for (int i = 0; i < last_blocks; ++i)
+        for(auto i = 0; i < last_blocks; ++i)
         {
             source_file.read(buffer, 256);
             destination_file.write(buffer, 256);
@@ -8132,7 +8132,7 @@ void DS_convert_file_R(int file_R_RAW, int bytes) // bytes = blocks_per_file * 2
         for (packet = Recording[recording].first_packet + 1; packet < (Recording[recording].first_packet + 1 + 2 * (Recording[recording].packets - 1)); packet += 2)
         {
             SerialFlashFile source_file = SerialFlash.open(name_packet[packet]);
-            for (int i = 0; i < 256; ++i)
+            for(auto i = 0; i < 256; ++i)
             {
                 source_file.read(buffer, 256);
                 destination_file.write(buffer, 256);
@@ -8143,7 +8143,7 @@ void DS_convert_file_R(int file_R_RAW, int bytes) // bytes = blocks_per_file * 2
     packet = Recording[recording].first_packet + 1 + 2 * (Recording[recording].packets - 1);
     SerialFlashFile source_file = SerialFlash.open(name_packet[packet]);
     last_blocks = (Recording[recording].bytes % PACKET_DIM) % 256;
-    for (int i = 0; i < last_blocks; ++i)
+    for(auto i = 0; i < last_blocks; ++i)
     {
         source_file.read(buffer, 256);
         destination_file.write(buffer, 256);
@@ -8181,7 +8181,7 @@ void Print_Directory(File dir, int numSpaces)
 void DS_seed_all_Recordings(void)
 {
     Serial.println(F("*** DS_seed_all_Recordings() ***"));
-    for (int i = 0; i < RECORDINGS; ++i)
+    for(auto i = 0; i < RECORDINGS; ++i)
     {
         Recording[i].first_packet = 0;
         Recording[i].packets = 0;
@@ -8200,7 +8200,7 @@ void DS_seed_all_Recordings(void)
 void DS_update_recordings(void)
 {
     recordings = 0;
-    for (int i = 0; i < RECORDINGS; ++i)
+    for(auto i = 0; i < RECORDINGS; ++i)
         if (Recording[i].packets > 0 && Recording[i].consistent == true)
         {
             recordings++;
@@ -8212,7 +8212,7 @@ void DS_update_recordings(void)
 
 void DS_read_all_Recordings(void)
 {
-    for (int i = 0; i < RECORDINGS; ++i)
+    for(auto i = 0; i < RECORDINGS; ++i)
     {
         DS_read_Recording(i);
     }
@@ -8248,7 +8248,7 @@ float DS_get_Recording_seconds(int value)
 
 int DS_find_Recording_free(void)
 {
-    for (int i = 0; i < RECORDINGS; ++i)
+    for(auto i = 0; i < RECORDINGS; ++i)
         if (Recording[i].packets == 0)
         {
             return i;
@@ -8262,7 +8262,7 @@ int DS_get_next_Recording(int value)
     {
         return value;
     }
-    for (int i = (value + 1); i < RECORDINGS; ++i)
+    for(auto i = (value + 1); i < RECORDINGS; ++i)
     {
         if (Recording[i].consistent && Recording[i].packets > 0)
         {
@@ -8274,7 +8274,7 @@ int DS_get_next_Recording(int value)
 
 int DS_get_last_Recording(void)
 {
-    for (int i = RECORDINGS - 1; i >= 0; --i)
+    for(auto i = RECORDINGS - 1; i >= 0; --i)
     {
         if (Recording[i].consistent && Recording[i].packets > 0)
         {
@@ -8289,7 +8289,7 @@ int DS_get_previous_Recording(int value)
     if (value < 0)
         return -1;
 
-    for (int i = (value - 1); i >= 0; --i)
+    for(auto i = (value - 1); i >= 0; --i)
     {
         if (Recording[i].consistent && Recording[i].packets > 0)
         {
@@ -8303,7 +8303,7 @@ bool DS_check_conversion(void)
 {
     if ((Get_flash_size() - Get_flash_occupation()) >= Recording[recording].bytes)
     {
-        for (int i = 0; i < FIRST_RECORDING_FILE; ++i)
+        for(auto i = 0; i < FIRST_RECORDING_FILE; ++i)
         {
             if (!SerialFlash.exists(name_file[i]))
             {
@@ -8420,7 +8420,7 @@ void DS_define_model(void) // {"Exit"}, {"Delete"}, {"Pause+Rec"}, {"Mono Rec"},
     }
 
     DS_menu_max = -1;
-    for (int i = 0; i < DS_MV; ++i)
+    for(auto i = 0; i < DS_MV; ++i)
     {
         DS_menu_max += Menu_DS[i];
     }
@@ -9062,7 +9062,7 @@ void LOOP_reset_all_data(void)
 {
     LOOP_time = 0;
     LOOP_stretch_int = 100;
-    for (int track = 0; track < TRACKS; ++track)
+    for(auto track = 0; track < TRACKS; ++track)
     {
         LOOP_events[track] = 0;        // numero di eventi nel track
         LOOP_track_run[track] = false; // true --> il track va suonato
@@ -9077,7 +9077,7 @@ void LOOP_reset_all_data(void)
 void LOOP_stop_all_midi_tracks(void) // to be called inside AudioNoInterrupt()
 {
     // Ferma i track running
-    for (int i = 0; i < TRACKS; ++i)
+    for(auto i = 0; i < TRACKS; ++i)
     {
         LOOP_track_run[i] = false; // true --> il track va suonato
     }
@@ -9222,7 +9222,7 @@ void LOOP_set_time_order(int track)
         int min_time_index = 0; // indice cercato
         int min_time = LOOP_element[track][0].time;
 
-        for (int i = 1; i < LOOP_events[track]; ++i)
+        for(auto i = 1; i < LOOP_events[track]; ++i)
         {
             if (LOOP_element[track][i].time < min_time)
             {
@@ -9237,7 +9237,7 @@ void LOOP_set_time_order(int track)
         LOOP_time_order[track][0] = evento successivo
         */
 
-        for (int i = 0; i < LOOP_events[track]; ++i)
+        for(auto i = 0; i < LOOP_events[track]; ++i)
         {
             LOOP_time_order[track][i] = (min_time_index + i) % LOOP_events[track];
         }
@@ -9260,7 +9260,7 @@ void LOOP_restart_procedure(int track)
     else
     {
         LOOP_clock_memo = LOOP_normalized_time();
-        for (int i = 0; i < LOOP_events[track]; ++i)
+        for(auto i = 0; i < LOOP_events[track]; ++i)
         {
             if (LOOP_element[track][LOOP_time_order[track][i]].time >= LOOP_clock_memo)
             {
@@ -9283,7 +9283,7 @@ void LOOP_restart_procedure(int track)
 
 void LOOP_RESET_all_channels_led_flag(void)
 {
-    for (int i = 0; i < TRACKS; ++i)
+    for(auto i = 0; i < TRACKS; ++i)
     {
         LOOP_led_flag[i] = false;
     }
@@ -9306,21 +9306,21 @@ bool Print_midi_loop_complete_data(int loop_id)
 
     // byte LOOP_events[6]
     Serial.println("byte LOOP_events[6]");
-    for (int i = 0; i < 6; ++i)
+    for(auto i = 0; i < 6; ++i)
     {
         Serial.println(LOOP_events[i]);
     }
 
     // int LOOP_slide[6]
     Serial.println("int LOOP_slide[6]");
-    for (int i = 0; i < 6; ++i)
+    for(auto i = 0; i < 6; ++i)
     {
         Serial.println(LOOP_slide[i]);
     }
 
     // int LOOP_pitch_int[6]
     Serial.println("int LOOP_pitch_int[6]");
-    for (int i = 0; i < 6; ++i)
+    for(auto i = 0; i < 6; ++i)
     {
         Serial.println(LOOP_pitch_int[i]);
     }
@@ -9332,7 +9332,7 @@ bool Print_midi_loop_complete_data(int loop_id)
     // LOOP_element[TRACKS][LOOP_EVENTS]
     for (byte track = 0; track < TRACKS; ++track)
     {
-        for (int event = 0; event < LOOP_events[track]; ++event)
+        for(auto event = 0; event < LOOP_events[track]; ++event)
         {
             Serial.print("*** LOOP_element[");
             Serial.print(track);
@@ -9406,7 +9406,7 @@ void Compile_midi_loop_file(int loop_id, File &file) // private
 
     // uint16_t LOOP_time
     data = (const byte *)(const void *)&LOOP_time;
-    for (int i = 0; i < 2; ++i)
+    for(auto i = 0; i < 2; ++i)
     {
         file.println(*(data + i));
         Serial.println(*(data + i));
@@ -9414,28 +9414,28 @@ void Compile_midi_loop_file(int loop_id, File &file) // private
 
     // byte LOOP_events[6]
     data = &LOOP_events[0];
-    for (int i = 0; i < 6; ++i)
+    for(auto i = 0; i < 6; ++i)
     {
         file.println(*(data + i));
     }
 
     // int LOOP_slide[6]
     data = (const byte *)(const void *)&LOOP_slide[0];
-    for (int i = 0; i < 24; ++i)
+    for(auto i = 0; i < 24; ++i)
     {
         file.println(*(data + i));
     }
 
     // int LOOP_pitch_int[6]
     data = (const byte *)(const void *)&LOOP_pitch_int[0];
-    for (int i = 0; i < 24; ++i)
+    for(auto i = 0; i < 24; ++i)
     {
         file.println(*(data + i));
     }
 
     // int LOOP_stretch
     data = (const byte *)(const void *)&LOOP_stretch_int;
-    for (int i = 0; i < 4; ++i)
+    for(auto i = 0; i < 4; ++i)
     {
         file.println(*(data + i));
         Serial.println(*(data + i));
@@ -9444,11 +9444,11 @@ void Compile_midi_loop_file(int loop_id, File &file) // private
     // LOOP_struct LOOP_element[TRACKS][LOOP_EVENTS]
     for (byte track = 0; track < TRACKS; ++track)
     {
-        for (int event = 0; event < LOOP_events[track]; ++event)
+        for(auto event = 0; event < LOOP_events[track]; ++event)
         {
             // LOOP_struct LOOP_element[track][LOOP_EVENTS] -> 8 byte
             data = (const byte *)(const void *)&LOOP_element[track][event];
-            for (int i = 0; i < 8; ++i)
+            for(auto i = 0; i < 8; ++i)
             {
                 file.println(*(data + i));
             }
@@ -9514,7 +9514,7 @@ void Copy_midi_loop_from_SD_to_RAM_local(File &file)
     // int LOOP_slide[6]
     for (uint8_t i = 0; i < 6; ++i)
     {
-        for (int b = 0; b < 4; ++b)
+        for(auto b = 0; b < 4; ++b)
         {
             string_byte = file.readStringUntil('\n');
             value_b[b] = string_byte.toInt();
@@ -9524,7 +9524,7 @@ void Copy_midi_loop_from_SD_to_RAM_local(File &file)
     }
 
     // int LOOP_pitch_int[6]
-    for (int i = 0; i < 6; ++i)
+    for(auto i = 0; i < 6; ++i)
     {
         for (uint8_t b = 0; b < 4; ++b)
         {
@@ -9548,10 +9548,10 @@ void Copy_midi_loop_from_SD_to_RAM_local(File &file)
     // LOOP_struct LOOP_element[TRACKS][LOOP_EVENTS] -> 8 bytes
     for (uint8_t track = 0; track < TRACKS; ++track)
     {
-        for (int event = 0; event < LOOP_events[track]; ++event)
+        for(auto event = 0; event < LOOP_events[track]; ++event)
         {
             // int time
-            for (int b = 0; b < 4; ++b)
+            for(auto b = 0; b < 4; ++b)
             {
                 string_byte = file.readStringUntil('\n');
                 value_b[b] = string_byte.toInt();
@@ -9649,7 +9649,7 @@ int Get_first_loop_id_free(void)
         Serial.println(F("Get_first_loop_id_free(void) - no .loop file in SD."));
         return -2;
     }
-    for (int loop_id = 0; loop_id < MIDI_LOOP_FILES; ++loop_id)
+    for(auto loop_id = 0; loop_id < MIDI_LOOP_FILES; ++loop_id)
     {
         String filename = Filename_midi_loop(loop_id);
         String full_path = String("/LILLALOOP/" + filename);
@@ -9677,7 +9677,7 @@ int Get_next_loop_id_in_SD(int loop_id)
         Serial.println(F("Get_next_loop_id_in_SD(int loop_id) - no .loop file in SD."));
         return -2;
     }
-    for (int next_loop = loop_id + 1; next_loop < MIDI_LOOP_FILES; ++next_loop)
+    for(auto next_loop = loop_id + 1; next_loop < MIDI_LOOP_FILES; ++next_loop)
     {
         String filename = Filename_midi_loop(next_loop);
         String full_path = String("/LILLALOOP/" + filename);
@@ -9708,7 +9708,7 @@ int Get_previous_loop_id_in_SD(int loop_id)
         Serial.println(F("Get_previous_loop_id_in_SD(int loop_id) - no .loop file in SD."));
         return -2;
     }
-    for (int previous_loop = loop_id - 1; previous_loop >= 0; --previous_loop)
+    for(auto previous_loop = loop_id - 1; previous_loop >= 0; --previous_loop)
     {
         String filename = Filename_midi_loop(previous_loop);
         String full_path = String("/LILLALOOP/" + filename);
@@ -9770,7 +9770,7 @@ void Make_VFS(void)
             }
         }
         // create VFS
-        for (int i = 0; i < VFS_packets; ++i)
+        for(auto i = 0; i < VFS_packets; ++i)
         {
             SerialFlash.createErasable(name_packet[i], PACKET_DIM);
         }
@@ -9791,7 +9791,7 @@ void Make_VFS(void)
 int Get_VFS_packets(void)
 {
     int value = 0;
-    for (int i = 0; i < VFS_PACKETS_MAX; ++i)
+    for(auto i = 0; i < VFS_PACKETS_MAX; ++i)
     {
         if (SerialFlash.exists(name_packet[i]))
         {
@@ -9827,12 +9827,12 @@ void Compile_VFS_FAT_table(void)
     // reset array
     Reset_VFS_FAT_table();
 
-    for (int i = 0; i < RECORDINGS; ++i)
+    for(auto i = 0; i < RECORDINGS; ++i)
     {
         int last_packet = Recording[i].first_packet + Recording[i].packets * (Recording[i].stereo ? 2 : 1) - 1;
         if (Recording[i].consistent && Recording[i].packets > 0)
         {
-            for (int j = Recording[i].first_packet; j <= last_packet; ++j)
+            for(auto j = Recording[i].first_packet; j <= last_packet; ++j)
             {
                 VFS_FAT_table[j] = i;
                 Serial.print(F("Compile_VFS_FAT_table() --> Packet: "));
@@ -9847,7 +9847,7 @@ void Compile_VFS_FAT_table(void)
 void Reset_VFS_FAT_table(void)
 {
     Serial.println(F("*** Reset_VFS_FAT_table() *** "));
-    for (int i = First_DS_packet; i < VFS_packets_DS; ++i)
+    for(auto i = First_DS_packet; i < VFS_packets_DS; ++i)
     {
         VFS_FAT_table[i] = -1;
     }
@@ -9855,7 +9855,7 @@ void Reset_VFS_FAT_table(void)
 
 int Get_first_packet_free(void)
 {
-    for (int i = First_DS_packet; i < VFS_packets_DS; ++i)
+    for(auto i = First_DS_packet; i < VFS_packets_DS; ++i)
     {
         if (VFS_FAT_table[i] == -1)
         {
@@ -9870,7 +9870,7 @@ int Get_first_packet_free(void)
 int Get_packets_free(void)
 {
     int value = 0;
-    for (int i = First_DS_packet; i < VFS_packets_DS; ++i)
+    for(auto i = First_DS_packet; i < VFS_packets_DS; ++i)
     {
         if (VFS_FAT_table[i] == -1)
         {
@@ -9883,7 +9883,7 @@ int Get_packets_free(void)
 void Erase_all_Packet(void)
 {
     Serial.println("*** Erase ALL Packets and VFS_FAT ***");
-    for (int i = 0; i < VFS_PACKETS_MAX; ++i) // for (int i = 0; i < VFS_packets; ++i)
+    for(auto i = 0; i < VFS_PACKETS_MAX; ++i) // for(auto i = 0; i < VFS_packets; ++i)
     {
         if (SerialFlash.exists(name_packet[i]))
         {
@@ -9897,7 +9897,7 @@ void Erase_all_Packet(void)
 void Erase_all_Packet_for_DS(void)
 {
     Serial.println("*** Erase ALL Packets for Direct Sampling and VFS_FAT ***");
-    for (int i = First_DS_packet; i <= Last_DS_packet; ++i)
+    for(auto i = First_DS_packet; i <= Last_DS_packet; ++i)
     {
         Erase_Packet(i);
     }
@@ -9925,7 +9925,7 @@ void Clean_up_VFS(void) // Deletes packets occupied by not-consistent recording,
     Serial.println("*** Clean_up_VFS ***");
 
     // erase Packets occupied by inconsistent Recordings
-    for (int i = 0; i < RECORDINGS; ++i)
+    for(auto i = 0; i < RECORDINGS; ++i)
     {
         if (!Recording[i].consistent)
         {
@@ -9934,7 +9934,7 @@ void Clean_up_VFS(void) // Deletes packets occupied by not-consistent recording,
             Serial.println(F(". Now associated Packets will be erased:"));
             // find all Packets registered "i" and erase
             int last_packet = Recording[i].first_packet + Recording[i].packets * (Recording[i].stereo ? 2 : 1);
-            for (int j = Recording[i].first_packet; j < last_packet; ++j)
+            for(auto j = Recording[i].first_packet; j < last_packet; ++j)
             {
                 Erase_Packet(j);
             }
@@ -9966,11 +9966,11 @@ void Defragment_VFS(void) // updates VFS_FAT_table, moves packets, updates recor
     // Packet     1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
     // Recording  a a a a _ _ _ _ _ _  cL cR cL cR cL cR cL cR _  _  _  d  d  d  d  d  _  _
 
-    for (int i = First_DS_packet; i < VFS_packets_DS; ++i)
+    for(auto i = First_DS_packet; i < VFS_packets_DS; ++i)
     {
         if (VFS_FAT_table[i] == -1) // i == 5
         {
-            for (int j = i; j < VFS_packets_DS; ++j) // j = 5 -->
+            for(auto j = i; j < VFS_packets_DS; ++j) // j = 5 -->
             {
                 if (VFS_FAT_table[j] >= 0) // j == 11
                 {
@@ -10022,7 +10022,7 @@ void Shift_file_VFS(int to_packet, int from_packet, int packets)
     SerialFlashFile Packet_from;
     SerialFlashFile Packet_to;
 
-    for (int i = 0; i < packets; ++i)
+    for(auto i = 0; i < packets; ++i)
     {
         Serial.print("moving packet: ");
         Serial.println(from_packet + i);
@@ -10031,7 +10031,7 @@ void Shift_file_VFS(int to_packet, int from_packet, int packets)
         Packet_to.erase();
         // Packet_from.seek(0); // unnecessary
         // Packet_to.seek(0);  // unnecessary
-        for (int block = 0; block < 256; ++block)
+        for(auto block = 0; block < 256; ++block)
         {
             // Packet_from.seek(block * 256); // included in .read function
             Packet_from.read(basket, 256);
@@ -10047,7 +10047,7 @@ void Shift_file_VFS(int to_packet, int from_packet, int packets)
 void Print_VFS_FAT_table(void)
 {
     Serial.println();
-    for (int i = First_DS_packet; i < VFS_packets_DS; ++i)
+    for(auto i = First_DS_packet; i < VFS_packets_DS; ++i)
     {
         Serial.print("VFS_FAT_table[");
         Serial.print(i);
@@ -10131,7 +10131,7 @@ int Get_first_raw_file_available(int start_value)
 {
     if (start_value >= 0)
     {
-        for (int i = start_value; i < FIRST_RECORDING_FILE; ++i)
+        for(auto i = start_value; i < FIRST_RECORDING_FILE; ++i)
         {
             if (!SerialFlash.exists(name_file[i]))
             {
@@ -10247,7 +10247,7 @@ FLASHMEM
 int Get_raw_files(void)
 {
     int value = 0;
-    for (int i = 0; i < FIRST_RECORDING_FILE; ++i)
+    for(auto i = 0; i < FIRST_RECORDING_FILE; ++i)
     {
         if (SerialFlash.exists(name_file[i]))
         {
@@ -10261,7 +10261,7 @@ FLASHMEM
 int Get_raw_files_volume(void)
 {
     unsigned long value = 0;
-    for (int i = 0; i < FIRST_RECORDING_FILE; ++i)
+    for(auto i = 0; i < FIRST_RECORDING_FILE; ++i)
     {
         if (SerialFlash.exists(name_file[i]))
         {
@@ -10447,7 +10447,7 @@ uint16_t Calc_Noclick_max(bool use_Wavetable)
 
 void Get_all_Noclick_pointer(void) // initialization of *Noclick_pointer[] array
 {
-    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
     {
         Noclick_pointer[instrument] = Noclick[instrument].get_pointer();
     }
@@ -10455,7 +10455,7 @@ void Get_all_Noclick_pointer(void) // initialization of *Noclick_pointer[] array
 
 void Fill_all_Noclick(void)
 {
-    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
     {
         if (Session[session].Instrument[instrument].used) // Fill_Noclick(instrument)
         {
@@ -11376,14 +11376,14 @@ void LS_erase_FIFO_array(int16_t *Array, int stereo)
 
     if (stereo)
     {
-        for (int i = 0; i < LS_STEREO_SAMPLES; ++i)
+        for(auto i = 0; i < LS_STEREO_SAMPLES; ++i)
         {
             *(Array + i) = 0;
         }
     }
     else
     {
-        for (int i = 0; i < LS_MONO_SAMPLES; ++i)
+        for(auto i = 0; i < LS_MONO_SAMPLES; ++i)
         {
             *(Array + i) = 0;
         }
@@ -11581,7 +11581,7 @@ void Golive_MIXER(int instrument)
     MX_source = instrument;
 
     Display.MX_page();
-    for (int source = 0; source < 9; ++source)
+    for(auto source = 0; source < 9; ++source)
     {
         Display.MX_source_values(source);
     }
@@ -11676,7 +11676,7 @@ void Read_all_Sounds(void)
 
 void Save_all_Sounds_changed(void)
 {
-    for (int id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for(auto id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
     {
         // Sound which have been changed only for .used
         if (Sound[id_sound].used != Sound_cache_P[id_sound].used)

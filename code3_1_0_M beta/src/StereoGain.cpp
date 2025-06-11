@@ -20,7 +20,7 @@ void StereoGain::update(void)
         return;
     }
 
-    for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+    for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
     {
         if (gain_flag_L || gain_flag_R)
         {

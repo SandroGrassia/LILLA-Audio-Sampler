@@ -4,7 +4,7 @@
 
 void SamplesBasket::Delete(void)
 {
-   for (int i = 0; i < dim; ++i)
+   for (auto i = 0; i < dim; ++i)
    {
       *(data + i) = 0;
    }

@@ -271,7 +271,7 @@ void MidiReader::Update(void)
                 midi_value = MIDI.getData1();
                 after_touch_channel_value[midi_channel] = midi_value / 127.0f;
 
-                for (int I = 0; I < INSTRUMENTS_MAX; ++I)
+                for(auto I = 0; I < INSTRUMENTS_MAX; ++I)
                     if ((Preset[I].midi_channel == midi_channel) && (Preset[I].Filter.use == 1) && (Preset[I].Filter.modulation == 4))
                     {
                         Players_Manager_ptr->Multicast_IF_index(I, Preset[I].Filter.index * after_touch_channel_value[midi_channel]);
@@ -339,7 +339,7 @@ void MidiReader::Update(void)
 
                 else
                 {
-                    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
                     {
                         if ((controller == CC_Sound_gain[instrument]) && (controller > 0))
                         {
@@ -430,7 +430,7 @@ void MidiReader::Update(void)
         }
 
         // check notes to play/stop
-        for (int track = 0; track < TRACKS; ++track)
+        for(auto track = 0; track < TRACKS; ++track)
         {
             if (LOOP_track_run[track] && (LOOP_Clock_frozen >= LOOP_play_time[track]))
             {
@@ -496,7 +496,7 @@ void MidiReader::Update(void)
                         TT_led_flag = true;
                     }
 
-                    // for (int i = 0; i < 127; ++i)
+                    // for(auto i = 0; i < 127; ++i)
                     // {
                     //  Serial.print(key_state[0][i]);
                     //  Serial.print("-");

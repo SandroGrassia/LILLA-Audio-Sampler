@@ -9,7 +9,7 @@
 void LoopMetronomo::Setup(const int LOOP_time)
 {
     // calcola i valori LOOP_metro_delta_ms
-    for (int i = 0; i < (LOOP_metro_leds - 1); ++i)
+    for(auto i = 0; i < (LOOP_metro_leds - 1); ++i)
     {
         metro_delta_ms[i] = LOOP_time / LOOP_metro_leds;
     }
@@ -18,7 +18,7 @@ void LoopMetronomo::Setup(const int LOOP_time)
 
 void LoopMetronomo::Leds_off(void)
 {
-    for (int i = 0; i < LOOP_metro_leds; ++i)
+    for(auto i = 0; i < LOOP_metro_leds; ++i)
     {
         Display.Loop_led_metronomo(Metro_LED_X + i * 12, Metro_LED_Y, false);
     }

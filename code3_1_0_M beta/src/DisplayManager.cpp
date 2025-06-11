@@ -21,12 +21,12 @@ void DisplayManager::Lilla_cover_slow(void)
     tft.fillScreen(ILI9341_BLACK);
 
     // fade-in
-    for (int i = 0; i <= 10; ++i)
+    for (auto i = 0; i <= 10; ++i)
     {
         Logo(i / 10.0f);
         delay(50);
     }
-    for (int i = 0; i <= 20; ++i)
+    for (auto i = 0; i <= 20; ++i)
     {
         Cover_text(i / 20.0f);
         delay(50);
@@ -34,12 +34,12 @@ void DisplayManager::Lilla_cover_slow(void)
 
     // fade-out
     delay(4000);
-    for (int i = 50; i >= 0; --i)
+    for (auto i = 50; i >= 0; --i)
     {
         Cover_text(i / 50.0f);
         delay(30);
     }
-    for (int i = 20; i >= 0; --i)
+    for (auto i = 20; i >= 0; --i)
     {
         Logo(i / 20.0f);
         delay(30);
@@ -665,7 +665,7 @@ void DisplayManager::LOOP_page(void)
     tft.print("SOUND");
 
     tft.setTextColor(ILI9341_WHITE);
-    for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+    for (auto i = 0; i < INSTRUMENTS_MAX; ++i)
     {
         if (Session[session].Instrument[i].used)
         {
@@ -674,7 +674,7 @@ void DisplayManager::LOOP_page(void)
         }
     }
 
-    for (int i = 0; i < TRACKS; ++i)
+    for (auto i = 0; i < TRACKS; ++i)
     {
         Loop_track_data(i);
     }
@@ -1247,7 +1247,7 @@ void DisplayManager::DS_bar(uint8_t channel, int value) // 0 <= value <= BAR_ELE
 
     if (value > value_old[channel])
     {
-        for (int i = value_old[channel] + 1; i <= value; ++i)
+        for (auto i = value_old[channel] + 1; i <= value; ++i)
         {
             value_float = i / BAR_ELEMENTS_float;
             // builds bricks
@@ -1256,7 +1256,7 @@ void DisplayManager::DS_bar(uint8_t channel, int value) // 0 <= value <= BAR_ELE
     }
     else if (value < value_old[channel])
     {
-        for (int i = value + 1; i <= value_old[channel]; ++i)
+        for (auto i = value + 1; i <= value_old[channel]; ++i)
         {
             // remove bricks
             tft.drawFastHLine(X0, DS_VUMETER_BAR_Y - i, DS_VUMETER_BAR_DISTANCE, ILI9341_BLACK);
@@ -2649,7 +2649,7 @@ void DisplayManager::CC_page(void)
 FLASHMEM
 void DisplayManager::All_CC_Sound_gain(void)
 {
-    for (int n = 0; n < 8; ++n)
+    for (auto n = 0; n < 8; ++n)
     {
         Show_CC_Sound_gain(n);
     }
@@ -3555,7 +3555,7 @@ void DisplayManager::Show_LS_ring_tape_wave(int id_sound)
 
     LS_K_wave_color = (LS_window_B_sample - LS_window_A_sample) / value_float;
 
-    for (int i = 0; i < WAVE_WIDTH; ++i)
+    for (auto i = 0; i < WAVE_WIDTH; ++i)
     {
         yp = CANVAS_WAVE_0 - (*(X + i) >> 10);
         yn = CANVAS_WAVE_0 - (*(X + i + WAVE_WIDTH) >> 10);
@@ -3742,7 +3742,7 @@ void DisplayManager::Show_wave(uint8_t instrument)
     canvas.fillRect(0, 0, NC_A, WAVE_HEIGHT, WAVE_BOARD_NOCLICK);
     canvas.fillRect(NC_B, 0, NC_A, WAVE_HEIGHT, WAVE_BOARD_NOCLICK);
 
-    for (int i = 0; i < WAVE_WIDTH; ++i)
+    for (auto i = 0; i < WAVE_WIDTH; ++i)
     {
         // 16bits>>11 = 5bits from -16 to +15
         yp = CANVAS_WAVE_0 - (*(X + i) >> 10) * volume_float; // MAXIMUM delta 32*4 = 128  (−32768 <= int16_t <= +32767)

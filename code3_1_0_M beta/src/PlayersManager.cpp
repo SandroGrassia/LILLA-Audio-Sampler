@@ -413,7 +413,7 @@ void PlayersManager::Reset_booked_and_restart_player(void)
     // Player_booked serve ad evitare che gli Instrument che sono attivati da NoteOn non competano sullo stesso Player
     // players_to_restart, se risultera' >0, richiede il calcolo dei vari valori di samples (mix_samples_for_Player[p])
     // che ciascun Player da riavviare (restart_Player[p] == true) dovra' utilizzare
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         Player_booked[p] = false;
         restart_Player[p] = false;
@@ -510,7 +510,7 @@ void PlayersManager::Change_from_key(int session, int instrument, int from_key_n
 {
     if (from_key_new > Session[session].Instrument[instrument].from_note)
     {
-        for (int p = 0; p < PLAYERS; ++p)
+        for(auto p = 0; p < PLAYERS; ++p)
         {
             if (Player_ptr[p].Read_note() < from_key_new && Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_instrument() == instrument)
             {
@@ -526,7 +526,7 @@ void PlayersManager::Change_to_key(int session, int instrument, int to_key_new)
 {
     if (to_key_new < Session[session].Instrument[instrument].to_note)
     {
-        for (int p = 0; p < PLAYERS; ++p)
+        for(auto p = 0; p < PLAYERS; ++p)
         {
             if (Player_ptr[p].Read_note() > to_key_new && Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_instrument() == instrument)
             {
@@ -540,7 +540,7 @@ void PlayersManager::Change_to_key(int session, int instrument, int to_key_new)
 
 void PlayersManager::Multicast_change_players_notes(int session, int instrument) // usato quando si cambia la root_key
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_instrument() == instrument)
         {
@@ -551,7 +551,7 @@ void PlayersManager::Multicast_change_players_notes(int session, int instrument)
 
 void PlayersManager::Multicast_release_players(int id_sound)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (Player_ptr[p].Read_id_sound() == id_sound)
         {
@@ -562,7 +562,7 @@ void PlayersManager::Multicast_release_players(int id_sound)
 
 void PlayersManager::Broadcast_volume(void)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (Player_ptr[p].isPlaying())
         {
@@ -573,7 +573,7 @@ void PlayersManager::Broadcast_volume(void)
 
 void PlayersManager::Multicast_volume_for_instrument_edit(int instrument)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
         {
@@ -584,7 +584,7 @@ void PlayersManager::Multicast_volume_for_instrument_edit(int instrument)
 
 void PlayersManager::Multicast_pitch_for_sound_edit(int instrument)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
         {
@@ -595,7 +595,7 @@ void PlayersManager::Multicast_pitch_for_sound_edit(int instrument)
 
 void PlayersManager::Multicast_pan(int instrument)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
         {
@@ -638,7 +638,7 @@ void PlayersManager::Broadcast_reset_effect(float resolution, uint8_t downsampli
 
 void PlayersManager::Update_all_Preset(int session, float volume_session)
 {
-    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
     {
         if (Session[session].Instrument[instrument].used)
         {
@@ -650,7 +650,7 @@ void PlayersManager::Update_all_Preset(int session, float volume_session)
 
 void PlayersManager::Update_all_Preset_volume(int session, float volume_session)
 {
-    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
     {
         if (Session[session].Instrument[instrument].used)
         {
@@ -771,7 +771,7 @@ void PlayersManager::Update_Preset_lock(int session, int instrument)
 
 void PlayersManager::Multicast_IF_update_filter_type(int instrument)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
         {
@@ -919,13 +919,13 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
     uint8_t players_to_cross_mix = 0;
     uint8_t mix_samples_for_Player[PLAYERS] = {0};
     bool cross_mix_Player[PLAYERS] = {0};
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         mix_samples_for_Player[p] = 0;
         cross_mix_Player[p] = false;
     }
 
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if ((Player_ptr[p].Read_local_session() == session) && (Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
         {
@@ -1259,7 +1259,7 @@ bool PlayersManager::Verify_if_stop_players(int session, int instrument) // when
     if ((POLYPHONY_FLASH[optimization] < PLAYERS) && Preset[instrument].use_Wavetable && !Get_use_Wavetable(Id_sound(session, instrument))) // Sound passes from use_Wavetable to !use_Wavetable
     {
         // players_critical  = how many Player ARE GOING to !use_Wavetable (those playing "instrument") + how many Player are ALREDY !use_Wavetable
-        for (int player = 0; player < PLAYERS; ++player)
+        for(auto player = 0; player < PLAYERS; ++player)
         {
             if ((Player_ptr + player)->isPlaying() && ((Player_ptr + player)->Read_instrument() == instrument || !(Player_ptr + player)->Read_use_Wavetable())) // if player is playing instrument or is playing in Flash mode -> counter increase
             {
@@ -1314,7 +1314,7 @@ void PlayersManager::Release_player(int player) // after receiving a NoteOff com
 
 void PlayersManager::Release_all_players_for_instrument(int instrument) // after receiving a NoteOff command
 {
-    for (int player = 0; player < PLAYERS; ++player)
+    for(auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPoweredOn() && (Player_ptr + player)->Read_instrument() == instrument)
         {
@@ -1325,7 +1325,7 @@ void PlayersManager::Release_all_players_for_instrument(int instrument) // after
 
 void PlayersManager::Release_all_players_for_instrument_solo(int instrument)
 {
-    for (int player = 0; player < PLAYERS; ++player)
+    for(auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPlaying() && ((Player_ptr + player)->Read_instrument() != instrument))
         {
@@ -1341,7 +1341,7 @@ void PlayersManager::Release_all_players_for_instrument_solo(int instrument)
 
 void PlayersManager::Release_all_players(void)
 {
-    for (int player = 0; player < PLAYERS; ++player)
+    for(auto player = 0; player < PLAYERS; ++player)
     {
         Release_player(player);
     }
@@ -1349,7 +1349,7 @@ void PlayersManager::Release_all_players(void)
 
 void PlayersManager::Release_softly_all_players(int session)
 {
-    for (int player = 0; player < PLAYERS; ++player)
+    for(auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPoweredOn() && (Player_ptr + player)->Read_local_session() == session)
         {
@@ -1360,7 +1360,7 @@ void PlayersManager::Release_softly_all_players(int session)
 
 void PlayersManager::Stop_all_players(void) // meglio Fast_stop...
 {
-    for (int player = 0; player < PLAYERS; ++player)
+    for(auto player = 0; player < PLAYERS; ++player)
     {
         (Player_ptr + player)->Fast_stop(); // Attiva il Release (ADSR) con tempo di caduta pari a 10 samples
         (Player_ptr + player)->Write_time_stamp(millis());
@@ -1369,7 +1369,7 @@ void PlayersManager::Stop_all_players(void) // meglio Fast_stop...
 
 void PlayersManager::Release_all_players_loop(void)
 {
-    for (int player = 0; player < PLAYERS; ++player)
+    for(auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPoweredOn() && ((Player_ptr + player)->Read_loop_track() >= 0))
         {
@@ -1380,7 +1380,7 @@ void PlayersManager::Release_all_players_loop(void)
 
 void PlayersManager::Release_all_players_loop(int track)
 {
-    for (int player = 0; player < PLAYERS; ++player)
+    for(auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPoweredOn() && ((Player_ptr + player)->Read_loop_track() == track))
         {
@@ -1405,7 +1405,7 @@ int PlayersManager::Get_span_for_all_cross_mix(void) // ALERT: can be used if Pl
 {
     const int audio_time_reserved = 200; // microsecondi riservati per tutti gli altri oggetti in un ciclo update()
     int value = 0;
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         value += Player_ptr[p].Read_update_time();
     }
@@ -1414,7 +1414,7 @@ int PlayersManager::Get_span_for_all_cross_mix(void) // ALERT: can be used if Pl
 
 void PlayersManager::Multicast_reset_pitch_bend_effects(int instrument)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (Player_ptr[p].Read_instrument() == instrument)
         {
@@ -1437,7 +1437,7 @@ void PlayersManager::Broadcast_pitch_bend(int midi_channel, float value)
 
 void PlayersManager::Broadcast_restore_pitch_bend_and_effects(int midi_channel, float value)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (!Preset[Player_ptr[p].Read_instrument()].lock && Preset[Player_ptr[p].Read_instrument()].midi_channel == midi_channel) // if(!bitRead(Session[session].Instrument[Player_ptr[p].instrument].info, 1))
         {
@@ -1449,7 +1449,7 @@ void PlayersManager::Broadcast_restore_pitch_bend_and_effects(int midi_channel, 
 
 void PlayersManager::Multicast_volume_for_MIDI_LOOP_running(int track, float value)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if ((Player_ptr[p].Read_loop_track() == track) && Player_ptr[p].isPlaying())
         {
@@ -1462,7 +1462,7 @@ void PlayersManager::Update_players_stistics(void)
 {
     players_using_Wavetable = 0;
     players_using_Flash = 0;
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (Player_ptr[p].isPlaying())
         {
@@ -1800,7 +1800,7 @@ int PlayersManager::Get_players_to_restart(void)
 
 void PlayersManager::Multicast_update_vibrato(int midi_channel, bool vibrato_active)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (Player_ptr[p].Read_midi_channel() == midi_channel)
         {
@@ -1811,7 +1811,7 @@ void PlayersManager::Multicast_update_vibrato(int midi_channel, bool vibrato_act
 
 void PlayersManager::Multicast_all_notes_off(int midi_channel)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         if (Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_midi_channel() == midi_channel)
         {
@@ -1844,7 +1844,7 @@ void PlayersManager::Multicast_stop_players_for_NoteOff(int midi_channel, int no
 
 void PlayersManager::Broadcast_FIFO_stereo(int16_t *LS_buffer_L_ptr, int16_t *LS_buffer_R_ptr)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         Player_ptr[p].LS_buffer_L_ptr = LS_buffer_L_ptr;
         Player_ptr[p].LS_buffer_R_ptr = LS_buffer_R_ptr;
@@ -1853,7 +1853,7 @@ void PlayersManager::Broadcast_FIFO_stereo(int16_t *LS_buffer_L_ptr, int16_t *LS
 
 void PlayersManager::Broadcast_FIFO_mono(int16_t *LS_buffer_mono_ptr)
 {
-    for (int p = 0; p < PLAYERS; ++p)
+    for(auto p = 0; p < PLAYERS; ++p)
     {
         Player_ptr[p].LS_buffer_mono_ptr = LS_buffer_mono_ptr;
     }

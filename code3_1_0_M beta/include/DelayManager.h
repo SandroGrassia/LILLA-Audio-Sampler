@@ -4,7 +4,7 @@
  *
  */
 
-// Questa classe controlla parametri di SteroDelay.h
+// Questa classe gestisce i parametri di SteroDelay.h
 
 #pragma once
 

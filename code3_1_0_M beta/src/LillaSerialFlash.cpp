@@ -33,7 +33,7 @@ void FlashFileRegisterParser::Read_all_file_data(void)
   int index = 0;
 
   Serial.println("*** Lilla_SerialFlash - rilevamento di tutti i file audio presenti ***");
-  for (int i = 0; i < (RAW_FILES + PACKETS); ++i)
+  for (auto i = 0; i < (RAW_FILES + PACKETS); ++i)
   {
     T = 0;
     if (i < RAW_FILES) // n.raw, n.rec (.liv sono su PSRAM)

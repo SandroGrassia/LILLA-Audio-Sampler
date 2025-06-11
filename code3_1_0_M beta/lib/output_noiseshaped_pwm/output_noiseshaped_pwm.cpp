@@ -47,20 +47,28 @@ void AudioOutputNoiseShapedPWM::begin(uint8_t pin)
 	update_responsibility = false;
 
 	if (pin >= 64)
+	{
 		return;
+	}
 	if (pins_in_use[pin])
+	{
 		return;
+	}
 
 	int unit = allocate_unit();
 	if (unit == -1)
+	{
 		return;
+	}
 	pins_in_use[pin] = true;
 
 	pwm_tx_buffer = (uint16_t *)malloc(2 * BUFSIZE * sizeof(uint16_t)); // in DMAMEM, double buffer
 	if (pwm_tx_buffer == NULL)
+	{
 		return;
+	}
 
-	for (int i = 0; i < 4; ++i)
+	for (auto i = 0; i < 4; ++i)
 	{
 		accum[i] = 0;
 	}
@@ -199,6 +207,7 @@ void AudioOutputNoiseShapedPWM::begin(uint8_t pin)
 		{
 			pwm_tx_buffer[j] = modulo / 2;
 		}
+		
 		arm_dcache_flush_delete(pwm_tx_buffer, 2 * BUFSIZE * sizeof(int16_t));
 
 		update_responsibility = update_setup();
@@ -226,22 +235,30 @@ int AudioOutputNoiseShapedPWM::allocate_unit(void)
 void AudioOutputNoiseShapedPWM::isr0(void)
 {
 	if (instances[0])
+	{
 		instances[0]->handle_interrupt();
+	}
 }
 void AudioOutputNoiseShapedPWM::isr1(void)
 {
 	if (instances[1])
+	{
 		instances[1]->handle_interrupt();
+	}
 }
 void AudioOutputNoiseShapedPWM::isr2(void)
 {
 	if (instances[2])
+	{
 		instances[2]->handle_interrupt();
+	}
 }
 void AudioOutputNoiseShapedPWM::isr3(void)
 {
 	if (instances[3])
+	{
 		instances[3]->handle_interrupt();
+	}
 }
 
 void AudioOutputNoiseShapedPWM::handle_interrupt(void)
@@ -298,20 +315,29 @@ void AudioOutputNoiseShapedPWM::handle_interrupt(void)
 	}
 
 	if (update_responsibility)
+	{
 		update_all();
+	}
 }
 
 void AudioOutputNoiseShapedPWM::update(void)
 {
 	if (!active)
+	{
 		return;
+	}
+
 	audio_block_t *new_block = receiveReadOnly();
+
 	__disable_irq();
 	audio_block_t *old_block = block;
 	block = new_block;
 	__enable_irq();
+
 	if (old_block)
+	{
 		release(old_block);
+	}
 }
 
 #endif // __IMXRT1062__

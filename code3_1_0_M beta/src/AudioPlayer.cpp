@@ -1251,7 +1251,7 @@ void AudioPlayer::update(void)
             VCF_ptr->Update();
         }
 
-        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+        for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
         {
             block_L->data[i] = pan_gain_L * block[i];
             block_R->data[i] = pan_gain_R * block[i];

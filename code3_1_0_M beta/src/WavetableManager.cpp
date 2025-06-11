@@ -42,7 +42,7 @@ bool WavetableManager::Make(int file_id, int8_t mode, int A_Flash_sample, int B_
         READ_Samples(file_id, cache_1, A_Flash_sample, length_max);
 
         // B>>>>>>>>>>>>length_max>>>>>>>>>>>>>>A
-        for (int i = 0; i < (length_max); ++i)
+        for (auto i = 0; i < (length_max); ++i)
         {
             Wavetable[i] = cache_1[length_max - 1 - i];
         }
@@ -59,7 +59,7 @@ bool WavetableManager::Make(int file_id, int8_t mode, int A_Flash_sample, int B_
         READ_Samples(file_id, Wavetable, (A_Flash_sample + delta_Noclick), length_min);
 
         // (B-d+1)***delta_Noclick***B
-        for (int i = 0; i < delta_Noclick; ++i)
+        for (auto i = 0; i < delta_Noclick; ++i)
         {
             Wavetable[length_min + i] = *(p_Noclick + i);
         }
@@ -77,7 +77,7 @@ bool WavetableManager::Make(int file_id, int8_t mode, int A_Flash_sample, int B_
         READ_Samples(file_id, Wavetable, A_Flash_sample, length_max);
 
         // (A+1)<<<<<<<(length_max - 2)<<<<<<<(B-1)
-        for (int i = 0; i < (length_max - 2); ++i)
+        for (auto i = 0; i < (length_max - 2); ++i)
         {
             Wavetable[length_max + i] = Wavetable[(length_max - 2) - i];
         }
@@ -90,7 +90,7 @@ bool WavetableManager::Make(int file_id, int8_t mode, int A_Flash_sample, int B_
         length = length_mix;
 
         // (A)>>>>delta>>>>(A+d-1)
-        for (int i = 0; i < delta_Noclick; ++i)
+        for (auto i = 0; i < delta_Noclick; ++i)
         {
             cache_1[i] = *(p_Noclick + i);
         }
@@ -101,12 +101,12 @@ bool WavetableManager::Make(int file_id, int8_t mode, int A_Flash_sample, int B_
         READ_Samples(file_id, cache_2, (A_Flash_sample + delta_Noclick), length_min);
 
         // (A)>>>>>delta>>>>(A+d-1)(A+d)>>>>>>>>>>>>>>>>length_min>>>>>>>>>>>>(B-d)
-        for (int i = 0; i < length_min; ++i)
+        for (auto i = 0; i < length_min; ++i)
         {
             cache_1[delta_Noclick + i] = cache_2[i];
         }
 
-        for (int i = 0; i < length_mix; ++i)
+        for (auto i = 0; i < length_mix; ++i)
         {
             Wavetable[i] = cache_1[(length_mix - 1) - i];
         }

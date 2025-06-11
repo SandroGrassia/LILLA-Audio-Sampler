@@ -15,7 +15,7 @@ int MIN_index(T *array, int elements)
 {
     T min_element = *array;
     int answer = 0;
-    for (int i = 1; i < elements; ++i)
+    for (auto i = 1; i < elements; ++i)
     {
         if (*(array + i) < min_element)
         {

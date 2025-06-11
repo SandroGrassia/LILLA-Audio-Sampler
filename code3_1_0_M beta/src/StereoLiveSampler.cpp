@@ -60,7 +60,7 @@ void StereoLiveSampler::update(void)
 
     if (!in_block_L || !in_block_R)
     {
-        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+        for(auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
         {
             in_block_L->data[i] = 0;
             in_block_R->data[i] = 0;
@@ -87,7 +87,7 @@ void StereoLiveSampler::update(void)
     {
         memcpy((uint32_t *)(Buffer_L), (uint32_t *)in_block_L->data, 256); // memcpy(destination pointer, origin pointer, bytes to be copied)
         memcpy((uint32_t *)(Buffer_R), (uint32_t *)in_block_R->data, 256); // memcpy(destination pointer, origin pointer, bytes to be copied)
-        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+        for(auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             LS_buffer_mono_ptr[Q_sample + 1 + i] = (Buffer_L[i] >> 1) + (Buffer_R[i] >> 1);
     }
 
@@ -104,7 +104,7 @@ void StereoLiveSampler::update(void)
 
         if (stereo)
         {
-            for (int i = 0; i < (AUDIO_BLOCK_SAMPLES / 2); ++i)
+            for(auto i = 0; i < (AUDIO_BLOCK_SAMPLES / 2); ++i)
             {
                 *(uint32_t *)(LS_buffer_L_ptr + i) = 0;
                 *(uint32_t *)(LS_buffer_R_ptr + i) = 0;
@@ -113,7 +113,7 @@ void StereoLiveSampler::update(void)
 
         else
         {
-            for (int i = 0; i < (AUDIO_BLOCK_SAMPLES / 2); ++i)
+            for(auto i = 0; i < (AUDIO_BLOCK_SAMPLES / 2); ++i)
             {
                 *(uint32_t *)(LS_buffer_mono_ptr + i) = 0;
             }
@@ -132,7 +132,7 @@ void StereoLiveSampler::update(void)
     {
         if (stereo)
         {
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for(auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 float factor = (1.0 - samples_counter / Slope_samples);
                 LS_buffer_L_ptr[Q_sample_cache + 1 + i] = LS_buffer_L_ptr[Q_sample_cache + 1 + i] * factor;
@@ -143,7 +143,7 @@ void StereoLiveSampler::update(void)
 
         else
         {
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for(auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 float factor = (1.0 - samples_counter / Slope_samples);
                 LS_buffer_mono_ptr[Q_sample_cache + 1 + i] = LS_buffer_mono_ptr[Q_sample_cache + 1 + i] * factor;
@@ -161,7 +161,7 @@ void StereoLiveSampler::update(void)
     {
         if (stereo)
         {
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for(auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 float factor = samples_counter / Slope_samples;
                 LS_buffer_L_ptr[Q_sample_cache + 1 + i] = LS_buffer_L_ptr[Q_sample_cache + 1 + i] * factor;
@@ -172,7 +172,7 @@ void StereoLiveSampler::update(void)
 
         else
         {
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for(auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 float factor = samples_counter / Slope_samples;
                 LS_buffer_mono_ptr[Q_sample_cache + 1 + i] = LS_buffer_mono_ptr[Q_sample_cache + 1 + i] * factor;

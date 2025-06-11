@@ -22,7 +22,7 @@ bool DelayManager::New_values(const Delay_data_struct *data)
 
     if (Delay_data_required.instrument_route != Delay_data.instrument_route)
     {
-        if (false)
+        if (true)
         {
             Serial.print(Delay_data.instrument_route);
             Serial.print(" - ");
@@ -57,7 +57,11 @@ bool DelayManager::New_values(const Delay_data_struct *data)
             Serial.println(" old-new samples");
         }
 
-        Start_LPF(SAMPLES, Delay_data.samples, Delay_data_required.samples);
+        Start_LPF(SAMPLES, Delay_values.samples, Calc_delay_samples(Delay_data_required.samples));
+
+        // assegna subito il nuovo valore di regime
+        Delay_data.samples = Delay_data_required.samples;
+
         flag[SAMPLES] = true;
         run_flag = true;
     }
@@ -127,7 +131,11 @@ bool DelayManager::New_values(const Delay_data_struct *data)
             Serial.println(" old-new loop_gain");
         }
 
-        Start_LPF(LOOP_GAIN, Delay_data.loop_gain, Delay_data_required.loop_gain);
+        Start_LPF(LOOP_GAIN, Delay_values.loop_gain, Delay_feedback(Delay_data_required.loop_gain));
+
+        // assegna subito il nuovo valore di regime
+        Delay_data.loop_gain = Delay_data_required.loop_gain;
+
         flag[LOOP_GAIN] = true;
         run_flag = true;
     }
@@ -155,7 +163,7 @@ void DelayManager::Update(void)
             // Calcola i nuovi valori
             Calc_delay_routing(Delay_data.instrument_route);
 
-            for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+            for (auto i = 0; i < INSTRUMENTS_MAX; ++i)
             {
                 // trasmetti i nuovi valori
                 Players_Manager_ptr->MX_multicast_change_routing(Delay_values.instrument_route[i]);
@@ -184,11 +192,11 @@ void DelayManager::Update(void)
 
         if (flag[SAMPLES])
         {
-            Delay_data.samples = round(New_value(SAMPLES));
-            Delay_data.samples = constrain(Delay_data.samples, Delay_data_limits[SAMPLES][0], Delay_data_limits[SAMPLES][1]);
-
-            // calcola nuovo valore
-            Delay_values.samples = Calc_delay_samples(Delay_data.samples);
+            Delay_values.samples = New_value(SAMPLES);
+            if(Delay_values.samples < 0)
+            {
+               Delay_values.samples = 0; 
+            }
 
             // trasmetti nuovo valore
             if (Delay_values.samples_LR >= 0) // Left channel
@@ -297,17 +305,13 @@ void DelayManager::Update(void)
 
         if (flag[LOOP_GAIN])
         {
-            Delay_data.loop_gain = round(New_value(LOOP_GAIN));
-            Delay_data.loop_gain = constrain(Delay_data.loop_gain, Delay_data_limits[LOOP_GAIN][0], Delay_data_limits[LOOP_GAIN][1]);
-
-            // calcola nuovo valore
-            Delay_values.loop_gain = Delay_feedback(Delay_data.loop_gain);
+            Delay_values.loop_gain = New_value(LOOP_GAIN);
 
             // trasmetti nuovo valore
             D_gain_L_feedback_ptr->Set_gain(Delay_values.loop_gain);
             D_gain_R_feedback_ptr->Set_gain(Delay_values.loop_gain);
 
-            if (false)
+            if (true)
             {
                 Serial.print(F("Delay_values.loop_gain: "));
                 Serial.println(Delay_values.loop_gain);
@@ -319,6 +323,7 @@ void DelayManager::Update(void)
         {
             return;
         }
+
         --step;
         if (step == 0)
         {

@@ -83,7 +83,7 @@ int InfoMaster::Raw_file_samples(int file_id)
 
 int16_t *InfoMaster::Sound_620_samples_array(int file_id, uint32_t A, uint32_t B)
 {
-    for (int i = 0; i < 2 * WAVE_WIDTH; ++i)
+    for (auto i = 0; i < 2 * WAVE_WIDTH; ++i)
     {
         samples_620_array[i] = 0;
     }
@@ -92,7 +92,7 @@ int16_t *InfoMaster::Sound_620_samples_array(int file_id, uint32_t A, uint32_t B
     float samples_per_pixel = (B - A + 1) / WAVE_WIDTH_F;                                     // fondamentale il "." nel divisore!!
     int Samples = (samples_per_pixel >= BASKET_INFO ? BASKET_INFO : ceil(samples_per_pixel)); // numero di campioni da leggere 1 <= Samples <= BASKET_INFO
 
-    for (int i = 0; i < WAVE_WIDTH; ++i)
+    for (auto i = 0; i < WAVE_WIDTH; ++i)
     {
         //    samples_per_pixel = 0.7
         //    file_id:   A          (A+1)      (A+2)      (A+3)      (A+5)         .......................B
@@ -121,7 +121,7 @@ int16_t *InfoMaster::Sound_620_samples_array(int file_id, uint32_t A, uint32_t B
 
         else
         {
-            for (int j = 0; j < Samples; ++j)
+            for (auto j = 0; j < Samples; ++j)
             {
                 if (samples_basket[j] >= 0 && samples_basket[j] > max_pos)
                 {
@@ -273,14 +273,14 @@ int16_t *InfoMaster::LS_620_samples_array(int file_id, int A_window_sample, int 
     }
 
     // si effettuano WAVE_WIDTH prelievi
-    for (int i = 0; i < WAVE_WIDTH; ++i)
+    for (auto i = 0; i < WAVE_WIDTH; ++i)
     {
         // si avanza di samples_per_line (per poi prelevare samples_to_read campioni)
         delta = samples_per_line * i;
         Read_samples(file_id, samples_basket, A_window_sample_local + delta, samples_to_read);
         max_pos = 0;
         min_neg = 0;
-        for (int j = 0; j < samples_to_read; ++j)
+        for (auto j = 0; j < samples_to_read; ++j)
         {
             if (samples_basket[j] > max_pos)
             {

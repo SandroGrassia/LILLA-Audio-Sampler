@@ -12,7 +12,7 @@ void WaveLFO::Update(void)
 {
     if (periodic == 0) // aperiodic wave
     {
-        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+        for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
         {
             if (wave_end)
             {
@@ -63,7 +63,7 @@ void WaveLFO::Update(void)
 
         phase = phase_accumulator;
         inc = phase_increment;
-        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+        for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
         {
             index = phase >> 24;     // index prende gli 8 bit alti di phase
             val1 = Sine_wave[index]; // Sine_wave[] is defined in Lilla_Definitions.h
@@ -176,11 +176,11 @@ void WaveLFO::Setup_aperiodic_wave(float seconds, float max_value, int waveform)
 
     if (waveform == 1) // rising (positive values)
     {
-        for (int i = 0; i <= 10; ++i)
+        for (auto i = 0; i <= 10; ++i)
         {
             local_waveform[i] = max_value * waveform_attack[i];
         }
-        for (int i = 0; i < 10; ++i)
+        for (auto i = 0; i < 10; ++i)
         {
             local_m_waveform[i] = max_value * (waveform_attack[i + 1] - waveform_attack[i]);
         }
@@ -188,11 +188,11 @@ void WaveLFO::Setup_aperiodic_wave(float seconds, float max_value, int waveform)
 
     if (waveform == 2) // falling (negative values)
     {
-        for (int i = 0; i <= 10; ++i)
+        for (auto i = 0; i <= 10; ++i)
         {
             local_waveform[i] = -max_value * waveform_attack[i];
         }
-        for (int i = 0; i < 10; ++i)
+        for (auto i = 0; i < 10; ++i)
         {
             local_m_waveform[i] = -max_value * (waveform_attack[i + 1] - waveform_attack[i]);
         }

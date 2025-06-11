@@ -70,7 +70,7 @@ void EepromManager::Save_Session(uint8_t session, Session_struct Session_session
 {
     EEPROM_Session.used = Session_session.used;
     EEPROM_Session.instruments = Session_session.instruments;
-    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
     {
         EEPROM_Session.Instrument[instrument].used = Session_session.Instrument[instrument].used;
         EEPROM_Session.Instrument[instrument].id_sound = Session_session.Instrument[instrument].id_sound;
@@ -95,7 +95,7 @@ void EepromManager::Read_Session(uint8_t session)
 
     Session[session].used = EEPROM_Session.used;
     Session[session].instruments = EEPROM_Session.instruments;
-    for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
     {
         Session[session].Instrument[instrument].used = EEPROM_Session.Instrument[instrument].used;
         Session[session].Instrument[instrument].id_sound = EEPROM_Session.Instrument[instrument].id_sound;
@@ -189,7 +189,7 @@ void EepromManager::Reset_EEPROM(void)
 
 void EepromManager::Print_EEPROM_content(void)
 {
-    for (int i = 0; i < LOCATION_RECORDING; ++i)
+    for (auto i = 0; i < LOCATION_RECORDING; ++i)
     {
         if (i % 90 == 0)
         {
@@ -206,7 +206,7 @@ void EepromManager::Print_EEPROM_content(void)
     }
     Serial.println();
 
-    for (int i = LOCATION_RECORDING; i < LOCATION_SOUND; ++i)
+    for (auto i = LOCATION_RECORDING; i < LOCATION_SOUND; ++i)
     {
         if ((i - LOCATION_RECORDING) % SIZE_OF_EEPROM_RECORDING == 0)
         {
@@ -220,7 +220,7 @@ void EepromManager::Print_EEPROM_content(void)
     }
     Serial.println();
 
-    for (int i = LOCATION_SOUND; i < LOCATION_OPTIMIZATION; ++i)
+    for (auto i = LOCATION_SOUND; i < LOCATION_OPTIMIZATION; ++i)
     {
         if ((i - LOCATION_SOUND) % SIZE_OF_SOUND == 0)
         {
@@ -248,7 +248,7 @@ void EepromManager::Print_EEPROM_content(void)
     Serial.println(EEPROM.read(LOCATION_FIRST_OCTAVE));
     Serial.println();
 
-    for (int i = LOCATION_DELAY; i < LOCATION_CC_SETTINGS; ++i)
+    for (auto i = LOCATION_DELAY; i < LOCATION_CC_SETTINGS; ++i)
     {
         Serial.print(F("Delay - location "));
         Serial.print(i);
@@ -257,7 +257,7 @@ void EepromManager::Print_EEPROM_content(void)
     }
     Serial.println();
 
-    for (int i = LOCATION_CC_SETTINGS; i < EEPROM_BYTES; ++i)
+    for (auto i = LOCATION_CC_SETTINGS; i < EEPROM_BYTES; ++i)
     {
         Serial.print(F("CC Settings - location "));
         Serial.print(i);
@@ -336,7 +336,7 @@ String EepromManager::Filename_session_delay(int session)
 void EepromManager::Copy_Delay_data_from_RAM_to_SD(File &file) // private
 {
     const byte *data = (const byte *)(const void *)&Delay_data;
-    for (int i = 0; i < DELAY_DATA_DIM; ++i)
+    for (auto i = 0; i < DELAY_DATA_DIM; ++i)
     {
         file.println(*(data + i));
     }

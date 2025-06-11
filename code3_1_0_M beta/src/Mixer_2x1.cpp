@@ -9,7 +9,7 @@
 void Mixer_2x1::update(void) // execution:  micros @600MHz
 {
     // T[0] = micros();
-    for (int in = 0; in < 2; ++in)
+    for(auto in = 0; in < 2; ++in)
     {
         if (!out_block)
         {

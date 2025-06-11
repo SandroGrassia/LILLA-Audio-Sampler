@@ -8,9 +8,9 @@
 
 void PlayersStatistics::Reset_total_Players_per_track_instrument(void)
 {
-    for (int track = 0; track < TRACKS; ++track)
+    for(auto track = 0; track < TRACKS; ++track)
     {
-        for (int instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+        for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
         {
             total_Players_per_track_instrument[track][instrument] = 0;
             total_Players_per_track_instrument_old[track][instrument] = 0;
@@ -48,7 +48,7 @@ int PlayersStatistics::Read_total_Players_per_track_instrument_old(const int &tr
 
 void PlayersStatistics::Reset_total_Players_per_instrument(void)
 {
-    for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+    for(auto i = 0; i < INSTRUMENTS_MAX; ++i)
     {
         total_Players_per_instrument[i] = 0;
         total_Players_per_instrument_old[i] = 0;
@@ -66,7 +66,7 @@ void PlayersStatistics::Inc_total_Players_per_instrument(int instrument)
 
     if (false)
     {
-        for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+        for(auto i = 0; i < INSTRUMENTS_MAX; ++i)
         {
             Serial.print(total_Players_per_instrument[i]);
             Serial.print(" ");
@@ -84,7 +84,7 @@ void PlayersStatistics::Dec_total_Players_per_instrument(int instrument)
 
     if (false)
     {
-        for (int i = 0; i < INSTRUMENTS_MAX; ++i)
+        for(auto i = 0; i < INSTRUMENTS_MAX; ++i)
         {
             Serial.print(total_Players_per_instrument[i]);
             Serial.print(" ");

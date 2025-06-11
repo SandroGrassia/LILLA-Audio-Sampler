@@ -188,7 +188,7 @@ void StereoDelay::update(void)
 
         delay_pitch = (AUDIO_BLOCK_SAMPLES - (double)delay_delta) / AUDIO_BLOCK_SAMPLES;
         D_sample_read = sample_read; // campione iniziale
-        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+        for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
         {
             I_sample_read_f = floor(D_sample_read);
             if (I_sample_read_f >= 0)
@@ -228,7 +228,7 @@ void StereoDelay::update(void)
     
     else
     {
-        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+        for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
         {
             out_block->data[i] = *(DELAY_fifo + sample_read);
             ++sample_read;
@@ -244,7 +244,7 @@ void StereoDelay::update(void)
     // Write in_block to delay_Main_Array; execution: 1,5micros @600MHz
     // ***** spostato ****
     in_block = receiveReadOnly(0);
-    for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+    for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
     {
         if (!in_block)
         {

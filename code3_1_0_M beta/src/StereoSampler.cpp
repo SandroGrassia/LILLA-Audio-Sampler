@@ -146,7 +146,7 @@ void StereoSampler::update(void)
             memcpy((uint32_t *)RAM_buffer_L, (uint32_t *)in_block_L->data, 256); // memcpy neglects pointer types
             memcpy((uint32_t *)RAM_buffer_R, (uint32_t *)in_block_R->data, 256);
 
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 *(RAM_buffer_L_ptr + i) = (float)*(RAM_buffer_L_ptr + i) * (1.0 - samples_counter / F_Slope_samples);
                 *(RAM_buffer_R_ptr + i) = (float)*(RAM_buffer_R_ptr + i) * (1.0 - samples_counter / F_Slope_samples);
@@ -167,7 +167,7 @@ void StereoSampler::update(void)
             memcpy((uint32_t *)RAM_buffer_L, (uint32_t *)in_block_L->data, 256); // memcpy neglects pointer types
             memcpy((uint32_t *)RAM_buffer_R, (uint32_t *)in_block_R->data, 256);
 
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 *(RAM_buffer_L_ptr + i) = (float)*(RAM_buffer_L_ptr + i) * (samples_counter / F_Slope_samples);
                 *(RAM_buffer_R_ptr + i) = (float)*(RAM_buffer_R_ptr + i) * (samples_counter / F_Slope_samples);
@@ -194,7 +194,7 @@ void StereoSampler::update(void)
             memcpy((uint32_t *)RAM_buffer_R, (uint32_t *)in_block_R->data, 256);
 
             // calculate average values
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 *(RAM_buffer_L_ptr + i) = (*(RAM_buffer_L_ptr + i) + *(RAM_buffer_R_ptr + i)) / 2;
             }
@@ -210,7 +210,7 @@ void StereoSampler::update(void)
             memcpy((uint32_t *)RAM_buffer_R, (uint32_t *)in_block_R->data, 256);
 
             // calculate average values
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 *(RAM_buffer_L_ptr + i) = (1.0 - samples_counter / F_Slope_samples) * (float)(*(RAM_buffer_L_ptr + i) + *(RAM_buffer_R_ptr + i)) / 2.0;
                 --samples_counter;
@@ -232,7 +232,7 @@ void StereoSampler::update(void)
             memcpy((uint32_t *)RAM_buffer_R, (uint32_t *)in_block_R->data, 256);
 
             // calculate average values
-            for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+            for (auto i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 *(RAM_buffer_L_ptr + i) = (samples_counter / F_Slope_samples) * (float)(*(RAM_buffer_L_ptr + i) + *(RAM_buffer_R_ptr + i)) / 2.0;
                 samples_counter--;
