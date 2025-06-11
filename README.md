@@ -50,11 +50,11 @@ Four different modes:
 
 Connections:
 - USB-B for power supply, firmware update
-- 3.5mm jack MIDI IN
-- 3.5mm jack MIDI THRU
-- 3.5mm jack LINE IN: dynamic microphones/line 2 channels input with analog gain (level) control
-- 3.5mm jack LINE OUT: 3.3Vpp 2 channels audio output
-- 3.5mm jack MONITOR (output): 3.3Vpp 2 channels audio output (only for Sounds check)
+- 3.5mm jack midi in
+- 3.5mm jack midi thru
+- 3.5mm jack stereo line in: dynamic microphones/line 2 channels input with analog gain (level) control
+- 3.5mm jack stereo line out: 3.3Vpp 2 channels audio output
+- 3.5mm jack stereo monitor: 3.3Vpp 2 channels audio output (only for Sounds check)
 - micro-SD socket
 
 
