@@ -1,0 +1,389 @@
+\doxysection{Audio\+Player.\+h}
+\hypertarget{_audio_player_8h_source}{}\label{_audio_player_8h_source}\index{code3\_1\_0\_M\_github/include/AudioPlayer.h@{code3\_1\_0\_M\_github/include/AudioPlayer.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <SerialFlash.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <spi\_interrupt.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <Wire.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <utility/dspinst.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}LillaSerialFlash.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}SharedElements.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}AudioVCF.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}WaveLFO.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}StereoLiveSampler.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}PlayersStatistics.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}Functions.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}LoopLedSet.h"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_audio_player}{AudioPlayer}}\ :\ \textcolor{keyword}{public}\ AudioStream}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ BASKET\_DIM\ =\ 3100;\ \textcolor{comment}{//\ la\ dimensione\ deve\ essere\ non\ inferiore\ a\ AUDIO\_BLOCK\_SAMPLES\ *\ MAX\_PITCH\_WAVETABLE}}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keyword}{static}\ int16\_t\ samples\_basket[BASKET\_DIM];\ \textcolor{comment}{//\ cache\ array\ unico\ per\ samples\ copiati\ dai\ Player}}
+\DoxyCodeLine{00029\ \ \ \ \ int16\_t\ block[AUDIO\_BLOCK\_SAMPLES];}
+\DoxyCodeLine{00030\ \ \ \ \ uint8\_t\ mix\_samples\ =\ 32;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ uint8\_t\ identity;}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{int}\ state;\ \textcolor{comment}{//\ 0=idle\ (no\ output\ available)\ 1=running\ (no\ stop\ request)\ 2=fading\ (output\ is\ falling\ down)}}
+\DoxyCodeLine{00034\ \ \ \ \ \mbox{\hyperlink{class_lilla_serial_flash_file}{LillaSerialFlashFile}}\ rawfile;\ \textcolor{comment}{//\ SerialFlashFile\ rawfile;}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{int}\ file\_id;}
+\DoxyCodeLine{00036\ \ \ \ \ uint32\_t\ samples\_counter;\ \textcolor{comment}{//\ starting\ from\ play()}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{bool}\ power\_on\ =\ \textcolor{keyword}{false};\ \textcolor{comment}{//\ play()\ ONLY\ can\ set\ power\_on\ =\ true;\ the\ stop\ event\ (Release\_note(),\ ADSR\_gain=0,\ end\ of\ file)\ coming\ for\ first\ sets\ power\_on=false:}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{bool}\ idle\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ \ \ power\_on\ and\ idle}}
+\DoxyCodeLine{00043\ \textcolor{comment}{}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ \ \ Get\_ready\_to\_play()\ sets\ power\_on=true,\ than\ Player\ waits\ for\ next\ update()\ to\ start\ playing\ (idle=false);}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ \ \ When\ Player\ starts\ playing,\ idle\ is\ set\ idle=false;}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ \ \ The\ stop\ event\ coming\ for\ first\ sets\ power\_on=false:}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ \ \ \ \ \ \ -\/\ Release\_note()\ has\ less\ priority,\ it\ only\ sets\ power\_on=false}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ \ \ \ \ \ \ -\/\ ADSR\_gain=0\ immediately\ sets\ power\_on=false,\ idle=true}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ \ \ \ \ \ \ -\/\ same\ End-\/Of-\/File\ event}}
+\DoxyCodeLine{00050\ \textcolor{comment}{}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ \ \ **\ Release\_note()\ comes\ first:}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ \ \ play\ \ \ \ \ \_\_\_\_\_\_!\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ \ \ Release\_note\ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\%\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00054\ \textcolor{comment}{}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ \ \ power\_on\ \_\_\_\_\_\_|-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\%\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ \ \ idle\ \ \ \ \ -\/-\/-\/-\/-\/-\/|\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_|-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00057\ \textcolor{comment}{}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ \ \ \ ADSR\_gain\ \_\_\_\_\_|***********************|\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ \ \ \ EOF\ \ \ \ \ \ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_!\_\_}}
+\DoxyCodeLine{00060\ \textcolor{comment}{}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ \ \ state\ \ \ 0000000111111111111111111222222000000000}}
+\DoxyCodeLine{00062\ \textcolor{comment}{}}
+\DoxyCodeLine{00063\ \textcolor{comment}{}}
+\DoxyCodeLine{00064\ \textcolor{comment}{}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ \ \ \ **\ ADSR\_gain=0\ comes\ first:}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ \ \ \ play\ \ \ \ \ \_\_\_\_\_\_!\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ Release\_note\ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_!\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00068\ \textcolor{comment}{}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ \ \ \ power\_on\ \_\_\_\_\_\_|-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\%\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ \ \ \ idle\ \ \ \ \ -\/-\/-\/-\/-\/-\/|\_\_\_\_\_\_\_\_\_\_\_\_\_\_|-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00071\ \textcolor{comment}{}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ ADSR\_gain\_\_\_\_\_\_|**************\%\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ \ \ EOF\ \ \ \ \ \ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_!\_\_}}
+\DoxyCodeLine{00074\ \textcolor{comment}{}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ \ \ state\ \ \ 0000000111111111111111100000000000000000}}
+\DoxyCodeLine{00076\ \textcolor{comment}{}}
+\DoxyCodeLine{00077\ \textcolor{comment}{}}
+\DoxyCodeLine{00078\ \textcolor{comment}{}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ \ \ **\ End-\/Of-\/File\ comes\ first:}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ \ \ play\ \ \ \ \ \_\_\_\_\_\_!\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ \ \ Release\_note\ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_!\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00082\ \textcolor{comment}{}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ power\_on\ \_\_\_\_\_\_|-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\%\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ idle\ \ \ \ \ -\/-\/-\/-\/-\/-\/|\_\_\_\_\_\_\_\_\_\_|-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00085\ \textcolor{comment}{}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ \ \ ADSR\ \ \ \ \_\_\_\_\_\_\_|*************************|\_\_\_\_\_\_}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ \ \ \ EOF\ \ \ \ \ \ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\%\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}}
+\DoxyCodeLine{00088\ \textcolor{comment}{}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ \ \ state\ \ \ 0000000111111111110000000000000000000000}}
+\DoxyCodeLine{00090\ \textcolor{comment}{}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordtype}{float}\ *p\_vibrato\_array;}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{float}\ vibrato\_array\_element\_float\ =\ 0;}
+\DoxyCodeLine{00095\ \ \ \ \ uint8\_t\ *p\_vibrato\_array\_last\_element;}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_vibrato\ =\ 1.0;}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ MIDI\_LOOP}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{int}\ track;}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{int}\ track\_wait;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ VCF}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordtype}{bool}\ VCF\_connect\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordtype}{bool}\ VCF\_modulated\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{float}\ VCF\_frequency\_pivot\ =\ 5000.0;}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{float}\ VCF\_central\_frequency;}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{float}\ VCF\_frequency\_array[4];}
+\DoxyCodeLine{00108\ \ \ \ \ int8\_t\ VCF\_pivot\_steps\ =\ 0;}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{float}\ VCF\_pivot\_grain;}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordtype}{void}\ Send\_LFO\_to\_VCF(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{int}\ LFO\_modulation\ =\ 0;}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{float}\ LFO\_index\ =\ 1.0;}
+\DoxyCodeLine{00113\ \ \ \ \ uint8\_t\ LFO\_periodic\ =\ 0;}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{float}\ LFO\_seconds\ =\ 1.0;}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{int}\ LFO\_index\_steps\ =\ 0;}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{float}\ LFO\_index\_grain\ =\ 0;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ check\ performance}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ monitor\_laps\ =\ 0;}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{int}\ check\ =\ 1000;}
+\DoxyCodeLine{00121\ \ \ \ \ elapsedMicros\ execution\_clock;}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ execution\_time;}
+\DoxyCodeLine{00123\ \ \ \ }
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordtype}{bool}\ warmup\_for\_play\_again\_flag\ =\ \textcolor{keyword}{false};\ \textcolor{comment}{//\ qundo\ si\ riceve\ Get\_ready\_to\_play\ ma\ il\ Player\ è\ !idle,\ il\ Player\ non\ puo'\ partire\ immediatamente}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{bool}\ restart\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordtype}{float}\ fast\_stop\_gain;}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{bool}\ main\_settings\_editing\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{bool}\ vibrato\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{bool}\ pitch\_tune\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{bool}\ pitch\_bend\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ uint8\_t\ mode\_player\_E;}
+\DoxyCodeLine{00133\ \ \ \ \ int16\_t\ *p\_Wavetable\_E;}
+\DoxyCodeLine{00134\ \ \ \ \ int16\_t\ *p\_Noclick\_E;}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{int}\ A\_Flash\_sample\_E;}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{int}\ B\_Flash\_sample\_E;}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{int}\ C\_Flash\_sample\_E;}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{int}\ B\_Flash\_sample\_5\_E;}
+\DoxyCodeLine{00139\ \ \ \ \ uint16\_t\ delta\_Noclick\_E;}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordtype}{bool}\ use\_Wavetable\_E;}
+\DoxyCodeLine{00141\ \ \ \ \ int32\_t\ Wavetable\_length\_E;}
+\DoxyCodeLine{00142\ \ \ \ \ int32\_t\ Flash\_first\_RAM\_sample\_E;}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_limit\_E;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_note;}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordtype}{float}\ velocity\_gain;\ \textcolor{comment}{//\ 0\ <=\ velocity\_gain\ <=\ 1.0}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_gain\_correction;}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_tune\ =\ 1.0;}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_limit;}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_bend\ =\ 1.0;}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{float}\ Attack\ =\ 0;}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{float}\ Decay\ =\ 0;}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordtype}{float}\ Sustain\ =\ 0;}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{float}\ Release\ =\ 0;}
+\DoxyCodeLine{00155\ \ \ \ \ uint8\_t\ ADSR\_phase;\ \textcolor{comment}{//\ 0:\ Attack,\ 1:\ Decay,\ 2:\ Sustain,\ 3:\ Release}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordtype}{float}\ ADSR\_point;\ \ \textcolor{comment}{//\ index,\ from\ 0.0\ to\ 10.0}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{float}\ ADSR\_point\_0;\ \textcolor{comment}{//\ last\ index,\ from\ 0.0\ to\ 10.0}}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{float}\ ADSR\_gain;}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{float}\ ADSR\_gain\_0;}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{float}\ J1;}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{float}\ J2;}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{float}\ DJ3\_4;\ \textcolor{comment}{//\ indexes\ of\ samples\ for\ ADSR\ filter}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{float}\ K\_Attack\_step;}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{float}\ K\_Dacay\_step;}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{float}\ K\_Sustain\_delta;}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{float}\ K\_Release\_step;}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordtype}{float}\ K\_Release\_delta;}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordtype}{bool}\ ADSR\_start\_release;}
+\DoxyCodeLine{00169\ \ \ \ \ uint8\_t\ Attack\_type;}
+\DoxyCodeLine{00170\ \ \ \ \ uint8\_t\ attack\_type\_wait\ =\ 0;}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordtype}{float}\ volume\_gain\ =\ 1.0;}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordtype}{float}\ K\_volume\_gain;\ \textcolor{comment}{//\ [Gain/sample]}}
+\DoxyCodeLine{00173\ \ \ \ \ uint32\_t\ JV0;}
+\DoxyCodeLine{00174\ \ \ \ \ int8\_t\ pan\_int;}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordtype}{float}\ pan\_gain\_L;}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{float}\ pan\_gain\_R;}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{float}\ K\_pan\_gain\_L,\ K\_pan\_gain\_R;}
+\DoxyCodeLine{00178\ \ \ \ \ uint32\_t\ JP0;}
+\DoxyCodeLine{00179\ \ \ \ \ uint32\_t\ K\_resolution\_step\ =\ 1;}
+\DoxyCodeLine{00180\ \ \ \ \ uint8\_t\ downsampling;}
+\DoxyCodeLine{00181\ \ \ \ \ int16\_t\ stored\_sample;}
+\DoxyCodeLine{00182\ \ \ \ \ uint8\_t\ sliding;}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{float}\ raw\_first\_value\_cache[AUDIO\_BLOCK\_SAMPLES];}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ uint8\_t\ mode\_player;}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordtype}{int}\ A\_Flash\_sample;}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordtype}{int}\ B\_Flash\_sample;}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{int}\ B\_Flash\_sample\_0;}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordtype}{int}\ C\_Flash\_sample;}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordtype}{int}\ B\_Flash\_sample\_5;}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordtype}{float}\ a\_sample;}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{float}\ b\_sample;}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{float}\ a\_first\_sample;}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{float}\ initial\_index\_offset;}
+\DoxyCodeLine{00195\ \ \ \ \ int16\_t\ *p\_Wavetable;}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordtype}{bool}\ use\_Wavetable\_old;}
+\DoxyCodeLine{00197\ \ \ \ \ int16\_t\ INT\_Wavetable\_B\_sample;}
+\DoxyCodeLine{00198\ \ \ \ \ int16\_t\ INT\_Wavetable\_C\_sample;}
+\DoxyCodeLine{00199\ \ \ \ \ int32\_t\ Wavetable\_length;}
+\DoxyCodeLine{00200\ \ \ \ \ int32\_t\ Flash\_first\_RAM\_sample;}
+\DoxyCodeLine{00201\ \ \ \ \ int16\_t\ *p\_Noclick;}
+\DoxyCodeLine{00202\ \ \ \ \ uint16\_t\ delta\_Noclick\ =\ 0;}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{int}\ file\_id\_wait;}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordtype}{float}\ volume\_gain\_wait;}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{int}\ session\_wait;}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{int}\ instrument\_wait;}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{int}\ id\_sound\_wait;}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordtype}{int}\ note\_wait;}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_note\_wait;\ \ \ \ \textcolor{comment}{//\ 0.5=half\ speed\ 1=original\ speed\ 2=double\ speed}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordtype}{float}\ velocity\_gain\_wait;\ \textcolor{comment}{//\ 0\ <=\ velocity\_gain\ <=\ 1.0}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_tune\_wait;}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_bend\_wait;}
+\DoxyCodeLine{00214\ \ \ \ \ uint8\_t\ mode\_player\_wait;}
+\DoxyCodeLine{00215\ \ \ \ \ int8\_t\ pan\_int\_wait;}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordtype}{float}\ pan\_gain\_L\_wait;}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordtype}{float}\ pan\_gain\_R\_wait;}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keywordtype}{int}\ A\_Flash\_sample\_wait;}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordtype}{int}\ B\_Flash\_sample\_wait;}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordtype}{int}\ C\_Flash\_sample\_wait;}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordtype}{int}\ B\_Flash\_sample\_5\_wait;}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordtype}{float}\ a\_first\_sample\_wait;}
+\DoxyCodeLine{00223\ \ \ \ \ int16\_t\ *p\_Wavetable\_wait;}
+\DoxyCodeLine{00224\ \ \ \ \ int16\_t\ *p\_Noclick\_wait;}
+\DoxyCodeLine{00225\ \ \ \ \ uint16\_t\ delta\_Noclick\_wait;}
+\DoxyCodeLine{00226\ \ \ \ \ int32\_t\ Wavetable\_length\_wait;}
+\DoxyCodeLine{00227\ \ \ \ \ int32\_t\ Flash\_first\_RAM\_sample\_wait;}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\_limit\_wait;}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordtype}{bool}\ use\_Wavetable\_wait;}
+\DoxyCodeLine{00230\ \ \ \ \ uint32\_t\ K\_resolution\_step\_wait\ =\ 1;}
+\DoxyCodeLine{00231\ \ \ \ \ uint8\_t\ downsampling\_wait;}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordtype}{bool}\ resolution\_flag\_wait\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{bool}\ downsampling\_flag\_wait\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{bool}\ volume\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{bool}\ volume\_gain\_warmup\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordtype}{bool}\ pan\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordtype}{bool}\ pan\_gain\_warmup\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{bool}\ set\_effects\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{bool}\ resolution\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordtype}{bool}\ downsampling\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00242\ \ \ \ \ }
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ DIRECT\_SAMPLIG}}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordtype}{int}\ recording;}
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keywordtype}{bool}\ recording\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordtype}{bool}\ stereo\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordtype}{int}\ packet\_delta\ =\ 0;}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordtype}{int}\ first\_packet\ =\ 0;}
+\DoxyCodeLine{00249\ \ \ \ \ }
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{comment}{//\ LIVE\_SAMPLING}}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordtype}{bool}\ LS\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00252\ \ \ \ \ int16\_t\ *FIFO;}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordtype}{int}\ FIFO\_dim;}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keywordtype}{bool}\ precedence\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordtype}{int}\ midi\_channel\ =\ 0;}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordtype}{int}\ local\_session\ =\ 0;}
+\DoxyCodeLine{00258\ \ \ \ \ uint8\_t\ instrument\ =\ 0;}
+\DoxyCodeLine{00259\ \ \ \ \ uint8\_t\ id\_sound\ =\ 0;}
+\DoxyCodeLine{00260\ \ \ \ \ uint8\_t\ note\ =\ 0;}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ time\_stamp\ =\ 0;}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keywordtype}{float}\ pitch\ =\ 0.0;}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{bool}\ use\_Wavetable\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//\ Player\ timing}}
+\DoxyCodeLine{00266\ \ \ \ \ uint16\_t\ update\_time;\ }
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordtype}{void}\ Read\_flash(int16\_t\ *destination,\ \textcolor{keywordtype}{int}\ first\_sample,\ \textcolor{keywordtype}{int}\ total\_samples);}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_pitch(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_volume\_gain(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_pan\_gain(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_ADSR\_parameters(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_ADSR\_gain(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keywordtype}{void}\ Start\_playing(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordtype}{void}\ Flash\_memory\_harvest(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keywordtype}{void}\ Wavetable\_harvest(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordtype}{float}\ Mirror(\textcolor{keywordtype}{float}\ pivot,\ \textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordtype}{void}\ Append\_transposed(int16\_t\ *\_target,\ uint16\_t\ first\_index,\ int16\_t\ *\_source,\ uint16\_t\ N);}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordtype}{void}\ Append(int16\_t\ *\_target,\ uint16\_t\ first\_index,\ int16\_t\ *\_source,\ uint16\_t\ N);}
+\DoxyCodeLine{00281\ \ \ \ \ int32\_t\ cache;}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_led\_flags(\textcolor{keywordtype}{int}\ track);}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00287\ \ \ \ \ \mbox{\hyperlink{class_audio_player}{AudioPlayer}}(\textcolor{keywordtype}{void})\ :\ AudioStream(0,\ NULL)}
+\DoxyCodeLine{00288\ \ \ \ \ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ begin();}
+\DoxyCodeLine{00290\ \ \ \ \ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keywordtype}{void}\ begin(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordtype}{int}\ State(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00295\ \ \ \ \ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ Settati\ alla\ creazione\ di\ ciascuna\ istanza}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_identity(uint8\_t\ value);}
+\DoxyCodeLine{00298\ \ \ \ \ \mbox{\hyperlink{class_audio_v_c_f}{AudioVCF}}*\ VCF\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00299\ \ \ \ \ \mbox{\hyperlink{class_wave_l_f_o}{WaveLFO}}*\ LFO\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00300\ \ \ \ \ \mbox{\hyperlink{class_stereo_live_sampler}{StereoLiveSampler}}*\ LiveSampler\_ptr\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ meglio\ static!}}
+\DoxyCodeLine{00301\ \ \ \ \ \mbox{\hyperlink{class_players_statistics}{PlayersStatistics}}*\ Players\_statistics\_ptr\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ meglio\ static!}}
+\DoxyCodeLine{00302\ \ \ \ \ \mbox{\hyperlink{class_loop_led_set}{LoopLedSet}}\ *LOOP\_led\_set\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{comment}{//\ Received\ when\ FIFO\ is\ created}}
+\DoxyCodeLine{00305\ \ \ \ \ int16\_t*\ LS\_buffer\_mono\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00306\ \ \ \ \ int16\_t*\ LS\_buffer\_L\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00307\ \ \ \ \ int16\_t*\ LS\_buffer\_R\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{comment}{//\ received\ before\ playing}}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keywordtype}{void}\ Connect\_VCF(\textcolor{keywordtype}{bool}\ use,\ \textcolor{keywordtype}{int}\ type,\ \textcolor{keywordtype}{float}\ pivot,\ \textcolor{keywordtype}{float}\ resonance,\ \textcolor{keywordtype}{bool}\ modulated);}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordtype}{void}\ Connect\_LFO\_TO\_VCF(uint8\_t\ modulation,\ \textcolor{keywordtype}{float}\ index,\ uint8\_t\ periodic,\ \textcolor{keywordtype}{float}\ frequency\_time);\ \textcolor{comment}{//\ used\ by\ Midi\_Reader}}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordtype}{void}\ Start\_VCF(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_VCF\_pivot(\textcolor{keywordtype}{float}\ new\_pivot);}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_LFO\_index(\textcolor{keywordtype}{float}\ new\_index);}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_VCF\_resonance(\textcolor{keywordtype}{float}\ resonance);}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordtype}{bool}\ isPlaying(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordtype}{bool}\ isPoweredOn(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_file(\textcolor{keywordtype}{int}\ file\_id\_in);}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_ADSR(\textcolor{keywordtype}{float}\ attack\_in,\ \textcolor{keywordtype}{float}\ decay\_in,\ \textcolor{keywordtype}{float}\ sustain\_in,\ \textcolor{keywordtype}{float}\ release\_in,\ uint8\_t\ attack\_type\_in);\ \textcolor{comment}{//\ set\ ADSR\ parameters.\ Times\ are\ in\ seconds.\ 0\ <=\ sustain\_value\ <=\ 1.0}}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_volume(\textcolor{keywordtype}{float}\ volume\_gain\_value);}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_volume(\textcolor{keywordtype}{float}\ volume\_gain\_value);}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_pan(\textcolor{keywordtype}{int}\ pan\_int\_value);\ \ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_effects(\textcolor{keywordtype}{float}\ resolution\_exp,\ uint8\_t\ downsampling\_in);}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_pitch(\textcolor{keywordtype}{float}\ pitch\_tune\_in);}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_note(\textcolor{keywordtype}{float}\ pitch\_note\_in);}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_pitch\_bend(\textcolor{keywordtype}{float}\ pitch\_bend\_in);}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{keywordtype}{void}\ Write\_loop\_track(\textcolor{keywordtype}{int}\ track);}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_pan(\textcolor{keywordtype}{float}\ pan\_int\_value);}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_vibrato\_pointers(\textcolor{keywordtype}{float}\ *p\_vibrato\_array\_in,\ uint8\_t\ *p\_vibrato\_array\_last\_element\_in);}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_vibrato\_flag(\textcolor{keywordtype}{bool}\ value);}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordtype}{void}\ Write\_update\_time(uint16\_t\ value);}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_mix\_samples(uint8\_t\ value);}
+\DoxyCodeLine{00335\ \ \ \ \ }
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00338\ \textcolor{comment}{\ \ \ \ Main\_settings}}
+\DoxyCodeLine{00339\ \textcolor{comment}{\ \ \ \ chiamata\ da\ PlayersManager}}
+\DoxyCodeLine{00340\ \textcolor{comment}{}}
+\DoxyCodeLine{00341\ \textcolor{comment}{\ \ \ \ Compiti:}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ \ \ -\/\ setta\ una\ serie\ di\ valori\ e\ flag,\ individuati\ col\ suffisso\ "{}wait"{},\ utilizzati\ alla\ successiva\ partenza/ripartenza\ del\ Player,\ comandata\ da\ update()}}
+\DoxyCodeLine{00343\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keywordtype}{void}\ Main\_settings(uint8\_t\ mode\_in,\ \textcolor{keywordtype}{int}\ A\_value\_in,\ \textcolor{keywordtype}{int}\ B\_value\_in,\ uint16\_t\ delta\_Noclick\_in,\ \textcolor{keywordtype}{bool}\ RAM\_mode\_in,\ int16\_t\ *p\_Noclick\_in,\ int16\_t\ *p\_Wavetable\_in);\ }
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ \ }
+\DoxyCodeLine{00347\ \ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00348\ \textcolor{comment}{\ \ \ \ Get\_ready\_to\_play}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ \ \ \ chiamata\ da\ PlayersManager}}
+\DoxyCodeLine{00350\ \textcolor{comment}{}}
+\DoxyCodeLine{00351\ \textcolor{comment}{\ \ \ \ Compiti:}}
+\DoxyCodeLine{00352\ \textcolor{comment}{\ \ \ \ -\/\ setta\ una\ serie\ di\ valori\ e\ flag,\ individuati\ col\ suffisso\ "{}wait"{},\ utilizzati\ alla\ successiva\ partenza/ripartenza\ del\ Player,\ comandata\ da\ update()}}
+\DoxyCodeLine{00353\ \textcolor{comment}{\ \ \ \ */}\ \ \ }
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keywordtype}{void}\ Get\_ready\_to\_play(\textcolor{keywordtype}{float}\ pitch\_note\_in,\ \textcolor{keywordtype}{float}\ velocity\_in,\ \textcolor{keywordtype}{int}\ session\_in,\ uint8\_t\ instrument\_in,\ uint8\_t\ id\_sound\_in,\ uint8\_t\ note\_in);\ \textcolor{comment}{//\ chiamata\ da\ Playermanager\ per\ suonare}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ \ \ Main\_settings\_editing}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ \ \ chiamata\ da\ PlayersManager}}
+\DoxyCodeLine{00359\ \textcolor{comment}{}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ \ \ Compiti:}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ \ \ -\/\ setta\ una\ serie\ di\ valori\ e\ flag,\ individuati\ col\ suffisso\ "{}E"{},\ utilizzati\ al\ successivo\ update()}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ \ \ */}\ \ \ \ \ \ \ }
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keywordtype}{void}\ Main\_settings\_editing(uint8\_t\ mode\_in,\ \textcolor{keywordtype}{int}\ A\_value\_in,\ \textcolor{keywordtype}{int}\ B\_value\_in,\ uint16\_t\ delta\_Noclick\_in,\ \textcolor{keywordtype}{bool}\ RAM\_mode\_in,\ int16\_t\ *p\_Noclick\_in,\ int16\_t\ *p\_Wavetable\_in);}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keywordtype}{void}\ Release\_note(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ release\ note,\ fires\ ADSR\ "{}release"{}}}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{keywordtype}{void}\ Fast\_stop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00366\ \ \ \ \ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordtype}{float}\ Read\_pitch(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_loop\_track(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_update\_time(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keywordtype}{bool}\ Read\_precedence(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_session\_wait(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_local\_session(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_midi\_channel(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_instrument(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_id\_sound(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_note(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ Read\_time\_stamp(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_use\_Wavetable(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \ \textcolor{keywordtype}{void}\ Write\_midi\_channel(\textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordtype}{void}\ Write\_precedence(\textcolor{keywordtype}{bool}\ value);}
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{keywordtype}{void}\ Write\_time\_stamp(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ value);}
+\DoxyCodeLine{00383\ \};}
+
+\end{DoxyCode}

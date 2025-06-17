@@ -1,0 +1,37 @@
+\doxysection{Lilla\+Clock.\+h}
+\hypertarget{_lilla_clock_8h_source}{}\label{_lilla_clock_8h_source}\index{code3\_1\_0\_M\_github/include/LillaClock.h@{code3\_1\_0\_M\_github/include/LillaClock.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}MidiReader.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}FilterBiquadManager.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}DelayManager.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_lilla_clock}{LillaClock}}\ :\ \textcolor{keyword}{public}\ AudioStream}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keywordtype}{bool}\ stop\_flag\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00021\ \ \ \ \ \mbox{\hyperlink{class_lilla_clock}{LillaClock}}(\textcolor{keywordtype}{void})\ :\ AudioStream(0,\ NULL)\ \{\}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ uint8\_t\ identity;}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{class_midi_reader}{MidiReader}}\ *Midi\_reader\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00025\ \ \ \ \ \mbox{\hyperlink{class_filter_biquad_manager}{FilterBiquadManager}}\ *Filter\_Biquad\_Manager\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00026\ \ \ \ \ \mbox{\hyperlink{class_delay_manager}{DelayManager}}\ *Delay\_Manager\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{void}\ Start(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{void}\ Stop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00031\ \};}
+
+\end{DoxyCode}

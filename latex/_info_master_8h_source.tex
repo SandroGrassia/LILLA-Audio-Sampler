@@ -1,0 +1,54 @@
+\doxysection{Info\+Master.\+h}
+\hypertarget{_info_master_8h_source}{}\label{_info_master_8h_source}\index{code3\_1\_0\_M\_github/include/InfoMaster.h@{code3\_1\_0\_M\_github/include/InfoMaster.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <SerialFlash.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}LillaSerialFlash.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}SharedElements.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}SharedLS.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}SharedVFS.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}StereoLiveSampler.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_info_master}{InfoMaster}}}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \textcolor{keyword}{private}:\ }
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ WAVE\_WIDTH\_F\ =\ 310;}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ BASKET\_INFO\ =\ 500;\ \textcolor{comment}{//\ samples\_basket[]\ dimension}}
+\DoxyCodeLine{00022\ \ \ \ \ int16\_t\ samples\_basket[BASKET\_INFO];}
+\DoxyCodeLine{00023\ \ \ \ \ int16\_t\ samples\_620\_array[2\ *\ WAVE\_WIDTH];\ \textcolor{comment}{//\ for\ each\ of\ the\ 128\ columns\ of\ display,\ the\ method\ gives\ the\ max\ positive\ value\ and\ the\ min\ negative\ value.}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{comment}{//\ Live\ Sampling}}
+\DoxyCodeLine{00026\ \ \ \ \ int16\_t*\ FIFO;}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keywordtype}{int}\ FIFO\_dim;}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{bool}\ LS\_antiflicker\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{int}\ last\_A\_window\_sample;}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{int}\ last\_samples\_per\_line;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{void}\ Read\_samples(\textcolor{keywordtype}{int}\ file\_id,\ int16\_t\ *destination,\ \textcolor{keywordtype}{int}\ seek\_in,\ \textcolor{keywordtype}{int}\ samples\_in);\ \textcolor{comment}{//\ samples\_in\ <=\ BASKET\_INFO}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00035\ \ \ \ \ \mbox{\hyperlink{class_info_master}{InfoMaster}}\ (\textcolor{keywordtype}{void})\ \{\}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \mbox{\hyperlink{class_stereo_live_sampler}{StereoLiveSampler}}*\ LiveSampler\_ptr\ =\ \textcolor{keyword}{nullptr};\ \ \textcolor{comment}{//\ Info.\_LiveSampler\ =\ \&LiveSampler;}}
+\DoxyCodeLine{00038\ \ \ \ \ int16\_t*\ LS\_buffer\_mono\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00039\ \ \ \ \ int16\_t*\ LS\_buffer\_L\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00040\ \ \ \ \ int16\_t*\ LS\_buffer\_R\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{comment}{//\ Samples\ in\ mono\ recording\ or\ in\ Left\ channel's\ recording}}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{int}\ DS\_recording\_samples(\textcolor{keywordtype}{int}\ recording);}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{int}\ Raw\_file\_samples(\textcolor{keywordtype}{int}\ file\_id);}
+\DoxyCodeLine{00045\ \ \ \ \ int16\_t*\ Sound\_620\_samples\_array(\textcolor{keywordtype}{int}\ file\_id,\ uint32\_t\ A,\ uint32\_t\ B);}
+\DoxyCodeLine{00046\ \ \ \ \ int16\_t*\ LS\_620\_samples\_array(\textcolor{keywordtype}{int}\ file\_id,\ \textcolor{keywordtype}{int}\ A\_window\_sample,\ \textcolor{keywordtype}{int}\ B\_window\_sample);}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_restart\_antiflicker(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ chiamata\ da\ main.cpp\ quando\ si\ sceglie\ LS\_XY\_lock\ o\ quando\ con\ LS\_XY\_lock\ si\ modifica\ LS\_A\_window,\ o\ LS\_window\_width,\ o\ si\ }}
+\DoxyCodeLine{00048\ \};}
+
+\end{DoxyCode}

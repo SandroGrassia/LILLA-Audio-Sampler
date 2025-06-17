@@ -1,0 +1,47 @@
+\doxysection{Loop\+Metronomo.\+h}
+\hypertarget{_loop_metronomo_8h_source}{}\label{_loop_metronomo_8h_source}\index{code3\_1\_0\_M\_github/include/LoopMetronomo.h@{code3\_1\_0\_M\_github/include/LoopMetronomo.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}SharedLoop.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}ElementiGrafici.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}DisplayManager.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <SPI.h>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_loop_metronomo}{LoopMetronomo}}}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Metro\_LED\_Y\ =\ 64;\ \textcolor{comment}{//\ Y-\/PIXEL\ primo\ led\ Metronomo}}
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Metro\_LED\_X\ =\ 70;\ \textcolor{comment}{//\ X-\/PIXEL\ primo\ led\ Metronomo}}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keywordtype}{int}\ beat;}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keywordtype}{int}\ metro\_delta\_ms[LOOP\_metro\_leds];\ \textcolor{comment}{//\ delta\_t\ in\ ms\ tra\ i\ passi\ del\ metronomo}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{comment}{//\ riferimenti\ esterni}}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{class_display_manager}{DisplayManager}}\ \&Display;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ \ \ \ \ \mbox{\hyperlink{class_loop_metronomo}{LoopMetronomo}}(\mbox{\hyperlink{class_display_manager}{DisplayManager}}\ \&Display)\ :\ Display(Display)\ \{\}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{comment}{//\ riferimento\ esterno}}
+\DoxyCodeLine{00030\ \ \ \ \ Adafruit\_ILI9341\ *tft\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{void}\ Update(\textcolor{keywordtype}{bool}\ with\_led\ =\ \textcolor{keyword}{true});\ \textcolor{comment}{//\ avanza\ il\ metronomo\ e\ i\ led}}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{void}\ Setup(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ LOOP\_time);}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{void}\ Leds\_off(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ spegne\ tutti\ i\ led}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{void}\ Led\_ON(\textcolor{keywordtype}{int}\ led);\ \textcolor{comment}{//\ accende\ il\ led\ e\ assegna\ beat}}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_beat(\textcolor{keywordtype}{int}\ value);\ \textcolor{comment}{//\ assegna\ il\ beat\ attuale}}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_beat(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ legge\ il\ beat\ attuale\ \ }}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_metro\_delta\_ms(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ delta\_t\ per\ il\ prossimo\ beat}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ metro\_time;\ \textcolor{comment}{//\ (ms)\ istante\ di\ esecuzione\ del\ prossimo\ evento\ da\ eseguire\ rispetto\ a\ LOOP\_Clock}}
+\DoxyCodeLine{00041\ \};}
+
+\end{DoxyCode}

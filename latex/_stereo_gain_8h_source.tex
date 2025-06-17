@@ -1,0 +1,53 @@
+\doxysection{Stereo\+Gain.\+h}
+\hypertarget{_stereo_gain_8h_source}{}\label{_stereo_gain_8h_source}\index{code3\_1\_0\_M\_github/include/StereoGain.h@{code3\_1\_0\_M\_github/include/StereoGain.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*\ \ questa\ classe\ utilizza\ receiveWritable\ quindi\ gli\ oggetti\ in\ ingresso}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ \ NON\ DOVREBBERO\ avere\ altri\ collegamenti}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <utility/dspinst.h>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}SharedElements.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}Functions.h"{}}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_stereo_gain}{StereoGain}}\ :\ \textcolor{keyword}{public}\ AudioStream}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keywordtype}{void}\ UPDATE\_gain(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00024\ \ \ \ \ }
+\DoxyCodeLine{00025\ \ \ \ \ audio\_block\_t\ *inputQueueArray[2]\ =\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00026\ \ \ \ \ audio\_block\_t\ *out\_block\_L\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00027\ \ \ \ \ audio\_block\_t\ *out\_block\_R\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_L\ =\ 0;}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_R\ =\ 0;}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_delta\_L\ =\ 0;}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_delta\_R\ =\ 0;}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{bool}\ gain\_flag\_L\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{bool}\ gain\_flag\_R\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{int}\ gain\_step\_L\ =\ 0;}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{int}\ gain\_step\_R\ =\ 0;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ int32\_t\ cache;\ \ \ \ }
+\DoxyCodeLine{00039\ \ \ \ \ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00041\ \ \ \ \ \mbox{\hyperlink{class_stereo_gain}{StereoGain}}(\textcolor{keywordtype}{void})\ :\ AudioStream(2,\ inputQueueArray)\ \{\}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_gain(\textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_gain\_L(\textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_gain\_R(\textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00047\ \};}
+
+\end{DoxyCode}

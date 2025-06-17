@@ -1,0 +1,125 @@
+\doxysection{Eeprom\+Manager Class Reference}
+\hypertarget{class_eeprom_manager}{}\label{class_eeprom_manager}\index{EepromManager@{EepromManager}}
+
+
+Collaboration diagram for Eeprom\+Manager\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=235pt]{class_eeprom_manager__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{struct_eeprom_manager_1_1_e_e_p_r_o_m___instrument__filter__data__struct}{EEPROM\+\_\+\+Instrument\+\_\+filter\+\_\+data\+\_\+struct}}
+\item 
+struct \mbox{\hyperlink{struct_eeprom_manager_1_1_e_e_p_r_o_m___instrument__struct}{EEPROM\+\_\+\+Instrument\+\_\+struct}}
+\item 
+struct \mbox{\hyperlink{struct_eeprom_manager_1_1_e_e_p_r_o_m___session__struct}{EEPROM\+\_\+\+Session\+\_\+struct}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_eeprom_manager_ab90f54fb5b1a850b638d66385f5c6c7a}\label{class_eeprom_manager_ab90f54fb5b1a850b638d66385f5c6c7a} 
+void {\bfseries Save\+\_\+\+CC\+\_\+lowpass\+\_\+filter} (uint8\+\_\+t CC\+\_\+lowpass\+\_\+filter)
+\item 
+\Hypertarget{class_eeprom_manager_a75198d2fd96600aec669b88d8acb70a3}\label{class_eeprom_manager_a75198d2fd96600aec669b88d8acb70a3} 
+void {\bfseries Read\+\_\+\+CC\+\_\+lowpass\+\_\+filter} (uint8\+\_\+t \&CC\+\_\+lowpass\+\_\+filter)
+\item 
+\Hypertarget{class_eeprom_manager_aba56942536d4420f031398724780d486}\label{class_eeprom_manager_aba56942536d4420f031398724780d486} 
+void {\bfseries Save\+\_\+optimization} (uint8\+\_\+t optimization)
+\item 
+\Hypertarget{class_eeprom_manager_a58eaab37b565625b40001ad408e4c3ef}\label{class_eeprom_manager_a58eaab37b565625b40001ad408e4c3ef} 
+void {\bfseries Read\+\_\+optimization} (uint8\+\_\+t \&optimization)
+\item 
+\Hypertarget{class_eeprom_manager_ac56c81360fe0e93a821e035c4bf7b9fa}\label{class_eeprom_manager_ac56c81360fe0e93a821e035c4bf7b9fa} 
+void {\bfseries Save\+\_\+\+CC\+\_\+\+Sound\+\_\+gain} (uint8\+\_\+t instrument, uint8\+\_\+t CC\+\_\+\+Sg\+\_\+instrument)
+\item 
+\Hypertarget{class_eeprom_manager_ae81337dd6106100ffc2bfa72ed5c78fa}\label{class_eeprom_manager_ae81337dd6106100ffc2bfa72ed5c78fa} 
+void {\bfseries Read\+\_\+\+CC\+\_\+\+Sound\+\_\+gain} (uint8\+\_\+t instrument, uint8\+\_\+t \&CC\+\_\+\+Sg\+\_\+instrument)
+\item 
+\Hypertarget{class_eeprom_manager_a04b5eb1e4c97d1049668492e2b827dc6}\label{class_eeprom_manager_a04b5eb1e4c97d1049668492e2b827dc6} 
+void {\bfseries Copy\+\_\+session\+\_\+\+Delay\+\_\+data\+\_\+from\+\_\+\+Eeprom\+\_\+to\+\_\+\+Ram} (\mbox{\hyperlink{struct_delay__data__struct}{Delay\+\_\+data\+\_\+struct}} \&Delay\+\_\+data)
+\item 
+\Hypertarget{class_eeprom_manager_af4e5e8a304dd4f720dbe95a61b7b82ea}\label{class_eeprom_manager_af4e5e8a304dd4f720dbe95a61b7b82ea} 
+void {\bfseries Save\+\_\+\+Delay\+\_\+to\+\_\+\+Eeprom} (\mbox{\hyperlink{struct_delay__data__struct}{Delay\+\_\+data\+\_\+struct}} Delay\+\_\+data)
+\item 
+\Hypertarget{class_eeprom_manager_afb6d3eae244a0345f4febdc7768d7932}\label{class_eeprom_manager_afb6d3eae244a0345f4febdc7768d7932} 
+void {\bfseries Read\+\_\+first\+\_\+octave} (int8\+\_\+t \&first\+\_\+octave)
+\item 
+\Hypertarget{class_eeprom_manager_af8632b511768c0ced71d326fba714658}\label{class_eeprom_manager_af8632b511768c0ced71d326fba714658} 
+void {\bfseries Save\+\_\+first\+\_\+octave} (int8\+\_\+t first\+\_\+octave)
+\item 
+\Hypertarget{class_eeprom_manager_a3901e517bb5b23d329c533d24e1ac937}\label{class_eeprom_manager_a3901e517bb5b23d329c533d24e1ac937} 
+void {\bfseries Save\+\_\+\+Sound} (uint8\+\_\+t id\+\_\+sound)
+\item 
+\Hypertarget{class_eeprom_manager_a9e9717ae8bfe0cf571cb2533f299d229}\label{class_eeprom_manager_a9e9717ae8bfe0cf571cb2533f299d229} 
+void {\bfseries Read\+\_\+\+Sound} (uint8\+\_\+t id\+\_\+sound, \mbox{\hyperlink{struct_sound__struct}{Sound\+\_\+struct}} \&Sound\+\_\+id\+\_\+sound)
+\item 
+\Hypertarget{class_eeprom_manager_a49465c9332ee8f102748669c6f6943ff}\label{class_eeprom_manager_a49465c9332ee8f102748669c6f6943ff} 
+void {\bfseries Save\+\_\+\+Session} (uint8\+\_\+t session, \mbox{\hyperlink{struct_session__struct}{Session\+\_\+struct}} Session\+\_\+session)
+\item 
+\Hypertarget{class_eeprom_manager_a292a7d25a770e22fd278baf47a050795}\label{class_eeprom_manager_a292a7d25a770e22fd278baf47a050795} 
+void {\bfseries Read\+\_\+\+Session} (uint8\+\_\+t session)
+\item 
+\Hypertarget{class_eeprom_manager_a6b42f3e180775bfdcd64632ed06a544c}\label{class_eeprom_manager_a6b42f3e180775bfdcd64632ed06a544c} 
+void {\bfseries Save\+\_\+\+DS\+\_\+\+Recording} (int recording)
+\item 
+\Hypertarget{class_eeprom_manager_a45f07a7f6c836c6a280d5797e9e0ef4b}\label{class_eeprom_manager_a45f07a7f6c836c6a280d5797e9e0ef4b} 
+void {\bfseries Save\+\_\+\+DS\+\_\+\+Recording} (const int \&recording, const \mbox{\hyperlink{struct_e_e_p_r_o_m___v_f_s___recording}{EEPROM\+\_\+\+VFS\+\_\+\+Recording}} \&EEPROM\+\_\+\+Rec\+\_\+recording)
+\item 
+\Hypertarget{class_eeprom_manager_a04137f3c05e4926250becc7eb728e84f}\label{class_eeprom_manager_a04137f3c05e4926250becc7eb728e84f} 
+void {\bfseries Read\+\_\+\+DS\+\_\+\+Recording} (const int \&recording, \mbox{\hyperlink{struct_e_e_p_r_o_m___v_f_s___recording}{EEPROM\+\_\+\+VFS\+\_\+\+Recording}} \&EEPROM\+\_\+\+Rec\+\_\+recording)
+\item 
+\Hypertarget{class_eeprom_manager_aeeb2d7c56864fe8901c9a50d81f8b00b}\label{class_eeprom_manager_aeeb2d7c56864fe8901c9a50d81f8b00b} 
+void {\bfseries Save\+\_\+setup\+\_\+file} (File \&file)
+\item 
+\Hypertarget{class_eeprom_manager_ab8c2db98bb61330e0d5239a7ef601491}\label{class_eeprom_manager_ab8c2db98bb61330e0d5239a7ef601491} 
+void {\bfseries Copy\+\_\+setup\+\_\+from\+\_\+\+Eeprom\+\_\+to\+\_\+\+SD} (File \&file)
+\item 
+\Hypertarget{class_eeprom_manager_ab72bbd44ead5793caec246912ea273d5}\label{class_eeprom_manager_ab72bbd44ead5793caec246912ea273d5} 
+void {\bfseries Reset\+\_\+\+EEPROM} (void)
+\item 
+\Hypertarget{class_eeprom_manager_a97541faf79a9790fa499ef2886f7752f}\label{class_eeprom_manager_a97541faf79a9790fa499ef2886f7752f} 
+void {\bfseries Print\+\_\+\+EEPROM\+\_\+content} (void)
+\item 
+\Hypertarget{class_eeprom_manager_a0b19a6d681afc537ce4075e8164cea29}\label{class_eeprom_manager_a0b19a6d681afc537ce4075e8164cea29} 
+String {\bfseries Filename\+\_\+session\+\_\+delay} (int session)
+\item 
+\Hypertarget{class_eeprom_manager_af80dfcc725a8ba296336626ea66e34e7}\label{class_eeprom_manager_af80dfcc725a8ba296336626ea66e34e7} 
+void {\bfseries Copy\+\_\+session\+\_\+\+Delay\+\_\+data\+\_\+from\+\_\+\+Eeprom\+\_\+to\+\_\+\+SD} (int session)
+\item 
+\Hypertarget{class_eeprom_manager_a1dba2fb174ed9fb06269d157605a950a}\label{class_eeprom_manager_a1dba2fb174ed9fb06269d157605a950a} 
+void {\bfseries Copy\+\_\+session\+\_\+\+Delay\+\_\+data\+\_\+from\+\_\+\+RAM\+\_\+to\+\_\+\+SD} (int session)
+\item 
+\Hypertarget{class_eeprom_manager_aa25c78ecb983246762e41408600df9ab}\label{class_eeprom_manager_aa25c78ecb983246762e41408600df9ab} 
+bool {\bfseries Copy\+\_\+session\+\_\+\+Delay\+\_\+data\+\_\+from\+\_\+\+SD\+\_\+to\+\_\+\+Eeprom} (int session)
+\item 
+\Hypertarget{class_eeprom_manager_ac81627b86026b64418aa0966ac57ff32}\label{class_eeprom_manager_ac81627b86026b64418aa0966ac57ff32} 
+void {\bfseries Print\+\_\+\+Delay\+\_\+file\+\_\+\+SD} (int session)
+\item 
+\Hypertarget{class_eeprom_manager_a1f4e2884ac1399a992b70992783f3289}\label{class_eeprom_manager_a1f4e2884ac1399a992b70992783f3289} 
+void {\bfseries Delete\+\_\+\+Delay\+\_\+data\+\_\+in\+\_\+\+SD} (int session)
+\item 
+\Hypertarget{class_eeprom_manager_addebc705a8b7000acaf4c20a6c8f611e}\label{class_eeprom_manager_addebc705a8b7000acaf4c20a6c8f611e} 
+struct \mbox{\hyperlink{struct_eeprom_manager_1_1_e_e_p_r_o_m___session__struct}{Eeprom\+Manager\+::\+EEPROM\+\_\+\+Session\+\_\+struct}} {\bfseries \+\_\+\+\_\+attribute\+\_\+\+\_\+} ((\+\_\+\+\_\+packed\+\_\+\+\_\+))
+\item 
+\Hypertarget{class_eeprom_manager_a31d6e15fdb4ade56b41499db76a268b3}\label{class_eeprom_manager_a31d6e15fdb4ade56b41499db76a268b3} 
+int {\bfseries GET\+\_\+location\+\_\+of\+\_\+\+DS\+\_\+\+Recording} (const int \&recording)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_eeprom_manager_af74867dcc231fab475685d556fb3bb5e}\label{class_eeprom_manager_af74867dcc231fab475685d556fb3bb5e} 
+\mbox{\hyperlink{struct_eeprom_manager_1_1_e_e_p_r_o_m___session__struct}{EEPROM\+\_\+\+Session\+\_\+struct}} {\bfseries EEPROM\+\_\+\+Session}
+\item 
+\Hypertarget{class_eeprom_manager_a5df3b36374e2a00e0ed0e5be623e975f}\label{class_eeprom_manager_a5df3b36374e2a00e0ed0e5be623e975f} 
+const uint8\+\_\+t {\bfseries size\+\_\+of\+\_\+\+EEPROM\+\_\+\+Session} = sizeof(EEPROM\+\_\+\+Session)
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+code3\+\_\+1\+\_\+0\+\_\+\+M\+\_\+github/include/Eeprom\+Manager.\+h\item 
+code3\+\_\+1\+\_\+0\+\_\+\+M\+\_\+github/src/Eeprom\+Manager.\+cpp\end{DoxyCompactItemize}

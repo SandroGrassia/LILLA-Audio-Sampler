@@ -1,0 +1,31 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,335,102,361"/>
+<area shape="rect" id="Node000001" href="$class_ampli_out_mute_in.html" title=" " alt="" coords="159,5,274,32"/>
+<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="53,319,59,262,74,188,86,149,102,111,122,75,148,42,163,30,167,35,152,46,127,78,107,113,91,151,79,189,64,262,58,319"/>
+<area shape="rect" id="Node000002" href="$class_audio_feedback.html" title=" " alt="" coords="161,56,272,83"/>
+<area shape="poly" id="edge2_Node000000_Node000002" title=" " alt="" coords="55,319,64,271,80,210,107,148,126,119,148,93,164,81,167,85,151,97,130,122,112,151,85,212,69,272,61,320"/>
+<area shape="rect" id="Node000003" href="$class_audio_gain.html" title=" " alt="" coords="176,107,258,133"/>
+<area shape="poly" id="edge3_Node000000_Node000003" title=" " alt="" coords="58,319,69,280,87,233,113,185,148,143,174,127,177,132,151,147,118,188,92,235,75,282,64,320"/>
+<area shape="rect" id="Node000004" href="$class_audio_multiplier.html" title=" " alt="" coords="164,157,270,184"/>
+<area shape="poly" id="edge4_Node000000_Node000004" title=" " alt="" coords="63,319,95,257,119,223,148,194,167,182,170,187,151,198,123,227,100,259,68,321"/>
+<area shape="rect" id="Node000005" href="$class_audio_peak_detector.html" title=" " alt="" coords="150,208,284,235"/>
+<area shape="poly" id="edge5_Node000000_Node000005" title=" " alt="" coords="71,321,105,282,148,244,170,233,172,238,151,249,108,286,75,324"/>
+<area shape="rect" id="Node000006" href="$class_audio_player.html" title=" " alt="" coords="171,259,262,285"/>
+<area shape="poly" id="edge6_Node000000_Node000006" title=" " alt="" coords="91,324,149,295,176,283,178,288,151,300,93,329"/>
+<area shape="rect" id="Node000007" href="$class_lilla_clock.html" title=" " alt="" coords="178,309,256,336"/>
+<area shape="poly" id="edge7_Node000000_Node000007" title=" " alt="" coords="117,336,177,326,178,331,118,341"/>
+<area shape="rect" id="Node000008" href="$class_mixer__2x1.html" title=" " alt="" coords="176,360,258,387"/>
+<area shape="poly" id="edge8_Node000000_Node000008" title=" " alt="" coords="117,355,176,364,175,370,116,360"/>
+<area shape="rect" id="Node000009" href="$class_router__16x3.html" title=" " alt="" coords="169,411,264,437"/>
+<area shape="poly" id="edge9_Node000000_Node000009" title=" " alt="" coords="93,367,151,396,178,408,176,413,149,401,91,372"/>
+<area shape="rect" id="Node000010" href="$class_stereo_delay.html" title=" " alt="" coords="170,461,264,488"/>
+<area shape="poly" id="edge10_Node000000_Node000010" title=" " alt="" coords="75,372,108,410,151,447,172,458,170,463,148,452,105,414,71,375"/>
+<area shape="rect" id="Node000011" href="$class_stereo_gain.html" title=" " alt="" coords="174,512,260,539"/>
+<area shape="poly" id="edge11_Node000000_Node000011" title=" " alt="" coords="68,375,100,437,123,469,151,498,175,511,172,516,148,502,119,473,95,439,63,377"/>
+<area shape="rect" id="Node000012" href="$class_stereo_live_sampler.html" title=" " alt="" coords="151,563,282,589"/>
+<area shape="poly" id="edge12_Node000000_Node000012" title=" " alt="" coords="64,376,75,414,92,461,118,508,151,549,168,560,165,564,148,553,113,511,87,463,69,416,58,377"/>
+<area shape="rect" id="Node000013" href="$class_stereo_sampler.html" title=" " alt="" coords="163,613,270,640"/>
+<area shape="poly" id="edge13_Node000000_Node000013" title=" " alt="" coords="61,376,69,424,85,484,112,545,130,574,151,599,167,611,164,615,148,603,126,577,107,548,80,486,64,425,55,377"/>
+<area shape="rect" id="Node000014" href="$class_wave_sine.html" title=" " alt="" coords="177,664,257,691"/>
+<area shape="poly" id="edge14_Node000000_Node000014" title=" " alt="" coords="58,377,64,434,79,507,91,545,107,583,127,618,151,650,178,666,175,671,148,654,122,621,102,585,86,547,74,508,59,434,53,377"/>
+</map>

@@ -1,0 +1,90 @@
+\doxysection{Ampli\+Out\+Mute\+In.\+h}
+\hypertarget{_ampli_out_mute_in_8h_source}{}\label{_ampli_out_mute_in_8h_source}\index{code3\_1\_0\_M\_github/include/AmpliOutMuteIn.h@{code3\_1\_0\_M\_github/include/AmpliOutMuteIn.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ Audio\ Library\ for\ Teensy\ 3.X}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2014,\ Paul\ Stoffregen,\ paul@pjrc.com}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ Development\ of\ this\ audio\ library\ was\ funded\ by\ PJRC.COM,\ LLC\ by\ sales\ of}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ Teensy\ and\ Audio\ Adaptor\ boards.\ \ Please\ support\ PJRC's\ efforts\ to\ develop}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ open\ source\ software\ by\ purchasing\ Teensy\ or\ other\ PJRC\ products.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ Permission\ is\ hereby\ granted,\ free\ of\ charge,\ to\ any\ person\ obtaining\ a\ copy}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ of\ this\ software\ and\ associated\ documentation\ files\ (the\ "{}Software"{}),\ to\ deal}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ in\ the\ Software\ without\ restriction,\ including\ without\ limitation\ the\ rights}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ to\ use,\ copy,\ modify,\ merge,\ publish,\ distribute,\ sublicense,\ and/or\ sell}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ copies\ of\ the\ Software,\ and\ to\ permit\ persons\ to\ whom\ the\ Software\ is}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ furnished\ to\ do\ so,\ subject\ to\ the\ following\ conditions:}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ The\ above\ copyright\ notice,\ development\ funding\ notice,\ and\ this\ permission}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ notice\ shall\ be\ included\ in\ all\ copies\ or\ substantial\ portions\ of\ the\ Software.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ THE\ SOFTWARE\ IS\ PROVIDED\ "{}AS\ IS"{},\ WITHOUT\ WARRANTY\ OF\ ANY\ KIND,\ EXPRESS\ OR}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ IMPLIED,\ INCLUDING\ BUT\ NOT\ LIMITED\ TO\ THE\ WARRANTIES\ OF\ MERCHANTABILITY,}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ AND\ NONINFRINGEMENT.\ IN\ NO\ EVENT\ SHALL\ THE}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ AUTHORS\ OR\ COPYRIGHT\ HOLDERS\ BE\ LIABLE\ FOR\ ANY\ CLAIM,\ DAMAGES\ OR\ OTHER}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ LIABILITY,\ WHETHER\ IN\ AN\ ACTION\ OF\ CONTRACT,\ TORT\ OR\ OTHERWISE,\ ARISING\ FROM,}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ OUT\ OF\ OR\ IN\ CONNECTION\ WITH\ THE\ SOFTWARE\ OR\ THE\ USE\ OR\ OTHER\ DEALINGS\ IN}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ THE\ SOFTWARE.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ Lilla\_AmpliOut\_MuteIn\ offers:}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ -\/\ smooth\ output\ gain\ change}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ -\/\ smooth\ Mute/unmute\ inputs}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ -\/\ smooth\ inputs\ gain\ change}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <utility/dspinst.h>}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \#define\ SAMPLES\_VOLUME\ 1000\ //\ deve\ essere\ pari}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_ampli_out_mute_in}{AmpliOutMuteIn}}\ :\ \textcolor{keyword}{public}\ AudioStream}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ MULTI\_UNITYGAIN\ =\ 65536;}
+\DoxyCodeLine{00049\ \ \ \ \ audio\_block\_t\ *inputQueueArray[4]\ =\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00050\ \ \ \ \ int32\_t\ multiplier[4]\ =\ \{MULTI\_UNITYGAIN\};}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{bool}\ gain\_flag[4]\ =\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_runtime[4]\ =\ \{1.0\};}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_runtime\_mem[4]\ =\ \{0\};}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_delta[4]\ =\ \{0\};}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{int}\ gain\_step[4]\ =\ \{0\};}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{int}\ gain\_samples[4]\ =\ \{0\};}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordtype}{bool}\ muted[4]\ =\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ int32\_t\ multiplier\_out\ =\ MULTI\_UNITYGAIN;}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{bool}\ gain\_flag\_out\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_runtime\_out\ =\ 1.0;}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{float}\ gain\_delta\_out\ =\ 0;}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{int}\ gain\_step\_out\ =\ 0;}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{int}\ gain\_samples\_out\ =\ 0;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ int32\_t\ mult\_1\ =\ 0;}
+\DoxyCodeLine{00067\ \ \ \ \ int32\_t\ mult\_2\ =\ 0;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{void}\ Apply\_gain(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ channel,\ int16\_t\ *data,\ \textcolor{keyword}{const}\ int32\_t\ \ mult);}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{void}\ Apply\_gain\_then\_add(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ channel,\ int16\_t\ *data,\ \textcolor{keyword}{const}\ int16\_t\ *in,\ \textcolor{keyword}{const}\ int32\_t\ \ mult);}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{void}\ Get\_mults();}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ Get\_mults(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ channel);}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{void}\ Apply\_gain(int16\_t\ *data,\ \textcolor{keyword}{const}\ int32\_t\ \ mult);}
+\DoxyCodeLine{00074\ \ \ \ \ }
+\DoxyCodeLine{00075\ \ \ \ \ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{class_ampli_out_mute_in}{AmpliOutMuteIn}}(\textcolor{keywordtype}{void})\ :\ AudioStream(4,\ inputQueueArray)\ \{\}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{void}\ gain(\textcolor{keywordtype}{int}\ channel,\ \textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{void}\ gain(\textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{void}\ Mute(\textcolor{keywordtype}{int}\ channel);}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordtype}{void}\ unmute(\textcolor{keywordtype}{int}\ channel);}
+\DoxyCodeLine{00084\ \};}
+
+\end{DoxyCode}

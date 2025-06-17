@@ -1,0 +1,85 @@
+\doxysection{Shared\+Delay.\+h}
+\hypertarget{_shared_delay_8h_source}{}\label{_shared_delay_8h_source}\index{code3\_1\_0\_M\_github/include/SharedDelay.h@{code3\_1\_0\_M\_github/include/SharedDelay.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}SharedElements.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ DELAY}}
+\DoxyCodeLine{00012\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DELAY\_FIFO\_SAMPLES\ =\ 220672;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ DELAY\_FIFO\_BYTES\ =\ DELAY\_FIFO\_SAMPLES\ <<\ 1;\ \textcolor{comment}{//\ 0x6bc00\ -\/\ decimale\ 441.344}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{enum}\ Delay\_parameters}
+\DoxyCodeLine{00016\ \ \ \ \ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ SAMPLES,}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ SAMPLES\_LR,}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ MODULATION\_DEPTH,}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ MODULATION\_FREQUENCY,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ MODULATION\_PHASE\_LR,}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ LOOP\_GAIN,}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ INSTRUMENT\_ROUTE,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ MODULATION\_SOURCE}
+\DoxyCodeLine{00026\ \ \ \ \ \};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DELAY\_ITEMS\ =\ 8;\ \textcolor{comment}{//\ all\ Delay\ parameters}}
+\DoxyCodeLine{00029\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DELAY\_LPF\_ITEMS\ =\ 6;\ \textcolor{comment}{//\ parameters\ from\ SAMPLES\ to\ LOOP\_GAIN\ are\ filtered\ with\ LPFs\ }}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_delay__data__struct}{Delay\_data\_struct}}\ \textcolor{comment}{//\ DELAY\_DATA\_DIM\ byte}}
+\DoxyCodeLine{00032\ \{\ }
+\DoxyCodeLine{00033\ \ \ \ \ uint16\_t\ samples;}
+\DoxyCodeLine{00034\ \ \ \ \ int16\_t\ samples\_LR;}
+\DoxyCodeLine{00035\ \ \ \ \ uint8\_t\ instrument\_route;}
+\DoxyCodeLine{00036\ \ \ \ \ uint8\_t\ modulation\_source;}
+\DoxyCodeLine{00037\ \ \ \ \ uint8\_t\ modulation\_depth;}
+\DoxyCodeLine{00038\ \ \ \ \ uint8\_t\ modulation\_frequency;}
+\DoxyCodeLine{00039\ \ \ \ \ uint16\_t\ modulation\_phase\_LR;}
+\DoxyCodeLine{00040\ \ \ \ \ uint16\_t\ loop\_gain;}
+\DoxyCodeLine{00041\ \};}
+\DoxyCodeLine{00042\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DELAY\_DATA\_DIM\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_delay__data__struct}{Delay\_data\_struct}});}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Delay\_data\_limits[DELAY\_LPF\_ITEMS][2]\ =\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \{0,\ 99\},\ \textcolor{comment}{//\ SAMPLES}}
+\DoxyCodeLine{00046\ \ \ \ \ \{-\/10,\ 10\},\ \textcolor{comment}{//\ SAMPLES\_LR}}
+\DoxyCodeLine{00047\ \ \ \ \ \{0,\ 39\},\ \textcolor{comment}{//\ MODULATION\_DEPTH}}
+\DoxyCodeLine{00048\ \ \ \ \ \{0,\ 90\},\ \textcolor{comment}{//\ MODULATION\_FREQUENCY}}
+\DoxyCodeLine{00049\ \ \ \ \ \{0,\ 359\},\ \textcolor{comment}{//\ MODULATION\_PHASE\_LR}}
+\DoxyCodeLine{00050\ \ \ \ \ \{0,\ 9\}\ \textcolor{comment}{//\ LOOP\_GAIN}}
+\DoxyCodeLine{00051\ \};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_delay__values__struct}{Delay\_values\_struct}}}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{float}\ loop\_gain;}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{float}\ samples;}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordtype}{float}\ samples\_LR;}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordtype}{bool}\ instrument\_route[INSTRUMENTS\_MAX];}
+\DoxyCodeLine{00059\ \ \ \ \ uint8\_t\ modulation\_source;\ \textcolor{comment}{//\ 0:\ none\ 1:wave\ 2:signal}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{float}\ modulation\_depth;\ \ \ \ \ \ \ \ \textcolor{comment}{//\ 0.0\ -\/-\/>\ 1.0\ modulation\ index}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{float}\ modulation\_frequency;\ \ \ \ \textcolor{comment}{//\ only\ for\ waveform}}
+\DoxyCodeLine{00062\ \ \ \ \ uint16\_t\ modulation\_phase\_LR;}
+\DoxyCodeLine{00063\ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{extern}\ \mbox{\hyperlink{struct_delay__values__struct}{Delay\_values\_struct}}\ Delay\_values;}
+\DoxyCodeLine{00066\ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ PROGMEM\ delay\_samples\_table[100];}
+\DoxyCodeLine{00067\ \textcolor{keyword}{extern}\ \mbox{\hyperlink{struct_delay__data__struct}{Delay\_data\_struct}}\ Delay\_data;}
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{float}\ Delay\_feedback(int8\_t\ value);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ funzioni}}
+\DoxyCodeLine{00071\ \textcolor{keywordtype}{void}\ Calc\_Delay\_values(\mbox{\hyperlink{struct_delay__data__struct}{Delay\_data\_struct}}\ data);}
+\DoxyCodeLine{00072\ \textcolor{keywordtype}{void}\ Turn\_ON\_Delay(\textcolor{keywordtype}{bool}\ ON);}
+\DoxyCodeLine{00073\ \textcolor{keywordtype}{void}\ Calc\_delay\_routing(uint8\_t\ value);}
+\DoxyCodeLine{00074\ \textcolor{keywordtype}{float}\ Calc\_delay\_samples(\textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00075\ \textcolor{keywordtype}{float}\ Calc\_delay\_samples\_LR(\textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{float}\ Calc\_delay\_depth\ (uint8\_t\ value);}
+\DoxyCodeLine{00077\ \textcolor{keywordtype}{float}\ Calc\_delay\_frequency(uint8\_t\ value);}
+\DoxyCodeLine{00078\ \textcolor{keywordtype}{void}\ Print\_Delay\_data(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_delay__data__struct}{Delay\_data\_struct}}\ \&data);}
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{void}\ Print\_Delay\_values(\mbox{\hyperlink{struct_delay__values__struct}{Delay\_values\_struct}}\ Delay\_values);}
+
+\end{DoxyCode}

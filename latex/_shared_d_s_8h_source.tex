@@ -1,0 +1,37 @@
+\doxysection{Shared\+DS.\+h}
+\hypertarget{_shared_d_s_8h_source}{}\label{_shared_d_s_8h_source}\index{code3\_1\_0\_M\_github/include/SharedDS.h@{code3\_1\_0\_M\_github/include/SharedDS.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ DIRECT\ SAMPLING}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ VU-\/meter\ a\ barre}}
+\DoxyCodeLine{00013\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ BAR\_ELEMENTS\ =\ 50;\ \textcolor{comment}{//\ barre\ del\ VU-\/meter\ stereo}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ menu}}
+\DoxyCodeLine{00016\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_MV\ =\ 12;\ \textcolor{comment}{//\ elementi\ di\ Menu\_DS[]}}
+\DoxyCodeLine{00017\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{bool}\ Menu\_DS[DS\_MV];}
+\DoxyCodeLine{00018\ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ Menu\_DS\_char[DS\_MV][19];}
+\DoxyCodeLine{00019\ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ uint8\_t\ dimension\_voice\_Menu\_DS[DS\_MV];\ \textcolor{comment}{//\ dimensione\ degli\ elementi\ di\ Menu\_DS[]\ }}
+\DoxyCodeLine{00020\ \textcolor{keyword}{extern}\ uint8\_t\ X\_position\_Menu\_DS[DS\_MV];\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{extern}\ uint8\_t\ Y\_position\_Menu\_DS[DS\_MV];\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{extern}\ uint8\_t\ element\_Menu\_DS[DS\_MV];\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{extern}\ uint8\_t\ position\_Menu\_DS[DS\_MV];}
+\DoxyCodeLine{00024\ \textcolor{keyword}{extern}\ uint8\_t\ choice\_DS\_menu;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ variabili}}
+\DoxyCodeLine{00027\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ recordings;}
+\DoxyCodeLine{00028\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ recording;}
+\DoxyCodeLine{00029\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ DS\_gain;}
+\DoxyCodeLine{00030\ \textcolor{keyword}{extern}\ elapsedMillis\ DS\_blink\_timer;}
+\DoxyCodeLine{00031\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{bool}\ DS\_blink\_ON;}
+
+\end{DoxyCode}

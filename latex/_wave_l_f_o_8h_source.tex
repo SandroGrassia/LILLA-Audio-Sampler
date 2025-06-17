@@ -1,0 +1,84 @@
+\doxysection{Wave\+LFO.\+h}
+\hypertarget{_wave_l_f_o_8h_source}{}\label{_wave_l_f_o_8h_source}\index{code3\_1\_0\_M\_github/include/WaveLFO.h@{code3\_1\_0\_M\_github/include/WaveLFO.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ Audio\ Library\ for\ Teensy\ 3.X}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2014,\ Paul\ Stoffregen,\ paul@pjrc.com}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ Development\ of\ this\ audio\ library\ was\ funded\ by\ PJRC.COM,\ LLC\ by\ sales\ of}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ Teensy\ and\ Audio\ Adaptor\ boards.\ \ Please\ support\ PJRC's\ efforts\ to\ develop}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ open\ source\ software\ by\ purchasing\ Teensy\ or\ other\ PJRC\ products.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ Permission\ is\ hereby\ granted,\ free\ of\ charge,\ to\ any\ person\ obtaining\ a\ copy}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ of\ this\ software\ and\ associated\ documentation\ files\ (the\ "{}Software"{}),\ to\ deal}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ in\ the\ Software\ without\ restriction,\ including\ without\ limitation\ the\ rights}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ to\ use,\ copy,\ modify,\ merge,\ publish,\ distribute,\ sublicense,\ and/or\ sell}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ copies\ of\ the\ Software,\ and\ to\ permit\ persons\ to\ whom\ the\ Software\ is}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ furnished\ to\ do\ so,\ subject\ to\ the\ following\ conditions:}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ The\ above\ copyright\ notice,\ development\ funding\ notice,\ and\ this\ permission}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ notice\ shall\ be\ included\ in\ all\ copies\ or\ substantial\ portions\ of\ the\ Software.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ THE\ SOFTWARE\ IS\ PROVIDED\ "{}AS\ IS"{},\ WITHOUT\ WARRANTY\ OF\ ANY\ KIND,\ EXPRESS\ OR}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ IMPLIED,\ INCLUDING\ BUT\ NOT\ LIMITED\ TO\ THE\ WARRANTIES\ OF\ MERCHANTABILITY,}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ AND\ NONINFRINGEMENT.\ IN\ NO\ EVENT\ SHALL\ THE}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ AUTHORS\ OR\ COPYRIGHT\ HOLDERS\ BE\ LIABLE\ FOR\ ANY\ CLAIM,\ DAMAGES\ OR\ OTHER}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ LIABILITY,\ WHETHER\ IN\ AN\ ACTION\ OF\ CONTRACT,\ TORT\ OR\ OTHERWISE,\ ARISING\ FROM,}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ OUT\ OF\ OR\ IN\ CONNECTION\ WITH\ THE\ SOFTWARE\ OR\ THE\ USE\ OR\ OTHER\ DEALINGS\ IN}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ THE\ SOFTWARE.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ WaveLFO.h\ does\ NOT\ inherit\ from\ AudioStream.h}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <utility/dspinst.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}SharedElements.h"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_wave_l_f_o}{WaveLFO}}}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordtype}{bool}\ periodic\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ sinus\ wave}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordtype}{int}\ phase\_360\ =\ 0;}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{int}\ phase\_360\_delta\ =\ 0;}
+\DoxyCodeLine{00050\ \ \ \ \ uint32\_t\ phase\_accumulator\ =\ 0;}
+\DoxyCodeLine{00051\ \ \ \ \ uint32\_t\ phase\_accumulator\_delta\ =\ 0;}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{float}\ amplitude\ =\ 1000.0f;}
+\DoxyCodeLine{00053\ \ \ \ \ int32\_t\ magnitude\ =\ 2000;\ \textcolor{comment}{//\ TEST\ max\ value}}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{bool}\ step\_magnitude\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00055\ \ \ \ \ uint32\_t\ phase\_increment\ =\ 0;}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{int}\ J\_counter\ =\ 0;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ aperiodic\ wave}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordtype}{float}\ wave\_time\ =\ 0.0;}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{double}\ wave\_step\ =\ 0.0;}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{double}\ wave\_point\ =\ 0.0;}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{bool}\ wave\_end\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{double}\ local\_waveform[11]\ =\ \{0\};}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{double}\ local\_m\_waveform[10]\ =\ \{0\};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{class_wave_l_f_o}{WaveLFO}}(\textcolor{keywordtype}{void})\ \{\}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ int16\_t\ block[AUDIO\_BLOCK\_SAMPLES];}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{int}\ identity\ =\ 100;}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ Update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_phase(\textcolor{keywordtype}{int}\ angle);}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_frequency(\textcolor{keywordtype}{float}\ freq);\ \ \textcolor{comment}{//\ sinus\ wave}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_amplitude(\textcolor{keywordtype}{int}\ max\_value);\ \textcolor{comment}{//\ sinus\ wave}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_amplitude(\textcolor{keywordtype}{float}\ max\_value);\ \textcolor{comment}{//\ sinus\ wave}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordtype}{void}\ Setup\_aperiodic\_wave(\textcolor{keywordtype}{float}\ seconds,\ \textcolor{keywordtype}{float}\ max\_value,\ \textcolor{keywordtype}{int}\ waveform);\ \textcolor{comment}{//\ aperiodic\ wave\ -\/\ period:\ seconds\ \ n:\ waveform}}
+\DoxyCodeLine{00078\ \};}
+
+\end{DoxyCode}

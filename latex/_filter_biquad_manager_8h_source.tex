@@ -1,0 +1,30 @@
+\doxysection{Filter\+Biquad\+Manager.\+h}
+\hypertarget{_filter_biquad_manager_8h_source}{}\label{_filter_biquad_manager_8h_source}\index{code3\_1\_0\_M\_github/include/FilterBiquadManager.h@{code3\_1\_0\_M\_github/include/FilterBiquadManager.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Questa\ classe\ controlla\ parametri\ di\ filter\_biquad.h}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}SharedElements.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <filter\_biquad.h>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_filter_biquad_manager}{FilterBiquadManager}}}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00018\ \ \ \ \ \mbox{\hyperlink{class_filter_biquad_manager}{FilterBiquadManager}}(\textcolor{keywordtype}{void})\ \{\}}
+\DoxyCodeLine{00019\ \ \ \ \ }
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keywordtype}{void}\ Update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ AudioFilterBiquad*\ biquad\_L\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00023\ \ \ \ \ AudioFilterBiquad*\ biquad\_R\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00024\ \};}
+
+\end{DoxyCode}

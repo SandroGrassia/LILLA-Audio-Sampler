@@ -1,0 +1,17 @@
+<map id="AudioPlayer" name="AudioPlayer">
+<area shape="rect" id="Node000001" title=" " alt="" coords="258,187,350,213"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,102,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="45,47,38,85,39,104,46,121,59,133,79,145,135,164,200,179,259,190,258,195,199,185,134,169,77,150,56,138,42,124,34,105,32,85,40,46"/>
+<area shape="rect" id="Node000005" href="$class_stereo_live_sampler.html" title=" " alt="" coords="56,96,187,123"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="75,43,114,94,110,97,70,46"/>
+<area shape="rect" id="Node000003" href="$class_audio_v_c_f.html" title=" " alt="" coords="212,96,293,123"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="264,136,276,161,294,184,290,188,272,164,259,138"/>
+<area shape="rect" id="Node000004" href="$class_wave_l_f_o.html" title=" " alt="" coords="316,96,396,123"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="344,138,329,164,315,188,310,185,325,161,340,135"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="138,134,150,148,164,160,186,173,211,182,259,192,258,197,209,187,184,177,161,165,146,152,134,137"/>
+<area shape="rect" id="Node000006" href="$class_players_statistics.html" title=" " alt="" coords="445,5,566,32"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="490,46,441,112,415,144,394,165,372,178,348,189,346,184,369,174,391,161,411,140,437,109,486,43"/>
+<area shape="rect" id="Node000007" href="$class_loop_led_set.html" title=" " alt="" coords="598,96,688,123"/>
+<area shape="poly" id="edge8_Node000007_Node000006" title=" " alt="" coords="539,39,625,93,622,98,537,43"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="588,130,463,165,351,192,350,186,462,160,586,125"/>
+</map>

@@ -1,0 +1,79 @@
+\doxysection{Stereo\+Delay.\+h}
+\hypertarget{_stereo_delay_8h_source}{}\label{_stereo_delay_8h_source}\index{code3\_1\_0\_M\_github/include/StereoDelay.h@{code3\_1\_0\_M\_github/include/StereoDelay.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <WaveLFO.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}Functions.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}SharedDelay.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_stereo_delay}{StereoDelay}}\ :\ \textcolor{keyword}{public}\ AudioStream}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DELAY\_CENTRAL\_VALUE\_STEP\ =\ 2;}
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ MAX\_TAPS\ =\ 5;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keywordtype}{void}\ Constrain\_delay\_value(\textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ T[2]\ =\ \{0\};}
+\DoxyCodeLine{00024\ \ \ \ \ audio\_block\_t\ *inputQueueArray[2]\ =\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keywordtype}{int}\ sample\_write\ =\ 0;}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordtype}{int}\ sample\_read\ =\ 0;}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keywordtype}{int}\ delay\_value\ =\ 0;\ \textcolor{comment}{//\ [sample]}}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{int}\ delay\_central\_value\ =\ 0;}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{int}\ delay\_central\_value\_step\ =\ 0;\ \textcolor{comment}{//\ quanti\ campioni\ in\ piu'\ o\ in\ meno\ ad\ ogni\ update()}}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{int}\ delay\_modulation\_source\ =\ 0;\ \ \textcolor{comment}{//\ 0:\ none\ \ 1:\ LFO\ \ 2:\ input\ 1}}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordtype}{float}\ delay\_modulation\_gain\_value\ =\ 0;}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{int}\ J\_delay\_central\_value\_counter\ =\ 0;\ \textcolor{comment}{//\ quanti\ cicli\ di\ update()\ servono\ per\ raggiungere\ il\ delay\ richiesto}}
+\DoxyCodeLine{00033\ \ \ \ \ int32\_t\ cache;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{comment}{//\ **\ \ delay\_Main\_Array[DELAY\_FIFO\_SAMPLES]\ \ **}}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{comment}{//\ Start}}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{comment}{//\ read\_sample\ \ \ \ \ \ \ \ write\_sample}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{comment}{//\ R-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/W-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/|}}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{comment}{//\ 0<-\/\ \ delay\_value\ -\/>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (DELAY\_FIFO\_SAMPLES\ -\/\ 1)}}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{comment}{//\ Running}}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ read\_sample\ \ \ \ \ \ \ write\_sample}}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ rrrrrrrrrrrR-\/-\/-\/-\/-\/-\/-\/wwwwwwwwwwW-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/|}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//\ 0\ \ \ \ \ \ \ \ \ \ <-\/\ \ delay\_value\ -\/>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (DELAY\_FIFO\_SAMPLES\ -\/\ 1)}}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ Running}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ read\_sample\ \ \ \ \ \ \ write\_sample}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ rrrrrrrrrrrrrrrrrrrrrrRwwwwwwwwwwwwwwwwwW-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/|}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <-\/\ \ delay\_value\ -\/>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (DELAY\_FIFO\_SAMPLES\ -\/\ 1)}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{class_stereo_delay}{StereoDelay}}(\textcolor{keywordtype}{void})\ :\ AudioStream(2,\ inputQueueArray)\ \{\}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ execution:}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ normal:\ 6micros\ @600MHz}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ delay\_flag:\ 14.5micros\ @600MHz}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{void}\ Setup\_delay(\textcolor{keywordtype}{int}\ value);\ \textcolor{comment}{//\ value\ e'\ espresso\ in\ Samples}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_delay\_central\_value(\textcolor{keywordtype}{int}\ value);\ \textcolor{comment}{//\ value\ e'\ espresso\ in\ Samples}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ La\ variazione\ della\ sorgente\ di\ modulazione\ del\ delay\ va\ applicata\ immediatamente}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_delay\_modulation\_source(\textcolor{keywordtype}{int}\ value);\ \textcolor{comment}{//\ 0:none\ 1:LFO\ 2:input\_1}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ La\ variazione\ dell'indice\ di\ modulazione\ va\ applicata\ immediatamente}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_delay\_modulation\_gain(\textcolor{keywordtype}{float}\ value);\ \textcolor{comment}{//\ 0.0\ -\/-\/>\ 4.0}}
+\DoxyCodeLine{00069\ \ \ \ \ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ puntatori\ esterni}}
+\DoxyCodeLine{00071\ \ \ \ \ int16\_t\ *DELAY\_fifo\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ array\ FIFO}}
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{class_wave_l_f_o}{WaveLFO}}\ *LFO\_ptr\ =\ \textcolor{keyword}{nullptr};\ \ \textcolor{comment}{//\ nota:\ WaveLFO\ non\ eredita\ da\ AudioStream}}
+\DoxyCodeLine{00073\ \};}
+
+\end{DoxyCode}

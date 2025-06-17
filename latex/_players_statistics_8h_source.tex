@@ -1,0 +1,47 @@
+\doxysection{Players\+Statistics.\+h}
+\hypertarget{_players_statistics_8h_source}{}\label{_players_statistics_8h_source}\index{code3\_1\_0\_M\_github/include/PlayersStatistics.h@{code3\_1\_0\_M\_github/include/PlayersStatistics.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}SharedElements.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}SharedLoop.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_players_statistics}{PlayersStatistics}}}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00015\ \ \ \ \ \textcolor{keywordtype}{int}\ total\_Players\_per\_instrument[INSTRUMENTS\_MAX];\ \textcolor{comment}{//\ usato\ da\ DISPLAY\_led\_instrument(instrument):\ quanti\ Player\ stanno\ suonando\ l'Instrument}}
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{keywordtype}{int}\ total\_Players\_per\_instrument\_old[INSTRUMENTS\_MAX];}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ int8\_t\ total\_Players\_per\_track\_instrument[TRACKS][INSTRUMENTS\_MAX];\ \textcolor{comment}{//\ usato\ da\ DISPLAY\_led\_instrument(instrument):\ quanti\ Player\ stanno\ suonando\ nella\ track\ l'instrument}}
+\DoxyCodeLine{00019\ \ \ \ \ int8\_t\ total\_Players\_per\_track\_instrument\_old[TRACKS][INSTRUMENTS\_MAX];}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00022\ \ \ \ \ \mbox{\hyperlink{class_players_statistics}{PlayersStatistics}}(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00023\ \ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ Reset\_total\_Players\_per\_instrument();}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ Reset\_total\_Players\_per\_track\_instrument();}
+\DoxyCodeLine{00026\ \ \ \ \ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{void}\ Reset\_total\_Players\_per\_instrument(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_total\_Players\_per\_instrument(\textcolor{keywordtype}{int}\ instrument);}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{void}\ Inc\_total\_Players\_per\_instrument(\textcolor{keywordtype}{int}\ instrument);}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordtype}{void}\ Dec\_total\_Players\_per\_instrument(\textcolor{keywordtype}{int}\ instrument);}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_total\_Players\_per\_instrument\_old(\textcolor{keywordtype}{int}\ instrument,\ \textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_total\_Players\_per\_instrument\_old(\textcolor{keywordtype}{int}\ instrument);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{void}\ Reset\_total\_Players\_per\_track\_instrument(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_total\_Players\_per\_track\_instrument(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ track,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ instrument);}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keywordtype}{void}\ Inc\_total\_Players\_per\_track\_instrument(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ track,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ instrument);}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keywordtype}{void}\ Dec\_total\_Players\_per\_track\_instrument(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ track,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ instrument);}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keywordtype}{void}\ Set\_total\_Players\_per\_track\_instrument\_old(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ track,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ instrument,\ \textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{int}\ Read\_total\_Players\_per\_track\_instrument\_old(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ track,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ instrument);}
+\DoxyCodeLine{00041\ \};}
+
+\end{DoxyCode}

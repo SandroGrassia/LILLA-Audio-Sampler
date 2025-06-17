@@ -1,0 +1,77 @@
+\doxysection{Stereo\+Sampler.\+h}
+\hypertarget{_stereo_sampler_8h_source}{}\label{_stereo_sampler_8h_source}\index{code3\_1\_0\_M\_github/include/StereoSampler.h@{code3\_1\_0\_M\_github/include/StereoSampler.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ StereoSampler.h\ registra\ sul\ "{}virtual\ file\ system"{}\ (VFS)\ realizato\ nella\ Flash\ memory}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <SerialFlash.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <spi\_interrupt.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}SharedDS.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}LillaSerialFlash.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}EepromManager.h"{}}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_stereo_sampler}{StereoSampler}}\ :\ \textcolor{keyword}{public}\ AudioStream}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00022\ \ \ \ \ \textcolor{keywordtype}{void}\ stop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ audio\_block\_t\ *inputQueueArray[2]\ =\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00025\ \ \ \ \ audio\_block\_t\ *in\_block\_L\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00026\ \ \ \ \ audio\_block\_t\ *in\_block\_R\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{bool}\ recording;}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{int}\ recording\_id\ =\ 0;\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ equivalent\ to\ file\_id}}
+\DoxyCodeLine{00030\ \ \ \ \ \mbox{\hyperlink{class_lilla_serial_flash_file}{LillaSerialFlashFile}}\ Packet\_L;\ \textcolor{comment}{//\ SerialFlashFile\ Packet\_L;}}
+\DoxyCodeLine{00031\ \ \ \ \ \mbox{\hyperlink{class_lilla_serial_flash_file}{LillaSerialFlashFile}}\ Packet\_R;\ \textcolor{comment}{//\ SerialFlashFile\ Packet\_R;}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{bool}\ increment\_packets\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{bool}\ stereo\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{byte}\ RAM\_buffer\_L[256]\ =\ \{0\};\ \textcolor{comment}{//\ contains\ 1\ AUDIO\_BLOCK\_SAMPLES\ packets}}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keywordtype}{byte}\ RAM\_buffer\_R[256]\ =\ \{0\};\ \textcolor{comment}{//\ contains\ 1\ AUDIO\_BLOCK\_SAMPLES\ packets}}
+\DoxyCodeLine{00038\ \ \ \ \ int16\_t\ *RAM\_buffer\_L\_ptr\ =\ (int16\_t\ *)RAM\_buffer\_L;}
+\DoxyCodeLine{00039\ \ \ \ \ int16\_t\ *RAM\_buffer\_R\_ptr\ =\ (int16\_t\ *)RAM\_buffer\_R;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{int}\ packet\_open\_L\ =\ 0;}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{int}\ last\_packet\_L\ =\ 0;}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{int}\ packet\_open\_R\ =\ 0;}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{int}\ last\_packet\_R\ =\ 0;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{bool}\ attack\_gain\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{bool}\ decay\_gain\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordtype}{bool}\ book\_stop\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{int}\ samples\_counter\ =\ 0;}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ Slope\_blocks\ =\ 3.0;}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ F\_Slope\_samples\ =\ Slope\_blocks\ *\ AUDIO\_BLOCK\_SAMPLES;}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Slope\_samples\ =\ Slope\_blocks\ *\ AUDIO\_BLOCK\_SAMPLES;}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordtype}{int}\ countdown\_blocks\ =\ 0;}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{bool}\ countdown\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00055\ \ \ \ \ elapsedMicros\ timer;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ riferimenti\ esterni}}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{class_eeprom_manager}{EepromManager}}\ \&Archive;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{class_stereo_sampler}{StereoSampler}}(\mbox{\hyperlink{class_eeprom_manager}{EepromManager}}\ \&Archive)\ :\ AudioStream(2,\ inputQueueArray),\ Archive(Archive)\ \textcolor{comment}{//\ input:\ 0\ (Left),\ 1\ (Right)}}
+\DoxyCodeLine{00062\ \ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ Begin();}
+\DoxyCodeLine{00064\ \ \ \ \ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{void}\ Begin(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{bool}\ Start(\textcolor{keywordtype}{int}\ from\_packet,\ \textcolor{keywordtype}{int}\ last\_packet,\ \textcolor{keywordtype}{int}\ recording\_id\_in,\ \textcolor{keywordtype}{bool}\ stereo\_in);}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{void}\ Book\_stop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{bool}\ Is\_recording(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00071\ \};}
+
+\end{DoxyCode}

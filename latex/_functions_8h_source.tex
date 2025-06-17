@@ -1,0 +1,57 @@
+\doxysection{Functions.\+h}
+\hypertarget{_functions_8h_source}{}\label{_functions_8h_source}\index{code3\_1\_0\_M\_github/include/Functions.h@{code3\_1\_0\_M\_github/include/Functions.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <utility/dspinst.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00014\ \textcolor{keywordtype}{int}\ MIN\_index(T\ *array,\ \textcolor{keywordtype}{int}\ elements)}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ \ T\ min\_element\ =\ *array;}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordtype}{int}\ answer\ =\ 0;}
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ i\ =\ 1;\ i\ <\ elements;\ ++i)}
+\DoxyCodeLine{00019\ \ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*(array\ +\ i)\ <\ min\_element)}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ min\_element\ =\ *(array\ +\ i);}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ answer\ =\ i;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00025\ \ \ \ \ \}}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordflow}{return}\ answer;}
+\DoxyCodeLine{00027\ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ calcola\ mult\ x\ (a\ +\ b)\ dove\ a\ e\ b\ sono\ coppie\ adiacenti\ di\ campioni\ (int16\_t)}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ uint32\_t\ Muliply\_sum(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ \&mult,\ \textcolor{keyword}{const}\ uint32\_t\ \&a,\ \textcolor{keyword}{const}\ uint32\_t\ \&b)\ \_\_attribute\_\_((always\_inline,\ unused));}
+\DoxyCodeLine{00031\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ uint32\_t\ Muliply\_sum(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ \&mult,\ \textcolor{keyword}{const}\ uint32\_t\ \&a,\ \textcolor{keyword}{const}\ uint32\_t\ \&b)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ int32\_t\ Mult\ =\ mult\ *\ 65536;\ \ \textcolor{comment}{//\ 1.0\ *\ 65536\ moltiplica\ per\ 1.0}}
+\DoxyCodeLine{00034\ \ \ \ \ uint32\_t\ r\ =\ signed\_add\_16\_and\_16(a,\ b);\ \ \textcolor{comment}{//\ computes\ (((a[31:16]\ +\ b[31:16])\ <<\ 16)\ |\ (a[15:0\ +\ b[15:0]))\ include\ calcolo\ saturazione}}
+\DoxyCodeLine{00035\ \ \ \ \ int32\_t\ val\_lo\ =\ signed\_multiply\_32x16t(Mult,\ r);\ \textcolor{comment}{//\ computes\ ((mult[31:0]\ x\ *\_r[31:16])\ >>\ 16)\ -\/-\/>\ mult\ x\ r[0]}}
+\DoxyCodeLine{00036\ \ \ \ \ int32\_t\ val\_hi\ =\ signed\_multiply\_32x16b(Mult,\ r);\ \textcolor{comment}{//\ computes\ ((mult[31:0]\ *\ *\_r[15:0])\ >>\ 16)\ \ -\/-\/>\ mult\ x\ r[1]}}
+\DoxyCodeLine{00037\ \ \ \ \ val\_lo\ =\ signed\_saturate\_rshift(val\_lo,\ 16,\ 0);}
+\DoxyCodeLine{00038\ \ \ \ \ val\_hi\ =\ signed\_saturate\_rshift(val\_hi,\ 16,\ 0);}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keywordflow}{return}\ pack\_16b\_16b(val\_lo,\ val\_hi);}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ computes\ limit(val,\ 2**bits)}}
+\DoxyCodeLine{00043\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ int16\_t\ Lilla\_saturate16(\textcolor{keyword}{const}\ int32\_t\ \&val)\ \_\_attribute\_\_((always\_inline,\ unused));}
+\DoxyCodeLine{00044\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ int16\_t\ Lilla\_saturate16(\textcolor{keyword}{const}\ int32\_t\ \&val)}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ int16\_t\ out;}
+\DoxyCodeLine{00047\ \ \ \ \ int32\_t\ tmp;}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{asm}\ \textcolor{keyword}{volatile}(\textcolor{stringliteral}{"{}ssat\ \%0,\ \%1,\ \%2"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}(tmp)\ :\ \textcolor{stringliteral}{"{}I"{}}(16),\ \textcolor{stringliteral}{"{}r"{}}(val));}
+\DoxyCodeLine{00049\ \ \ \ \ out\ =\ (int16\_t)(tmp);}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
+\DoxyCodeLine{00051\ \}}
+
+\end{DoxyCode}

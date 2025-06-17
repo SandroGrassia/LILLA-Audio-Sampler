@@ -1,0 +1,58 @@
+\doxysection{Shared\+LS.\+h}
+\hypertarget{_shared_l_s_8h_source}{}\label{_shared_l_s_8h_source}\index{code3\_1\_0\_M\_github/include/SharedLS.h@{code3\_1\_0\_M\_github/include/SharedLS.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Author:\ Sandro\ Grassia,\ info@lillasampler.it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ LIVE\ SAMPLING}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ Virtual\ tape}}
+\DoxyCodeLine{00014\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00015\ \textcolor{comment}{Dalla\ PSRAM\ totale\ si\ esclude\ spazio\ per\ i\ puntatori;\ lo\ spazio\ utile\ deve\ poter\ essere\ divisibile\ per\ \ 2\ (L/R)\ poi\ per\ 256\ (128\ samples)}}
+\DoxyCodeLine{00016\ \textcolor{comment}{PSRAM\_16MB\ -\/-\/>\ 16777216\ byte;\ escludiamo\ spazio\ per\ i\ puntatori\ (4*AUDIO\_BLOCK\_SAMPLES)\ -\/-\/>\ 16776704\ byte\ pari\ a\ 190sec;\ dedichiamo\ 1724*256=441344\ byte\ (circa\ 5sec)\ per\ ciascun\ canale\ del\ Delay,\ restano\ 15894016\ byte\ per\ Live\ Sampling}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00018\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ LS\_MONO\_SAMPLES\ =\ 7946752;}
+\DoxyCodeLine{00019\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ LS\_MONO\_BYTES\ =\ LS\_MONO\_SAMPLES\ <<\ 1;\ \textcolor{comment}{//\ 0xf28400\ -\/\ 15.893.504}}
+\DoxyCodeLine{00020\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ LS\_STEREO\_SAMPLES\ =\ 3973376;\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ LS\_STEREO\_BYTES\ =\ LS\_STEREO\_SAMPLES\ <<\ 1;\ \textcolor{comment}{//\ 0x794200\ -\/\ decimale\ 7.946.752}}
+\DoxyCodeLine{00022\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ FIRST\_LIVE\_SAMPLING\_FILE\ =\ 320;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ Menu}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ LS\_MV\ =\ 4;}
+\DoxyCodeLine{00026\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{bool}\ Menu\_LS[LS\_MV];}
+\DoxyCodeLine{00027\ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ Menu\_LS\_char[][12];}
+\DoxyCodeLine{00028\ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ uint8\_t\ dimension\_voice\_Menu\_LS[LS\_MV];}
+\DoxyCodeLine{00029\ \textcolor{keyword}{extern}\ uint8\_t\ X\_position\_Menu\_LS[LS\_MV];\ \textcolor{comment}{//\ argument\ is\ position}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{extern}\ uint8\_t\ element\_Menu\_LS[LS\_MV];\ \ \ \ \textcolor{comment}{//\ argument\ is\ position}}
+\DoxyCodeLine{00031\ \textcolor{keyword}{extern}\ uint8\_t\ position\_Menu\_LS[LS\_MV];\ \ \ \textcolor{comment}{//\ argument\ is\ element}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ variabili}}
+\DoxyCodeLine{00034\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ LS\_fbk\_table[9]\ =\ \{0,\ 0.01,\ 0.03,\ 0.07,\ 0.1,\ 0.2,\ 0.4,\ 0.8,\ 0.9\};}
+\DoxyCodeLine{00035\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_state;}
+\DoxyCodeLine{00036\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_feedback;\ \textcolor{comment}{//\ feedback\ interno\ al\ Live\ Sampler}}
+\DoxyCodeLine{00037\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{bool}\ LS\_stereo;}
+\DoxyCodeLine{00038\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_buffer\_dim;}
+\DoxyCodeLine{00039\ \textcolor{keyword}{extern}\ uint8\_t\ LS\_mode;\ \textcolor{comment}{//\ play\ mode}}
+\DoxyCodeLine{00040\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_window\_width;\ \textcolor{comment}{//\ samples\ from\ LS\_window\_A\_sample\ to\ LS\_window\_B\_sample}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_Q\_sample;\ \textcolor{comment}{//\ ultima\ posizione\ registrata\ su\ LS\_buffer\_L/R}}
+\DoxyCodeLine{00043\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{bool}\ LS\_XY\_lock;\ \textcolor{comment}{//\ play\ bloccato\ sul\ virtual\ tape}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_X\_step;\ \textcolor{comment}{//\ step\ di\ avanzamento}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_X\_delta;\ \textcolor{comment}{//\ distanza\ tra\ LS\_Q\_sample\ e\ LS\_X\_sample}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_X\_sample;\ \textcolor{comment}{//\ posizione\ di\ partenza\ play}}
+\DoxyCodeLine{00047\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_Y\_sample;\ \textcolor{comment}{//\ posizione\ di\ fine\ loop\ }}
+\DoxyCodeLine{00048\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ LS\_XY\_delta;\ \textcolor{comment}{//\ distanza\ tra\ LS\_X\_sample\ e\ LS\_Y\_sample}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ waveform}}
+\DoxyCodeLine{00051\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ WAVE\_WIDTH\ =\ 310;}
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{int}\ LS\_constrain\_position(\textcolor{keywordtype}{int}\ value);}
+
+\end{DoxyCode}

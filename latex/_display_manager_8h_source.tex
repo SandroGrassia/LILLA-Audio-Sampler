@@ -1,0 +1,348 @@
+\doxysection{Display\+Manager.\+h}
+\hypertarget{_display_manager_8h_source}{}\label{_display_manager_8h_source}\index{code3\_1\_0\_M\_github/include/DisplayManager.h@{code3\_1\_0\_M\_github/include/DisplayManager.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ LILLA\ Audio\ Sampler}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ \ \ Author:\ Sandro\ Grassia\ (info@lillasampler.it)}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ www.lillasampler.it}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <Adafruit\_GFX.h>}\ \ \ \ \ \textcolor{comment}{//\ https://learn.adafruit.com/adafruit-\/gfx-\/graphics-\/library/graphics-\/primitives}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <Adafruit\_ILI9341.h>}\ \textcolor{comment}{//\ 1.5.12\ version\ -\/\ Hardware-\/specific\ library}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <AudioStream.h>}\ \ \ \ \ \ \textcolor{comment}{//\ solo\ per\ definizione\ AUDIO\_SAMPLE\_RATE}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}SharedDS.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}SharedLS.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}SharedLoop.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}SharedDelay.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}SharedMixer.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}ElementiGrafici.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}PlayersStatistics.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}InfoMaster.h"{}}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ parametri\ collegamento\ SPI\ Display}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#define\ Sclk\ 27\ \ }\textcolor{comment}{//\ SCK}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ Mosi\ 26\ \ }\textcolor{comment}{//\ SDA}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#define\ Cs\ 38\ \ \ \ }\textcolor{comment}{//\ CS}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ Dc\ 29\ \ \ \ }\textcolor{comment}{//\ A0}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ Rst\ 30\ \ \ }\textcolor{comment}{//\ RESET}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#define\ Miso\ 255\ }\textcolor{comment}{//\ non\ connesso}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_display_manager}{DisplayManager}}}
+\DoxyCodeLine{00031\ \{}
+\DoxyCodeLine{00032\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{comment}{//\ 16-\/bit\ ('565')\ color\ settings\ http://www.barth-\/dev.de/online/rgb565-\/color-\/picker/\ and\ https://ee-\/programming-\/notepad.blogspot.com/2016/10/16-\/bit-\/color-\/generator-\/picker.html}}
+\DoxyCodeLine{00034\ \ \ \ \ Adafruit\_ILI9341\ tft\ =\ Adafruit\_ILI9341(Cs,\ Dc,\ Mosi,\ Sclk,\ Rst);\ \textcolor{comment}{//\ https://github.com/adafruit/Adafruit-\/GFX-\/Library/blob/master/Adafruit\_GFX.h}}
+\DoxyCodeLine{00035\ \ \ \ \ GFXcanvas16\ canvas\ =\ GFXcanvas16(WAVE\_WIDTH,\ WAVE\_HEIGHT);\ \ \ \ \ \ \ \ \textcolor{comment}{//\ https://github.com/adafruit/Adafruit-\/GFX-\/Library/blob/master/Adafruit\_GFX.cpp\ ;\ GFXcanvas16\ creates\ an\ array\ of\ w*h*2\ bytes\ in\ memory}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{comment}{//\ riferimenti\ esterni}}
+\DoxyCodeLine{00038\ \ \ \ \ \mbox{\hyperlink{class_info_master}{InfoMaster}}\ \&Info;}
+\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{class_players_statistics}{PlayersStatistics}}\ \&Players\_statistics;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{void}\ Note(\textcolor{keyword}{const}\ uint8\_t\ note\_number);}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{int}\ col;}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{int}\ row;}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{int}\ y\_pos(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ row);}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordtype}{int}\ x\_pos(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ col);}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{void}\ Cancel\_text\_reset\_cursor(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ X,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ Y,\ \textcolor{keywordtype}{int}\ N);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ Logo}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{void}\ Logo(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ light);}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{void}\ Cover\_text(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ light);}
+\DoxyCodeLine{00051\ \ \ \ \ uint16\_t\ Calc\_color(uint16\_t\ color\_peak,\ \textcolor{keywordtype}{float}\ light);}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Logo\_position\_DX\ =\ 80;\ \textcolor{comment}{//\ pixel}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Logo\_position\_DY\ =\ 50;\ \textcolor{comment}{//\ pixel}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ Avvisi}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}0123456789012345678901234..7890123456789109876543210"{};}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ ADV\_VFS\_0[50]\ =\ \textcolor{stringliteral}{"{}\ \ \ \ NOT\ ENOUGH\ MEMORY\ LEFT\ FOR\ DIRECT-\/SAMPLING!"{}};}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ ADV\_VFS\_1[50]\ =\ \textcolor{stringliteral}{"{}\ \ \ \ \ IF\ DIRECT-\/SAMPLING\ IS\ NEEDED\ PLEASE\ REPEAT"{}};}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ ADV\_VFS\_2[50]\ =\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ IMPORT\ WITH\ MAX\ 63MB\ OF\ RAW\ FILES"{}};}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ ADV\_VFS\_3[50]\ =\ \textcolor{stringliteral}{"{}\ \ \ \ \ RAW\ FILES\ IMPORT\ AND\ MEMORY\ CONFIGURATION"{}};}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ ADV\_VFS\_4[50]\ =\ \textcolor{stringliteral}{"{}\ \ \ \ \ COMPLETED.\ LILLA\ RESTARTS\ IN\ FEW\ SECONDS."{}};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ Popup}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{int}\ L\_POPUP;\ \ \ \ \ \textcolor{comment}{//\ Larghezza}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{int}\ H\_POPUP;\ \ \ \ \ \textcolor{comment}{//\ Altezza}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordtype}{int}\ X\_POPUP;\ \ \ \ \ \textcolor{comment}{//\ X\ posizione\ su\ display}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{int}\ Y\_POPUP;\ \ \ \ \ \textcolor{comment}{//\ Y\ posizione\ su\ display}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{int}\ Y\_POPUP\_TXT;\ \textcolor{comment}{//\ prima\ riga\ testo}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{int}\ X\_POPUP\_OPT;\ \textcolor{comment}{//\ riga\ opzioni}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{int}\ Y\_POPUP\_OPT;\ \textcolor{comment}{//\ riga\ opzioni}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ PERFORMANCE}}
+\DoxyCodeLine{00073\ \ \ \ \ uint8\_t\ Id\_sound(\textcolor{keyword}{const}\ uint8\_t\ session,\ \textcolor{keyword}{const}\ uint8\_t\ instrument);}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ X\_LED\ =\ 8;\ \textcolor{comment}{//\ posizione\ led\ pagina\ Performance\ (caratteri)}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{int}\ Instrument\_Y\_POSITION(\textcolor{keywordtype}{int}\ position);}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ rappresentazione\ Instrument\ VCF\ page}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ Instrument\_INDENT\_X0\ =\ 0.5;\ \textcolor{comment}{//\ indentatura\ dell'header\ nella\ Performance\ (in\ caratteri)\ a\ sinistra}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ Instrument\_SPACE\_X\ =\ 1.5;\ \ \ \textcolor{comment}{//\ spaziatura\ (in\ caratteri)\ tra\ due\ titole\ dell'header\ nella\ Performance}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Instrument\_VCF\_TXT\_X\ =\ 30;\ \ \ \ \textcolor{comment}{//\ (caratteri)}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Instrument\_VCF\_TXT\_Y\ =\ 5;\ \ \ \ \ \textcolor{comment}{//\ (caratteri)}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ canvas\ Y-\/positions\ on\ display}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ WAVE\_X0\ =\ 5;}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ WAVE\_MAX\ =\ 122;}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ WAVE\_HEIGHT\ =\ 97;\ \textcolor{comment}{//\ deve\ essere\ DISPARI}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ static\ constexpr\ int\ WAVE\_WIDTH\ =\ 310\ definito\ in\ SharedElements}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ T\_LOW\ =\ WAVE\_HEIGHT\ -\/\ 12;}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ wave\ Y-\/positions\ on\ canvas}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ CANVAS\_WAVE\_MIN\ =\ WAVE\_HEIGHT\ -\/\ 1;}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ CANVAS\_WAVE\_0\ =\ CANVAS\_WAVE\_MIN\ /\ 2;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ MIXER}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ MX\_X0\ =\ 8;\ \textcolor{comment}{//\ (caratteri)}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ MIDI\_LOOP}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Loop\_HEAD\_R\ =\ 5;\ \ \ \ \ \textcolor{comment}{//\ posizione\ "{}LOOP"{}}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Loop\_HEAD\_C\ =\ 3;\ \ \ \ \ \textcolor{comment}{//\ posizione\ "{}LOOP"{}}}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Loop\_LOOPS\_X\ =\ 11;\ \ \ \textcolor{comment}{//\ centro\ prima\ track}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Loop\_LOOP\_TIME\ =\ 20;\ \textcolor{comment}{//\ posizione\ di\ LOOP\_time}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ DIRECT\_SAMPLING}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_VUMETER\_BAR\_X\ =\ 210;\ \textcolor{comment}{//\ coordinate\ angolo\ in\ basso\ a\ SX}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_VUMETER\_BAR\_Y\ =\ 175;\ \textcolor{comment}{//\ coordinate\ angolo\ in\ basso\ a\ SX}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_VUMETER\_BAR\_DISTANCE\ =\ 6;}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_VUMETER\_BAR\_DX\ =\ 12;\ \textcolor{comment}{//\ distanza\ tra\ le\ mediane\ delle\ DS\_VUMETER\_BAR\_DISTANCE}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_START\_Y\ =\ DS\_VUMETER\_BAR\_Y\ +\ 13;}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_START\_X\ =\ DS\_VUMETER\_BAR\_X\ -\/\ 7;}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ DS\_MV\ =\ 12;}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ SETUP}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Control\ Change}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Control\_change\_X\ =\ 13;\ \textcolor{comment}{//\ posizione\ (in\ caratteri)}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ Copia\ file\ RAW\ da\ scheda\ SD}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ FileCopy\_BAR\_POS\_Y\ =\ 225;\ \textcolor{comment}{//\ y\_pos(15)}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ DELAY}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ Delay\_ROW\_BASE\ =\ 6;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ LIVE\_SAMPLING}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordtype}{float}\ LS\_K\_wave\_color;}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{int}\ LS\_window\_A\_sample;}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{int}\ LS\_window\_B\_sample;}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ LS\_MV\ =\ 4;}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint16\_t\ LS\_WAVE\_COLOR\ =\ 0xE08A;}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint16\_t\ LS\_WAVE\_ZERO\_COLOR\ =\ 0x7BCF;}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint16\_t\ LS\_WAVE\_BOARD\ =\ 0xFE40;\ \ \ \ \ \textcolor{comment}{//\ 0xA514}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint16\_t\ LS\_X\_COLOR\ =\ ILI9341\_GREEN;\ \textcolor{comment}{//\ Live\ Sampling\ linee\ verticali\ di\ esecuzione}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint16\_t\ LS\_Y\_COLOR\ =\ ILI9341\_WHITE;\ \textcolor{comment}{//\ Live\ Sampling\ linee\ verticali\ di\ esecuzione}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00130\ \ \ \ \ \mbox{\hyperlink{class_display_manager}{DisplayManager}}(\mbox{\hyperlink{class_info_master}{InfoMaster}}\ \&Info,\ \mbox{\hyperlink{class_players_statistics}{PlayersStatistics}}\ \&Players\_statistics)\ :\ Info(Info),\ Players\_statistics(Players\_statistics)\ \{\}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{void}\ Start(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{void}\ Lilla\_cover\_slow(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ Funzioni\ comuni}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{void}\ Frame(\textcolor{keywordtype}{float}\ col,\ \textcolor{keywordtype}{float}\ row,\ \textcolor{keywordtype}{int}\ chars,\ \textcolor{keywordtype}{bool}\ print);}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{void}\ Popup(String\ text,\ uint16\_t\ text\_color,\ uint16\_t\ filler\_color);}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{void}\ Board(\textcolor{keywordtype}{float}\ col,\ \textcolor{keywordtype}{float}\ row,\ \textcolor{keywordtype}{int}\ chars);}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{void}\ Cancel\_text(\textcolor{keywordtype}{int}\ X,\ \textcolor{keywordtype}{int}\ Y,\ \textcolor{keywordtype}{int}\ N);}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordtype}{void}\ Unity(String\ A);}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{void}\ Delete\_row(\textcolor{keywordtype}{float}\ row);}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_effects(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{void}\ Resolution(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{void}\ Downsampling(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{void}\ Lowpass\_filter(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{comment}{//\ Gestione\ LED}}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{void}\ Led\_instrument\_PERFORMANCE(uint8\_t\ instrument);}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordtype}{void}\ Led\_instrument\_SOUND\_EDIT(uint8\_t\ instrument);}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordtype}{void}\ Led\_instrument\_INSTRUMENT\_VCF(uint8\_t\ instrument);}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{void}\ Led\_instrument\_DIRECT\_SAMPLING(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{void}\ Led\_instrument\_LIVE\_SAMPLING(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordtype}{void}\ Led\_tuning\_tone(\textcolor{keywordtype}{int}\ session);}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ PERFORMANCE}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordtype}{void}\ Performance\_page(\textcolor{keywordtype}{bool}\ change\_session,\ \textcolor{keywordtype}{bool}\ change\_vol);}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_Performance(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{void}\ Session\_volume\_value(\textcolor{keywordtype}{bool}\ change\_vol);\ \textcolor{comment}{//\ chi\ la\ usa??}}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_Session\_number(\textcolor{keywordtype}{bool}\ change\_session);}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{void}\ Session\_volume(\textcolor{keywordtype}{bool}\ change\_vol);}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{void}\ Session\_header(\textcolor{keywordtype}{bool}\ change\_session,\ \textcolor{keywordtype}{bool}\ change\_vol);}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{void}\ Session\_volume\_color(\textcolor{keywordtype}{bool}\ change\_session,\ \textcolor{keywordtype}{bool}\ change\_vol);}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{void}\ Performance\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{void}\ Frame\_performance\_menu(uint8\_t\ position,\ \textcolor{keywordtype}{bool}\ fresh);}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{void}\ Delete\_all\_frame\_performance\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_session\_change\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_session\_change\_popup\_frame(uint8\_t\ value);}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_frame(\textcolor{keywordtype}{int}\ X,\ \textcolor{keywordtype}{int}\ Y,\ uint8\_t\ chars,\ \textcolor{keywordtype}{bool}\ print);}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_save\_changes\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_session\_delete\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_session\_delete\_popup\_frame(uint8\_t\ value);}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ Instrument}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{void}\ Instruments\_header(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordtype}{void}\ All\_Instrument(uint8\_t\ session);}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_Instrument\_description(uint8\_t\ session,\ uint8\_t\ instrument,\ \textcolor{keywordtype}{bool}\ editing);}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{void}\ Delete\_Instrument(\textcolor{keywordtype}{int}\ position);}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{void}\ Instrument\_frame\_on\_position(\textcolor{keywordtype}{float}\ position,\ \textcolor{keywordtype}{bool}\ print);}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ Tuning\ tone}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordtype}{void}\ Instrument\_TT(uint8\_t\ session);}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{void}\ Volume\_TT(uint8\_t\ session);}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ SOUND\_EDIT}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{void}\ SOUND\_EDIT\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordtype}{void}\ Frame\_SOUND\_EDIT\_menu(uint8\_t\ position);}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordtype}{void}\ Delete\_all\_frame\_SOUND\_EDIT\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_sound(uint8\_t\ session,\ uint8\_t\ instrument);}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_wave(uint8\_t\ instrument);}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{void}\ File(uint8\_t\ instrument);}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordtype}{void}\ Midi\_channel(uint8\_t\ instrument);}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordtype}{void}\ Pitch(uint8\_t\ instrument);}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordtype}{void}\ Gain\_sound(uint8\_t\ session,\ uint8\_t\ instrument);}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}\ Pan(uint8\_t\ instrument);}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{void}\ Attack(uint8\_t\ instrument);}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{void}\ Decay(uint8\_t\ instrument);}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordtype}{void}\ Sustain(uint8\_t\ instrument);}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordtype}{void}\ Release(uint8\_t\ instrument);}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordtype}{void}\ Play\_mode(uint8\_t\ instrument);}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keywordtype}{void}\ Noclick(uint8\_t\ instrument,\ \textcolor{keywordtype}{bool}\ value);}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordtype}{void}\ Trim\_step(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordtype}{void}\ Pitch\_voices\_max(uint8\_t\ instrument);}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ INSTRUMENT\_VCF}}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{void}\ Instrument\_VCF\_page(uint8\_t\ session,\ uint8\_t\ instrument);}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_gain(uint8\_t\ id\_sound);}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_solo(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_filter\_type(uint8\_t\ instrument);}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_cutoff(uint8\_t\ instrument);}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_resonance(uint8\_t\ instrument);}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_lfo\_type(uint8\_t\ instrument);}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_lfo\_freq\_time(uint8\_t\ instrument);}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_lfo\_index(uint8\_t\ instrument);}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VCF\_pan(uint8\_t\ id\_sound);}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ DELAY}}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordtype}{void}\ Delay\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_sounds(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_delay(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_read\_gain(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ feedback}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_delay\_LR(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_modulation\_type(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_modulation\_frequency(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_modulation\_depth(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ index}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{void}\ D\_modulation\_phase\_LR(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordtype}{void}\ Delay\_disabled(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ DIRECT\ SAMPLING}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_confirm\_EXIT\_from\_DS(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_page(uint8\_t\ instrument,\ \textcolor{keywordtype}{int}\ recording);}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_sampler\_IO(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_bar(uint8\_t\ channel,\ \textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00231\ \ \ \ \ uint16\_t\ DS\_calc\_bar\_color(\textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_line\_out(\textcolor{keywordtype}{bool}\ visible);}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_sampler\_frame(\textcolor{keywordtype}{bool}\ visible);}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_sampler\_txt(\textcolor{keywordtype}{bool}\ color);}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_available\_memory(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_raw\_available\_memory(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_hide\_recording(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_advice\_delete(\textcolor{keywordtype}{bool}\ value);}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_advice\_no\_conversion(\textcolor{keywordtype}{int}\ DS\_export,\ \textcolor{keywordtype}{bool}\ value);}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_conversion\_options(\textcolor{keywordtype}{int}\ file\_L\_RAW,\ \textcolor{keywordtype}{int}\ file\_R\_RAW,\ \textcolor{keywordtype}{int}\ DS\_export);}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_export\_options(\textcolor{keywordtype}{int}\ file\_L\_RAW,\ \textcolor{keywordtype}{int}\ file\_R\_RAW,\ \textcolor{keywordtype}{int}\ DS\_export);}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_Recording\_description(\textcolor{keywordtype}{int}\ recording,\ \textcolor{keywordtype}{bool}\ led);}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_recording\_seconds(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_update\_recording\_seconds(\textcolor{keywordtype}{float}\ value);}
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_volume(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_update\_volume(\textcolor{keywordtype}{bool}\ adj\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_show\_gain(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordtype}{void}\ DS\_frame\_menu(uint8\_t\ position);}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{comment}{//\ SETUP}}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordtype}{void}\ Settings\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordtype}{void}\ Key\_step(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordtype}{void}\ First\_octave(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keywordtype}{void}\ Optimization(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordtype}{void}\ Settings\_frame(int8\_t\ value);}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordtype}{void}\ CC\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordtype}{void}\ All\_CC\_Sound\_gain(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_CC\_Sound\_gain(\textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_CC\_lowpass\_filter(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordtype}{void}\ Frame\_CC\_page\_menu(\textcolor{keywordtype}{int}\ value);}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ configura\ VFS}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_VFS\_packets(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keywordtype}{void}\ Make\_VFS\_presentazione(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordtype}{void}\ Make\_VFS\_assegnazioni(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordtype}{void}\ Make\_VFS\_restart(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{void}\ Make\_VFS\_no\_spazio\_per\_sampler(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{comment}{//\ copia\ RAW\ files\ da\ SD}}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{void}\ Import\_raw\_files\_frame(uint8\_t\ value);}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_config\_import\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keywordtype}{void}\ SD\_missing(uint16\_t\ color);}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordtype}{void}\ Config\_import\_FILE\_error\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordtype}{void}\ Config\_import\_REBOOT\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_config\_import\_frame(uint8\_t\ value);}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_config\_export\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keywordtype}{void}\ Config\_export\_SD\_error\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordtype}{void}\ Config\_export\_save\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_factory\_reset\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordtype}{void}\ Factory\_reset\_wait\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordtype}{void}\ Config\_reset\_popup(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_titolo(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ importa\ i\ file\ RAW\ dalla\ scheda\ SD}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_attesa\_SD(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ attesa\ 10sec\ scheda\ SD}}
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_directory\_assente(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ manca\ /LILLARAW}}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_consistenza\_presente(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ SD\_raw\_volume,\ \textcolor{keywordtype}{int}\ SD\_raw\_files,\ \textcolor{keywordtype}{int}\ flash\_raw\_volume,\ \textcolor{keywordtype}{int}\ flash\_raw\_files);}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_ultimo\_avviso(\textcolor{keywordtype}{float}\ erasing\_time\_ms);}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_avvio\_copia(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ inizia\ la\ cancellazione\ (erasing)\ della\ Flash\ memory}}
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_percentuale\_iniziale(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_avanzamento(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ barcount);}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_sfondo\_popup(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ black\ panel}}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_sfondo\_elenco(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_file\_da\_copiare(\textcolor{keywordtype}{int}\ row,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ length);}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_errore\_flash\_chip(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ Flash\ memory\ error!}}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_errore\_flash\_full(\textcolor{keywordtype}{void});\ \textcolor{comment}{//\ Flash\ memory\ full!}}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_copia\_completata(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keywordtype}{void}\ Copy\_raw\_files\_SD\_to\_Flash\_chip\_file\_copiato(\textcolor{keywordtype}{int}\ row,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename,\ uint32\_t\ filesize);}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{comment}{//\ MIDI\_LOOP}}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordtype}{void}\ LOOP\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_loop\_id(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_midi\_loop\_title(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_track\_data(\ \textcolor{keywordtype}{int}\ track);}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_time\_stretched(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_rec\_advice(\textcolor{keywordtype}{int}\ track,\ \ \textcolor{keywordtype}{bool}\ on);}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_led(\ \textcolor{keywordtype}{int}\ Xled,\ \textcolor{keywordtype}{int}\ Yled,\ \textcolor{keywordtype}{bool}\ ONled);}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_led\_metronomo(\textcolor{keywordtype}{int}\ Xled,\ \textcolor{keywordtype}{int}\ Yled,\ \textcolor{keywordtype}{bool}\ ONled);}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordtype}{void}\ Loop\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordtype}{void}\ Frame\_loop\_menu(uint8\_t\ position,\ \textcolor{keywordtype}{bool}\ fresh);}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordtype}{void}\ Delete\_all\_frame\_loop\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{comment}{//\ LIVE\_SAMPLING}}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordtype}{void}\ Confirm\_EXIT\_from\_LS(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_Ring\_Tape(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_LS\_feedback(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_LS\_X\_step(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_dim(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_volume(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_LS\_mode(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_loop\_time(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_X\_sample\_delta(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_LS\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordtype}{void}\ Frame\_LS\_menu(uint8\_t\ position);}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordtype}{void}\ Delete\_all\_frame\_LS\_menu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordtype}{void}\ Show\_LS\_ring\_tape\_wave(\textcolor{keywordtype}{int}\ id\_sound);}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordtype}{void}\ LS\_draw\_XY\_lines(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00326\ \ \ \ \ uint16\_t\ Get\_LS\_wave\_color(\textcolor{keywordtype}{int}\ point);}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordtype}{void}\ Update\_LS\_rec(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{comment}{//\ MIDI\_MONITOR}}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordtype}{void}\ Midi\_monitor\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{void}\ Midi\_monitor\_frame(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordtype}{void}\ Midi\_monitor\_data(uint8\_t\ incoming\_midi\_channel,\ uint8\_t\ incoming\_midi\_message,\ int8\_t\ incoming\_note\_number,\ int8\_t\ incoming\_velocity,\ int32\_t\ incoming\_midi\_value,\ int8\_t\ incoming\_number);}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{comment}{//\ MIXER}}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keywordtype}{void}\ MX\_page(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordtype}{void}\ MX\_MAIN\_volume(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keywordtype}{void}\ MX\_MONITOR\_volume(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordtype}{void}\ MX\_source\_values(uint8\_t\ source);}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keywordtype}{void}\ MX\_source\_values\_write(uint8\_t\ source);}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordtype}{void}\ MX\_source\_values\_edit(uint8\_t\ source);}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordtype}{void}\ MX\_source\_values\_jump(uint8\_t\ old\_source,\ uint8\_t\ new\_source);}
+\DoxyCodeLine{00342\ \};}
+
+\end{DoxyCode}
