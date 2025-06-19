@@ -2,16 +2,7 @@
 <img width="500" src="/doc/assets/images/logo_0.jpg")
 </p>
 
-LILLA is an audio sampler based on Teensy 4.1, designed and assembled in Italy.<br/>
-
-
-[www.lillasampler.it](https://www.lillasampler.it/)
-
-
-[www.facebook.com/Lilla.audio.sampler](https://www.facebook.com/Lilla.audio.sampler)
-
-
-[www.tindie.com/products/lillasampler](https://www.tindie.com/products/lillasampler/lilla-audio-sampler-2/)
+LILLA is an audio sampler based on Teensy 4.1, designed and assembled in Italy.
 
 
 Here are some shoots showing how the project has evolved since it began in 2018.
@@ -47,7 +38,7 @@ Here are some shoots showing how the project has evolved since it began in 2018.
 <img width="400" src="/doc/assets/images/story_7.jpg")
 </p>
 
-*Foudamentals*
+*Foundamentals*
 
 LILLA is polyphonic (16 voices), multitimbral, and multi-midi audio sampler; LILLA allows to play either imported or self-recorded audio files (16bit/44.1KHz), or live audio stream (when used as Live Sampler) applying various playing mode, adding ADSR envelope, changing length and pitch, and using digital effects.
 Four different modes:
@@ -67,6 +58,7 @@ Four different modes:
 - micro-SD socket
 
 
-The PCB is manufactured in Hong Kong, while component assembly is carried out in Italy. The enclosure, also made in Italy, consists of an aluminum sheet case.
-The latest version is **LILLA 2025**. 
-
+*Links*
+- [www.lillasampler.it](https://www.lillasampler.it/)
+- [www.facebook.com/Lilla.audio.sampler](https://www.facebook.com/Lilla.audio.sampler)
+- [www.tindie.com/products/lillasampler](https://www.tindie.com/products/lillasampler/lilla-audio-sampler-2/)
