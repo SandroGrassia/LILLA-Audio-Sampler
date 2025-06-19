@@ -56,7 +56,7 @@ Connections:
 - 3.5mm jack midi thru
 - 3.5mm jack stereo line in: dynamic microphones/line 2 channels input with analog gain (level) control
 - 3.5mm jack stereo line out: 3.3Vpp 2 channels audio output
-- 3.5mm jack stereo monitor: 3.3Vpp 2 channels audio output (only for Sounds check)
+- 3.5mm jack lo-fi stereo monitor: 3.3Vpp 2 channels audio output
 - micro-SD socket
 
 
