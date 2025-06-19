@@ -41,6 +41,7 @@ Here are some shoots showing how the project has evolved since it began in 2018.
 <img width="400" src="/doc/assets/images/story_7.jpg")
 </p>
 
+Foudamentals:
 LILLA is polyphonic (16 voices), multitimbral, and multi-midi audio sampler; LILLA allows to play either imported or self-recorded audio files (16bit/44.1KHz), or live audio stream (when used as Live Sampler) applying various playing mode, adding ADSR envelope, changing length and pitch, and using digital effects.
 Four different modes:
 - **Performance mode**: play using "patches" formed by 1 to 8 sounds (layered or indipendent);
