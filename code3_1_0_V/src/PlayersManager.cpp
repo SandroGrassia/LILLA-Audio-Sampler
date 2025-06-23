@@ -625,7 +625,7 @@ void PlayersManager::Broadcast_reset_effect(float resolution, uint8_t downsampli
 
         else if (effect == 1) // reset downsampling
         {
-            Player_ptr[player].Set_effects(Calc_resolution(resolution), 1);
+            Player_ptr[player].Set_effects(resolution, 1);
         }
 
         else

@@ -15,7 +15,7 @@ void AudioPlayer::begin(void)
 
 int16_t AudioPlayer::samples_basket[BASKET_DIM];
 
-void AudioPlayer::Set_effects(float resolution_exp, uint8_t downsampling_in) // 1.0bit <= resolution_exp <= 16.0bit  ;  0 <= downsampling_in <= 6
+void AudioPlayer::Set_effects(float resolution_exp, uint8_t downsampling_in) // 1.0bit <= resolution_exp <= 16.0bit  1 <= downsampling_in <= 128
 {
     set_effects_flag = true;
     resolution_flag_wait = resolution_exp < 15.9;
@@ -24,7 +24,7 @@ void AudioPlayer::Set_effects(float resolution_exp, uint8_t downsampling_in) // 
     //     K_resolution_step_wait = 1;
     // else if(K_resolution_step_wait > 32700)
     //     K_resolution_step_wait = 32767;
-    downsampling_flag_wait = downsampling_in > 0;
+    downsampling_flag_wait = downsampling_in > 1;
     downsampling_wait = downsampling_in;
 }
 
@@ -1140,6 +1140,7 @@ void AudioPlayer::update(void)
             JV0 = samples_counter + SAMPLES_VOLUME;                            // [sample]
             volume_flag = true;
         }
+        
         if (pan_gain_warmup_flag)
         {
             pan_gain_warmup_flag = false;
@@ -1148,6 +1149,7 @@ void AudioPlayer::update(void)
             JP0 = samples_counter + SAMPLES_VOLUME;                         // [sample]
             pan_flag = true;
         }
+
         if (set_effects_flag)
         {
             resolution_flag = resolution_flag_wait;
@@ -1234,7 +1236,7 @@ void AudioPlayer::update(void)
 
         if (downsampling_flag)
         {
-            sliding = (sliding + 128) % downsampling;
+            sliding = (sliding + AUDIO_BLOCK_SAMPLES) % downsampling;
         }
 
         if (VCF_connect)
