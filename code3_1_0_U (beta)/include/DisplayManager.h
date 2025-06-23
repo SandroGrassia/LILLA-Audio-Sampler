@@ -68,7 +68,7 @@ private:
     int Y_POPUP_OPT; // riga opzioni
 
     // PERFORMANCE
-    uint8_t Id_sound(const uint8_t session, const uint8_t instrument);
+    uint8_t Id_sound(const uint8_t patch_id, const uint8_t instrument);
     static constexpr int X_LED = 8; // posizione led pagina Performance (caratteri)
     int Instrument_Y_POSITION(int position);
     // rappresentazione Instrument VCF page
@@ -148,45 +148,45 @@ public:
     void Led_INSTRUMENT_VCF_instrument(int instrument, bool on);
     void Led_DIRECT_SAMPLING(bool on);
     void Led_LIVE_SAMPLING(bool on);
-    void Led_tuning_tone(int session);
+    void Led_tuning_tone(int patch_id);
 
     // PERFORMANCE
-    void Performance_page(bool change_session, bool change_vol);
+    void Performance_page(bool change_patch, bool change_vol);
     void Show_Performance(void);
-    void Session_volume_value(bool change_vol); // chi la usa??
-    void Show_Session_number(bool change_session);
-    void Session_volume(bool change_vol);
-    void Session_header(bool change_session, bool change_vol);
-    void Session_volume_color(bool change_session, bool change_vol);
+    void Patch_volume_value(bool change_vol); // chi la usa??
+    void Show_Patch_number(bool change_patch);
+    void Patch_volume(bool change_vol);
+    void Patch_header(bool change_patch, bool change_vol);
+    void Patch_volume_color(bool change_patch, bool change_vol);
     void Performance_menu(void);
     void Frame_performance_menu(uint8_t position, bool fresh);
     void Delete_all_frame_performance_menu(void);
-    void Confirm_session_change_popup(void);
-    void Confirm_session_change_popup_frame(uint8_t value);
+    void Confirm_patch_change_popup(void);
+    void Confirm_patch_change_popup_frame(uint8_t value);
     void Confirm_frame(int X, int Y, uint8_t chars, bool print);
     void Confirm_save_changes_page(void);
-    void Confirm_session_delete_popup(void);
-    void Confirm_session_delete_popup_frame(uint8_t value);
+    void Confirm_patch_delete_popup(void);
+    void Confirm_patch_delete_popup_frame(uint8_t value);
     // Instrument
     void Instruments_header(void);
-    void All_Instrument(uint8_t session);
-    void Show_Instrument_description(uint8_t session, uint8_t instrument, bool editing);
+    void All_Instrument(uint8_t patch_id);
+    void Show_Instrument_description(uint8_t patch_id, uint8_t instrument, bool editing);
     void Delete_Instrument(int position);
     void Instrument_frame_on_position(float position, bool print);
     // Tuning tone
-    void Instrument_TT(uint8_t session);
-    void Volume_TT(uint8_t session);
+    void Instrument_TT(uint8_t patch_id);
+    void Volume_TT(uint8_t patch_id);
 
     // SOUND_EDIT
     void SOUND_EDIT_menu(void);
     void Frame_SOUND_EDIT_menu(uint8_t position);
     void Delete_all_frame_SOUND_EDIT_menu(void);
-    void Show_sound(uint8_t session, uint8_t instrument);
+    void Show_sound(uint8_t patch_id, uint8_t instrument);
     void Show_wave(uint8_t instrument);
     void File(uint8_t instrument);
     void Midi_channel(uint8_t instrument);
     void Pitch(uint8_t instrument);
-    void Gain_sound(uint8_t session, uint8_t instrument);
+    void Gain_sound(uint8_t patch_id, uint8_t instrument);
     void Pan(uint8_t instrument);
     void Attack(uint8_t instrument);
     void Decay(uint8_t instrument);
@@ -198,8 +198,8 @@ public:
     void Pitch_voices_max(uint8_t instrument);
 
     // INSTRUMENT_VCF
-    void Instrument_VCF_page(uint8_t session, uint8_t instrument);
-    void Show_VCF_gain(uint8_t id_sound);
+    void Instrument_VCF_page(uint8_t patch_id, uint8_t instrument);
+    void Show_VCF_gain(uint8_t sound_id);
     void Show_VCF_solo(void);
     void Show_VCF_filter_type(uint8_t instrument);
     void Show_VCF_cutoff(uint8_t instrument);
@@ -207,7 +207,7 @@ public:
     void Show_VCF_lfo_type(uint8_t instrument);
     void Show_VCF_lfo_freq_time(uint8_t instrument);
     void Show_VCF_lfo_index(uint8_t instrument);
-    void Show_VCF_pan(uint8_t id_sound);
+    void Show_VCF_pan(uint8_t sound_id);
 
     // DELAY
     void Delay_page(void);
@@ -322,7 +322,7 @@ public:
     void Show_LS_menu(void);
     void Frame_LS_menu(uint8_t position);
     void Delete_all_frame_LS_menu(void);
-    void Show_LS_ring_tape_wave(int id_sound);
+    void Show_LS_ring_tape_wave(int sound_id);
     void LS_draw_XY_lines(void);
     uint16_t Get_LS_wave_color(int point);
     void Update_LS_rec(void);

@@ -6,18 +6,17 @@
 
 #include <Arduino.h>
 
+
+
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0_R 17/06/2025";
+String FIRMWARE_VERSION = "3.1.0_U 23/06/2025";
+
 
 // **********************************************************
 // **************       VERSIONE LILLA         **************
 // **********************************************************
-// #define PCB_2022 0 // case legno
-// #define PCB_2023 0 // case alluminio
-#define PCB_2024 0 // case alluminio - encoder con CLK e DT invertiti
-
 /*
     PCB_2022 - hw code: Y22
     - gli encoder 24 e 25 hanno i terminali DT e CLK scambiati rispetto agli altri encoder
@@ -33,6 +32,12 @@ String FIRMWARE_VERSION = "3.1.0_R 17/06/2025";
     PCB_2024 LILLA 2024 - hw code: Y24
     - tutti gli encoder hanno i terminali DT e CLK invertiti rispetto al PCB
 */
+
+// #define PCB_2022 0 // case legno
+// #define PCB_2023 0 // case alluminio
+#define PCB_2024 0 // case alluminio - encoder con CLK e DT invertiti
+
+
 
 // **********************************************************
 // **************           MEMORY             **************
@@ -125,6 +130,7 @@ teensy_size:    RAM2: variables:34240  free for malloc/new:490048
 #include "SharedVFS.h"
 #include "SharedMixer.h"
 #include "SharedMM.h"
+#include "UserInterface.h"
 
 // Classi Lilla istanziate
 #include "AudioPlayer.h"
@@ -203,7 +209,7 @@ AudioOutputNoiseShapedPWM PWM_R(4); // PWM_R on pin 4;
 AudioOutputI2S audio_out;
 
 // *************************************************************
-// ****************      ARCHITETTURA          *****************
+// ****************     AUDIOCONNECTION        *****************
 // *************************************************************
 
 AudioConnection patchCord1(Player[0], 0, Router_L, 0);
@@ -303,7 +309,7 @@ AudioConnection patchCord76(PWM_mixer_out_R, 0, PWM_R, 0);
 AudioControlSGTL5000 Audio_shield;
 
 // *************************************************************
-// ***************   OGGETTI NON AUDIOSTREAM   *****************
+// ***************       NOT AUDIOSTREAM       *****************
 // *************************************************************
 InfoMaster Info;     // Infos about audio files
 WaveVibrato Vibrato; // LFO for midi Vibrato effect
@@ -328,164 +334,10 @@ PlayersManager Players_Manager(&Player[0], &Router_L, &Router_R, &Noclick[0], &W
 MidiReader Midi_reader(LOOP_metronomo);
 DelayManager Delay_manager;
 
-// *************************************************************
-// ********     MULTIPLEXERS, ENCODERS, PUSHBUTTONS    *********
-// *************************************************************
-
-// LILLA 2022/2023/2024/2025 comprende n.7 multiplexer (MUX)
-//
-// vista backside:
-//
-// MUX3     MUX2      MUX1
-// MUX4     MUX5      MUX6
-//                    MUX7
-
-// HARDWARE
-static constexpr int ENCODERS = 26;
-static constexpr int PUSHBUTTONS = 36;
-
-// microseconds between send address and read value
-static constexpr int PAUSE_MUX = 10;
-static constexpr int PB_UP_PAUSE = 50;
-static constexpr int PB_DOWN_PAUSE = 50;
-
-// pin del T41 dedicati al bus address dei MUX
-static constexpr int MUX_S0_pin = 37;
-static constexpr int MUX_S1_pin = 35;
-static constexpr int MUX_S2_pin = 34;
-static constexpr int MUX_S3_pin = 33;
-
-// corrispondenza tra gli identificativi dei MUX sul PCB (MUX1, MUX2,..., MUX7) e gli identificativi nel codice
-static constexpr int MUX1 = 0;
-static constexpr int MUX2 = 1;
-static constexpr int MUX3 = 2;
-static constexpr int MUX4 = 3;
-static constexpr int MUX5 = 4;
-static constexpr int MUX6 = 5;
-static constexpr int MUX7 = 6;
-
-// pin del T41 dedicati alle uscite SIG dei Mux
-#ifdef PCB_2022
-static constexpr uint8_t MUX_pin[7] = {40, 32, 25, 28, 31, 39, 36};
-#else
-static constexpr uint8_t MUX_pin[7] = {25, 40, 36, 9, 39, 28, 32};
-#endif
-
-// encoder
-struct EN_struct
-{
-    uint8_t state;
-    uint8_t DT_MUX_pin;
-    uint8_t CLK_MUX_pin;
-    uint8_t address;
-};
-EN_struct Encoder[26];
-static constexpr int READ_TIME = 50;
-static constexpr int ENC_STOP = 50; // ATTENZIONE: VALORE DA NON DIMINUIRE AL DI SOTTO DI 30!! milliseconds between consecuive reads
-static constexpr int ENC_NIP = 100;
-elapsedMillis ENC_timer;
-elapsedMillis ENC_nip;
-elapsedMillis minitimer;
-
-// pushbutton
-struct PB_struct
-{
-    bool state;
-    uint8_t mux; // da ELIMINARE
-    uint8_t P_MUX_pin;
-    uint8_t address;
-    unsigned long timer;
-};
-PB_struct PB[36];
-uint8_t PB_number = 0;
-unsigned long Timer_pushbutton = 0;
-static constexpr int STOP_PUSHBUTTONS = 500; // milliseconds between consecuive read of the same pushbutton
-elapsedMillis PB_timer = 0;
 
 // *************************************************************
 // ****************    VARIABLES AND ARRAYS     ****************
 // *************************************************************
-
-// Session
-Session_struct Session_cache_P; // used to save a Session BEFORE entering in PERFORMANCE mode
-uint8_t session_old;
-bool session_original;
-bool session_original_0;
-uint8_t sessions; // number of sessions in use (NOT deleted)
-
-// functions
-int8_t Get_Session_free(void);
-void Delete_all_Sessions_and_Sounds(void);
-void Read_all_Sessions(void);
-void Update_sessions(void);
-uint8_t Get_first_Session_existing(void);
-uint8_t Get_next_Session_existing(void);
-uint8_t Get_previous_Session_existing(void);
-void Ask_if_change_Session(void);
-void Ask_if_delete_this_SESSION(void);
-bool Verify_is_Session_original(const int session);
-void Select_performance_menu_elements(void);
-uint8_t Get_midi_channel_P_Session(uint8_t instrument);
-
-// Instrument
-uint8_t instrument;
-int8_t instrument_on_position[INSTRUMENTS_MAX];
-uint8_t last_edited_instrument;
-
-// functions
-void Update_instruments_leds(void);
-void Update_Instruments_positions(void); // posizione di tutti gli Instrument sul display
-bool Verify_if_Instrument_original(uint8_t I);
-void Macro_Instrument_editing(void);
-void Map_one_Instrument_for_all_notes(uint8_t instrument);
-void Drop_Instrument(uint8_t instrument);        // drop the instrument from the session ONLY IF instruments > 1
-uint8_t Clone_Instrument(uint8_t instrument);    // insert ONE new instrument BELOW instrument
-void Update_all_maps_Instrument_for_notes(void); // aggiorna la mappatura tra tutte le coppie midi_channel/note_number e relativi Instrument
-void Reset_all_maps_Instrument_for_notes(void);
-void Reset_map_Instrument_for_notes(uint8_t instrument);
-void Delete_one_map_Instrument_for_notes(uint8_t instrument);
-
-// instrument VCF functions
-bool Request_VCF_mode(void);
-void Macro_VCF_filter_on_none(void);
-void Macro_VCF_modulation_none(void);
-
-// leds
-bool led_state[INSTRUMENTS_MAX] = {false, false, false, false, false, false, false, false};
-bool led_state_old[INSTRUMENTS_MAX] = {false, false, false, false, false, false, false, false};
-bool display_led_instrument[INSTRUMENTS_MAX] = {false, false, false, false, false, false, false, false};
-
-// Sound
-Sound_struct Sound_cache_P[SOUNDS_MAX]; // used to save all Sound starting a new session
-uint8_t id_sound;
-bool sound_original = true;
-
-// functions
-bool Verify_is_Sound_original(uint8_t id_sound);
-void Copy_all_Sound_to_Sound_cache_P(void);
-void Pull_all_Sound_from_Sound_cache_P(void);
-uint8_t Get_sounds_free(void);
-void Read_all_Sounds(void);
-void Save_all_Sounds_changed(void);
-int8_t Get_sound_free(void);
-bool Request_SOUND_EDIT_mode(void);
-void Select_sound_edit_menu_elements(void);
-void Macro_Sound_menu(void);
-uint32_t Calc_trim_step(uint8_t value);
-uint8_t Get_midi_channel_from_Sound(uint8_t id_sound);
-void Set_midi_channel_for_Sound(uint8_t id_sound, uint8_t midi_channel);
-void Set_Sound_SOLO_OFF(void);
-
-// wavetable functions
-void Get_all_Wavetable_pointer(void);
-void Fill_all_Wavetable(void);
-void Fill_Wavetable(uint8_t instrument);
-
-// noclick functions
-uint16_t Calc_Noclick_max(bool use_Wavetable);
-void Get_all_Noclick_pointer(void);
-void Fill_all_Noclick(void);
-void Fill_Noclick(uint8_t instrument);
 
 // Polyphony/Max Pitch
 uint8_t optimization_cache;
@@ -499,6 +351,108 @@ int resolution_cache;
 int downsampling_cache;
 bool resolution_reset;
 bool downsampling_reset;
+
+// PERFORMANCE
+
+// Menu
+int P_menu;
+int P_menu_change;
+int P_menu_max;
+
+// Patch
+Patch_struct Patch_cache_P; // used to save a Patch BEFORE entering in PERFORMANCE mode
+uint8_t patch_old;
+bool patch_original;
+bool patch_original_0;
+uint8_t patches_number; // number of patches_number in use (NOT deleted)
+
+// functions
+int8_t Get_Patch_id_free(void);
+void Delete_all_Patches_and_Sounds(void);
+void Read_all_Patches(void);
+void Update_Patches_number(void);
+uint8_t Get_first_Patch_id_existing(void);
+uint8_t Get_next_Patch_id_existing(void);
+uint8_t Get_previous_Patch_id_existing(void);
+void Ask_if_change_Patch(void);
+void Ask_if_delete_this_Patch(void);
+bool Verify_is_Patch_original(const int patch_id);
+void Select_performance_menu_elements(void);
+
+// Instrument
+uint8_t Instrument_id;
+int8_t instrument_on_position[INSTRUMENTS_MAX];
+uint8_t last_edited_instrument;
+
+// variables
+uint8_t midi_channel_change;
+uint8_t from_key_change;
+uint8_t to_key_change;
+uint8_t patch_change;
+
+// functions
+void Update_instruments_leds(void);
+void Update_Instruments_positions(void); // posizione di tutti gli Instrument sul display
+bool Verify_if_Instrument_original(uint8_t I);
+void Macro_Instrument_editing(void);
+void Map_one_Instrument_for_all_notes(uint8_t instrument);
+void Drop_Instrument(uint8_t instrument);        // drop the instrument from the patch_id ONLY IF instruments > 1
+uint8_t Clone_Instrument(uint8_t instrument);    // insert ONE new instrument BELOW instrument
+void Update_all_maps_Instrument_for_notes(void); // aggiorna la mappatura tra tutte le coppie midi_channel/note_number e relativi Instrument
+void Reset_all_maps_Instrument_for_notes(void);
+void Reset_map_Instrument_for_notes(uint8_t instrument);
+void Delete_one_map_Instrument_for_notes(uint8_t instrument);
+
+// instrument VCF functions
+bool Request_VCF_mode(void);
+void Macro_VCF_filter_on_none(void);
+void Macro_VCF_modulation_none(void);
+
+// Sound
+Sound_struct Sound_cache_P[SOUNDS_MAX]; // used to save all Sound starting a new patch_id
+uint8_t Sound_id;
+bool sound_original = true;
+
+// functions
+bool Verify_is_Sound_original(uint8_t sound_id);
+void Copy_all_Sound_to_Sound_cache_P(void);
+void Pull_all_Sound_from_Sound_cache_P(void);
+uint8_t Get_sounds_free(void);
+void Read_all_Sounds(void);
+void Save_all_Sounds_changed(void);
+int8_t Get_sound_free(void);
+bool Request_SOUND_EDIT_mode(void);
+void Select_sound_edit_menu_elements(void);
+void Macro_Sound_menu(void);
+uint32_t Calc_trim_step(uint8_t value);
+uint8_t Get_midi_channel_from_Sound(uint8_t sound_id);
+void Set_midi_channel_for_Sound(uint8_t sound_id, uint8_t midi_channel);
+void Set_Sound_SOLO_OFF(void);
+
+// wavetable functions
+void Get_all_Wavetable_pointer(void);
+void Fill_all_Wavetable(void);
+void Fill_Wavetable(uint8_t instrument);
+
+// noclick functions
+uint16_t Calc_Noclick_max(bool use_Wavetable);
+void Get_all_Noclick_pointer(void);
+void Fill_all_Noclick(void);
+void Fill_Noclick(uint8_t instrument);
+
+// SOUND_EDIT
+// menu
+int So_menu;
+int So_menu_change;
+int So_menu_max;
+
+// slicing
+uint32_t trim_step; // samples per each step while trimming audio file
+int slicing_window;
+const int MIN_SNIPPET = 100; // minimum dimension (number of samples) of the snippet played
+
+// functions
+void Calc_pitch_from_note(void);
 
 // SETTINGS
 int8_t SET_menu;
@@ -518,40 +472,6 @@ int CC_number;
 // functions
 void Save_CC_SETTINGS(void);
 void Read_all_CC_Sound_gain(void);
-
-// PERFORMANCE
-// menu
-int P_menu;
-int P_menu_change;
-int P_menu_max;
-
-// variables
-uint8_t midi_channel_change;
-uint8_t from_key_change;
-uint8_t to_key_change;
-uint8_t session_change;
-uint8_t Instrument_filter_frame[8][3] = {{0, 1, 6}, {11, 6, 1}, {11, 7, 8}, {11, 8, 7}, {11, 9, 4}, {11, 10, 8}, {11, 11, 4}, {11, 12, 7}};
-
-// SOUND_EDIT
-// menu
-int So_menu;
-int So_menu_change;
-int So_menu_max;
-
-// slicing
-uint32_t trim_step; // samples per each step while trimming audio file
-int slicing_window;
-const int MIN_SNIPPET = 100; // minimum dimension (number of samples) of the snippet played
-
-// functions
-void Calc_pitch_from_note(void);
-
-// Micro SD
-File Lilla_File;
-const int SDcardSelect = BUILTIN_SDCARD;
-
-// Protect Lilla settings
-bool exibition = false;
 
 // DELAY
 int16_t *DELAY_fifo_L = NULL;
@@ -579,7 +499,7 @@ int First_DS_packet = 0;
 int Last_DS_packet = 0;
 
 // functions
-void DS_setup_DIRECT_SAMPLING_Session_and_Preset(void); // to be called inside AudioNoInterrupt()
+void DS_setup_DIRECT_SAMPLING_Patch_and_Preset(void); // to be called inside AudioNoInterrupt()
 void DS_refresh_DS_page(void);
 void DS_ask_if_EXIT_from_DS(void);
 void DS_back_to_first_DS_Recording(void);
@@ -596,7 +516,7 @@ int DS_get_last_Recording(void);
 int DS_get_previous_Recording(int value);
 bool DS_check_conversion(void);
 void DS_define_model(void);
-void DS_set_DS_Sampling_Session(void);
+void DS_set_DS_Sampling_Patch(void);
 int DS_get_samples_in_Recording(int value);
 void P_Recording(int value);
 
@@ -659,7 +579,7 @@ void LS_update_both_X_Y_samples(void);
 void LS_update_Q_sample(void);
 void LS_erase_FIFO_array(int16_t *Array, int stereo);
 void LS_Setup_buffers(bool stereo, bool first);
-void LS_setup_LS_Session(bool stereo);
+void LS_setup_LS_Patch(bool stereo);
 
 // MIDI_LOOP
 // variables
@@ -698,6 +618,8 @@ int Get_previous_loop_id_in_SD(int loop_id);
 void LOOP_stop_and_reset_runnig_loop_data(void);
 
 // MIXER
+// PWM Monitor
+int volume_MONITOR = 0;
 void Golive_MIXER(int instrument = -1);
 
 // EEPROM
@@ -713,38 +635,38 @@ int result;
 uint32_t big_result;
 
 // Switch
-void Switch_to_PERFORMANCE_session_old(void);
-void Jump_to_Session(uint8_t next_session);
-void Rebuild_session_old(void);
-void Golive_with_PERFORMANCE(int session);
+void Switch_to_PERFORMANCE_patch_old(void);
+void Jump_to_Patch(uint8_t next_patch);
+void Rebuild_patch_old(void);
+void Golive_with_PERFORMANCE(int patch_id);
 void Switch_from_MIDI_LOOP_to_PERFORMANCE(void);       // si fermano i track
-void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void);   // si ripristina session_old
-void Switch_from_DIRECT_SAMPLING_to_PERFORMANCE(void); // si ripristina session_old
-void Switch_to_MIXER(void);                            // si sta sulla session attuale, ci si posiziona sul primo instrument esistente
+void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void);   // si ripristina patch_old
+void Switch_from_DIRECT_SAMPLING_to_PERFORMANCE(void); // si ripristina patch_old
+void Switch_to_MIXER(void);                            // si sta sulla patch_id attuale, ci si posiziona sul primo instrument esistente
 void Switch_from_LIVE_SAMPLING_to_DELAY(void);
 void Golive_with_LIVE_SAMPLING(void);                    // passaggio e visualizzazione
-void Switch_from_PERFORMANCE_to_LIVE_SAMPLING(void);     // si memorizza la session attuale e si passa alla LS_session
-void Switch_from_MIDI_LOOP_to_LIVE_SAMPLING(void);       // si fermano i track e si passa alla LS_session
-void Switch_from_DIRECT_SAMPLING_to_LIVE_SAMPLING(void); // si passa alla LS_session
+void Switch_from_PERFORMANCE_to_LIVE_SAMPLING(void);     // si memorizza la patch_id attuale e si passa alla LS_patch
+void Switch_from_MIDI_LOOP_to_LIVE_SAMPLING(void);       // si fermano i track e si passa alla LS_patch
+void Switch_from_DIRECT_SAMPLING_to_LIVE_SAMPLING(void); // si passa alla LS_patch
 void Golive_DIRECT_SAMPLING(void);
 void Jump_to_DIRECT_SAMPLING_recording(int &recording);
-void Switch_to_DIRECT_SAMPLING(void);                    // si passa alla DS_session
-void Switch_from_MIDI_LOOP_to_DIRECT_SAMPLING(void);     // si fermano i track e si passa alla DS_session
-void Switch_from_LIVE_SAMPLING_to_DIRECT_SAMPLING(void); // si ferma la registrazione e si passa alla DS_session
+void Switch_to_DIRECT_SAMPLING(void);                    // si passa alla DS_patch
+void Switch_from_MIDI_LOOP_to_DIRECT_SAMPLING(void);     // si fermano i track e si passa alla DS_patch
+void Switch_from_LIVE_SAMPLING_to_DIRECT_SAMPLING(void); // si ferma la registrazione e si passa alla DS_patch
 void Golive_MIDI_MONITOR(void);
 void Switch_from_MIDI_LOOP_to_MIDI_MONITOR(void);    // si fermano i track
 void Golive_with_MIDI_LOOP(bool restart = false);    // passaggio e visualizzazione; restart == false non interrompe i track running
-void Switch_from_PERFORMANCE_to_MIDI_LOOP(void);     // si conserva la Session attuale
-void Switch_from_DIRECT_SAMPLING_to_MIDI_LOOP(void); // si ripristina session_old
-void Switch_from_LIVE_SAMPLING_to_MIDI_LOOP(void);   // si ripristina session_old
+void Switch_from_PERFORMANCE_to_MIDI_LOOP(void);     // si conserva la Patch attuale
+void Switch_from_DIRECT_SAMPLING_to_MIDI_LOOP(void); // si ripristina patch_old
+void Switch_from_LIVE_SAMPLING_to_MIDI_LOOP(void);   // si ripristina patch_old
 void Golive_SETUP(void);
 void Switch_from_MIDI_LOOP_to_SETUP(void); // si fermano i track
 
 // Print
-void P_Session(uint8_t S);
-void P_Instrument(uint8_t S, uint8_t I);
-void P_Session_cache_P(void);
-void P_Sound(uint8_t id_sound);
+void P_Patch(uint8_t patch_id);
+void P_Instrument(uint8_t patch_id, uint8_t instrument_id);
+void P_Patch_cache_P(void);
+void P_Sound(uint8_t sound_id);
 void P_Lilla_state(void);
 void P_keyboard_state(uint8_t mc, int8_t a, int8_t b);
 void P_map_instrument_for_note(uint8_t midi_channel);
@@ -752,31 +674,18 @@ template <class T>
 void P(String &what, T &value);
 void Print_Directory(File dir, int numSpaces);
 
+// Display
+// functions
+int x_pos(float col);
+
 // Test
 bool test_devices = false;
 bool test_mux = false;
 int state_mux = 0;
 bool mux_en;
 
-// PWM Monitor
-int volume_MONITOR = 0;
-
-// Display
-// functions
-int x_pos(float col);
-
-// Multiplexers
-void Write_MUX_address(uint8_t address);
-bool Read_pushbutton(uint8_t PB_id);
-bool Read_pushbutton_fast(uint8_t PB_id);
-int Read_pushbutton_UP(uint8_t PB_id);
-uint8_t Encoder_state(uint8_t encoder, bool write_mux);
-bool Read_encoder_fast(int encoder);
-int Read_encoder_simple(int encoder);
-template <class T>
-bool Read_encoder(int encoder, T &value, const int highest, const int lowest, int inc);
-template <class T>
-bool Read_encoder_inverse(int encoder, T &value, const int highest, const int lowest, int inc);
+// Protection
+bool exibition = false;
 
 // Startup
 void Compile_tables(void);
@@ -803,7 +712,7 @@ void setup()
     // Compila le tavole di costanti
     Compile_tables();
 
-    for (uint8_t i = 0; i < 10; ++i)
+    for (auto i = 0; i < 10; ++i)
     {
         m_exp_table[i] = exp_table[i + 1] - exp_table[i];
         m_sin_table[i] = sin_table[i + 1] - sin_table[i];
@@ -812,258 +721,11 @@ void setup()
     }
 
     const float value_float = 16.0;
-    for (uint8_t i = 0; i <= 32; ++i)
+    for (auto i = 0; i <= 32; ++i)
     {
         pan_gain_L_table[i] = sin((value_float - (i - 16.0)) * 0.049087f); // Left channel , 0.049087 = M_PI/64.0
         pan_gain_R_table[i] = sin((value_float + (i - 16.0)) * 0.049087f); // Right channel , 0.049087 = M_PI/64.0
     }
-
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //          Setup dei pin sul T41 collegati ai Mux
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    // Pin collegati all'Address bus dei Mux
-    pinMode(MUX_S0_pin, OUTPUT);
-    pinMode(MUX_S1_pin, OUTPUT);
-    pinMode(MUX_S2_pin, OUTPUT);
-    pinMode(MUX_S3_pin, OUTPUT);
-
-    // Pin collegati alle uscite SIG dei Mux
-    for (uint8_t i = 0; i < 7; ++i)
-    {
-        pinMode(MUX_pin[i], INPUT_PULLUP);
-    }
-
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //     Setup di variabili e strutture per i 26 Encoder
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    for (uint8_t i = 0; i < 26; ++i)
-    {
-        Encoder[i].state = 0;
-    }
-
-    Encoder[0].address = 10;
-    Encoder[1].address = 8;
-    Encoder[2].address = 6;
-    Encoder[3].address = 10;
-    Encoder[4].address = 8;
-    Encoder[5].address = 6;
-    Encoder[6].address = 10;
-    Encoder[7].address = 8;
-    Encoder[8].address = 11;
-    Encoder[9].address = 0;
-    Encoder[10].address = 2;
-    Encoder[11].address = 11;
-    Encoder[12].address = 0;
-    Encoder[13].address = 2;
-    Encoder[14].address = 11;
-    Encoder[15].address = 0;
-    Encoder[16].address = 12;
-    Encoder[17].address = 15;
-    Encoder[18].address = 3;
-    Encoder[19].address = 12;
-    Encoder[20].address = 15;
-    Encoder[21].address = 3;
-    Encoder[22].address = 12;
-    Encoder[23].address = 15;
-    Encoder[24].address = 3;
-    Encoder[25].address = 2;
-
-#if defined PCB_2022 || defined PCB_2023
-    Encoder[0].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[1].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[2].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[3].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[4].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[5].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[6].DT_MUX_pin = MUX_pin[MUX3];
-    Encoder[7].DT_MUX_pin = MUX_pin[MUX3];
-    Encoder[8].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[9].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[10].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[11].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[12].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[13].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[14].DT_MUX_pin = MUX_pin[MUX3];
-    Encoder[15].DT_MUX_pin = MUX_pin[MUX3];
-    Encoder[16].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[17].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[18].DT_MUX_pin = MUX_pin[MUX1];
-    Encoder[19].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[20].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[21].DT_MUX_pin = MUX_pin[MUX2];
-    Encoder[22].DT_MUX_pin = MUX_pin[MUX3];
-    Encoder[23].DT_MUX_pin = MUX_pin[MUX3];
-    Encoder[24].DT_MUX_pin = MUX_pin[MUX3];
-    Encoder[25].DT_MUX_pin = MUX_pin[MUX3];
-
-    Encoder[0].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[1].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[2].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[3].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[4].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[5].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[6].CLK_MUX_pin = MUX_pin[MUX4];
-    Encoder[7].CLK_MUX_pin = MUX_pin[MUX4];
-    Encoder[8].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[9].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[10].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[11].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[12].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[13].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[14].CLK_MUX_pin = MUX_pin[MUX4];
-    Encoder[15].CLK_MUX_pin = MUX_pin[MUX4];
-    Encoder[16].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[17].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[18].CLK_MUX_pin = MUX_pin[MUX6];
-    Encoder[19].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[20].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[21].CLK_MUX_pin = MUX_pin[MUX5];
-    Encoder[22].CLK_MUX_pin = MUX_pin[MUX4];
-    Encoder[23].CLK_MUX_pin = MUX_pin[MUX4];
-    Encoder[24].CLK_MUX_pin = MUX_pin[MUX4];
-    Encoder[25].CLK_MUX_pin = MUX_pin[MUX4];
-
-#else // if defined PCB_2024
-    Encoder[0].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[1].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[2].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[3].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[4].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[5].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[6].CLK_MUX_pin = MUX_pin[MUX3];
-    Encoder[7].CLK_MUX_pin = MUX_pin[MUX3];
-    Encoder[8].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[9].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[10].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[11].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[12].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[13].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[14].CLK_MUX_pin = MUX_pin[MUX3];
-    Encoder[15].CLK_MUX_pin = MUX_pin[MUX3];
-    Encoder[16].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[17].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[18].CLK_MUX_pin = MUX_pin[MUX1];
-    Encoder[19].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[20].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[21].CLK_MUX_pin = MUX_pin[MUX2];
-    Encoder[22].CLK_MUX_pin = MUX_pin[MUX3];
-    Encoder[23].CLK_MUX_pin = MUX_pin[MUX3];
-    Encoder[24].CLK_MUX_pin = MUX_pin[MUX3];
-    Encoder[25].CLK_MUX_pin = MUX_pin[MUX3];
-
-    Encoder[0].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[1].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[2].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[3].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[4].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[5].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[6].DT_MUX_pin = MUX_pin[MUX4];
-    Encoder[7].DT_MUX_pin = MUX_pin[MUX4];
-    Encoder[8].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[9].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[10].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[11].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[12].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[13].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[14].DT_MUX_pin = MUX_pin[MUX4];
-    Encoder[15].DT_MUX_pin = MUX_pin[MUX4];
-    Encoder[16].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[17].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[18].DT_MUX_pin = MUX_pin[MUX6];
-    Encoder[19].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[20].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[21].DT_MUX_pin = MUX_pin[MUX5];
-    Encoder[22].DT_MUX_pin = MUX_pin[MUX4];
-    Encoder[23].DT_MUX_pin = MUX_pin[MUX4];
-    Encoder[24].DT_MUX_pin = MUX_pin[MUX4];
-    Encoder[25].DT_MUX_pin = MUX_pin[MUX4];
-#endif
-
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //     Setup di variabili e strutture per i 36 Pushbutton
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    for (uint8_t i = 0; i < 36; ++i)
-    {
-        PB[i].state = false;
-        PB[i].timer = 0;
-    }
-
-    PB[0].address = 9;
-    PB[1].address = 7;
-    PB[2].address = 5;
-    PB[3].address = 9;
-    PB[4].address = 7;
-    PB[5].address = 5;
-    PB[6].address = 9;
-    PB[7].address = 7;
-    PB[8].address = 14;
-    PB[9].address = 1;
-    PB[10].address = 4;
-    PB[11].address = 14;
-    PB[12].address = 1;
-    PB[13].address = 4;
-    PB[14].address = 14;
-    PB[15].address = 1;
-    PB[16].address = 13;
-    PB[17].address = 1;
-    PB[18].address = 4;
-    PB[19].address = 13;
-    PB[20].address = 1;
-    PB[21].address = 4;
-    PB[22].address = 13;
-    PB[23].address = 1;
-    PB[24].address = 5;
-    PB[25].address = 4;
-    PB[26].address = 13;
-    PB[27].address = 14;
-    PB[28].address = 15;
-    PB[29].address = 0;
-    PB[30].address = 1;
-    PB[31].address = 2;
-    PB[32].address = 3;
-    PB[33].address = 4;
-    PB[34].address = 5;
-    PB[35].address = 6;
-
-    PB[0].P_MUX_pin = MUX_pin[MUX1];
-    PB[1].P_MUX_pin = MUX_pin[MUX1];
-    PB[2].P_MUX_pin = MUX_pin[MUX1];
-    PB[3].P_MUX_pin = MUX_pin[MUX2];
-    PB[4].P_MUX_pin = MUX_pin[MUX2];
-    PB[5].P_MUX_pin = MUX_pin[MUX2];
-    PB[6].P_MUX_pin = MUX_pin[MUX3];
-    PB[7].P_MUX_pin = MUX_pin[MUX3];
-    PB[8].P_MUX_pin = MUX_pin[MUX1];
-    PB[9].P_MUX_pin = MUX_pin[MUX1];
-    PB[10].P_MUX_pin = MUX_pin[MUX1];
-    PB[11].P_MUX_pin = MUX_pin[MUX2];
-    PB[12].P_MUX_pin = MUX_pin[MUX2];
-    PB[13].P_MUX_pin = MUX_pin[MUX2];
-    PB[14].P_MUX_pin = MUX_pin[MUX3];
-    PB[15].P_MUX_pin = MUX_pin[MUX3];
-    PB[16].P_MUX_pin = MUX_pin[MUX1];
-    PB[17].P_MUX_pin = MUX_pin[MUX6];
-    PB[18].P_MUX_pin = MUX_pin[MUX6];
-    PB[19].P_MUX_pin = MUX_pin[MUX2];
-    PB[20].P_MUX_pin = MUX_pin[MUX5];
-    PB[21].P_MUX_pin = MUX_pin[MUX5];
-    PB[22].P_MUX_pin = MUX_pin[MUX3];
-    PB[23].P_MUX_pin = MUX_pin[MUX4];
-    PB[24].P_MUX_pin = MUX_pin[MUX4];
-    PB[25].P_MUX_pin = MUX_pin[MUX4];
-    PB[26].P_MUX_pin = MUX_pin[MUX7];
-    PB[27].P_MUX_pin = MUX_pin[MUX7];
-    PB[28].P_MUX_pin = MUX_pin[MUX7];
-    PB[29].P_MUX_pin = MUX_pin[MUX7];
-    PB[30].P_MUX_pin = MUX_pin[MUX7];
-    PB[31].P_MUX_pin = MUX_pin[MUX7];
-    PB[32].P_MUX_pin = MUX_pin[MUX7];
-    PB[33].P_MUX_pin = MUX_pin[MUX7];
-    PB[34].P_MUX_pin = MUX_pin[MUX7];
-    PB[35].P_MUX_pin = MUX_pin[MUX7];
 
     // Audio Adaptor inizialization
     Audio_shield.enable();
@@ -1075,6 +737,12 @@ void setup()
     // Start SPI communication with W25Q512 Flash memory chip
     SerialFlash.begin();
     delay(100);
+
+   // User interfaces
+   Setup_Mux_Pins();
+   Setup_encoders();
+   Setup_pushbuttons();
+
 
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //              Inizializzazione degli oggetti
@@ -1089,20 +757,20 @@ void setup()
     Vibrato.Make_vibrato_table();
 
     // Setup Player and LFO
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        Player[p].Set_identity(p);
-        Player[p].Set_vibrato_pointers(Vibrato_array_pointer, Vibrato_array_last_element); // void Set_vibrato_pointers(float *p_vibrato_array_in, uint8_t *p_vibrato_array_last_element_in)
-        Player[p].VCF_ptr = &VCF[p];
-        Player[p].LFO_ptr = &LFO_P0[p];
-        Player[p].LiveSampler_ptr = &LiveSampler;
-        Player[p].Players_statistics_ptr = &Players_statistics;
-        LFO_P0[p].identity = p;
+        Player[player].Set_identity(player);
+        Player[player].Set_vibrato_pointers(Vibrato_array_pointer, Vibrato_array_last_element); // void Set_vibrato_pointers(float *p_vibrato_array_in, uint8_t *p_vibrato_array_last_element_in)
+        Player[player].VCF_ptr = &VCF[player];
+        Player[player].LFO_ptr = &LFO_P0[player];
+        Player[player].LiveSampler_ptr = &LiveSampler;
+        Player[player].Players_statistics_ptr = &Players_statistics;
+        LFO_P0[player].identity = player;
     }
 
-    for (uint8_t i = 0; i < INSTRUMENTS_MAX; ++i)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        CC_Sound_gain_cache[i] = -1;
+        CC_Sound_gain_cache[instrument_local] = -1;
     }
 
     // Setup Midi_reader
@@ -1133,9 +801,9 @@ void setup()
     Info.LiveSampler_ptr = &LiveSampler;
 
     // Setup Wavetable-s
-    for (uint8_t i = 0; i < INSTRUMENTS_MAX; ++i)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        Wavetable[i].LiveSampler_ptr = &LiveSampler;
+        Wavetable[instrument_local].LiveSampler_ptr = &LiveSampler;
     }
 
     // Setup Live Sampling Feedback mixers
@@ -1160,6 +828,12 @@ void setup()
     Players_statistics.Loop_led_set_ptr = &Loop_led_set;
     Players_statistics.Performance_led_set_ptr = &Performance_led_set;
 
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // ************     MUX, ENCODERS, PUSHBUTTONS      ***********
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
+
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //   ***************    FUNZIONI SPECIALI   *****************
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1168,7 +842,7 @@ void setup()
     if (Read_pushbutton(7))
     {
         // Attenzione richiede 2/3 minuti per la cancellazione dei Packet!
-        // Se la procedura si interrompe la EEPROM resta azzarata e Session[0] o Sound[0] NON saranno configurati correttamente!!
+        // Se la procedura si interrompe la EEPROM resta azzarata e Patch[0] o Sound[0] NON saranno configurati correttamente!!
 
         Display.Factory_reset_wait_popup();
         Factory_setup_Eeprom();
@@ -1189,11 +863,12 @@ void setup()
     }
 
     // Protected mode
-    // impedisce il salvataggio di nuove configurazioni
+    // impedisce il salvataggio di nuove Patch
     if (Read_pushbutton(2))
     {
         exibition = true;
     }
+
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //                          PARTENZA
@@ -1297,9 +972,9 @@ void loop()
         Players_Manager.Stop_all_players();
         if (Lilla_state == MIDI_LOOP)
         {
-            for (auto i = 0; i < TRACKS; ++i)
+            for (auto local_track = 0; local_track < TRACKS; ++local_track)
             {
-                LOOP_track_run[i] = false;
+                LOOP_track_run[local_track] = false;
             }
         }
         AudioInterrupts();
@@ -1404,7 +1079,7 @@ void loop()
             tuning_tone_flag = !tuning_tone_flag;
             if (Lilla_state == PERFORMANCE)
             {
-                Display.Instrument_TT(session);
+                Display.Instrument_TT(Patch_id);
             }
             if (!tuning_tone_flag)
             {
@@ -1417,7 +1092,7 @@ void loop()
         {
             if (Lilla_state == PERFORMANCE)
             {
-                Display.Volume_TT(session);
+                Display.Volume_TT(Patch_id);
             }
         }
     }
@@ -1485,14 +1160,14 @@ void loop()
     if (Lilla_state == PERFORMANCE)
     {
 
-        // Change volume_session
-        if (Read_encoder(15, volume_session, 40, 0, 1))
+        // Change volume_patch
+        if (Read_encoder(15, volume_patch, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+            Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
             Players_Manager.Broadcast_volume();
             AudioInterrupts();
-            Display.Session_volume_value(true);
+            Display.Patch_volume_value(true);
         }
 
         // Edit Instrument
@@ -1502,7 +1177,7 @@ void loop()
             result = Read_encoder_simple(2);
             if (result != 0)
             {
-                midi_channel_change = Get_midi_channel_from_Sound(id_sound);
+                midi_channel_change = Get_midi_channel_from_Sound(Sound_id);
                 // Serial.print("attuale canale: ");
                 // Serial.println(midi_channel_change);
                 if (result == 1)
@@ -1519,14 +1194,14 @@ void loop()
                         midi_channel_change--;
                     }
                 }
-                if (midi_channel_change != Get_midi_channel_from_Sound(id_sound))
+                if (midi_channel_change != Get_midi_channel_from_Sound(Sound_id))
                 {
                     AudioNoInterrupts();
-                    Players_Manager.Multicast_release_players(id_sound);
-                    Reset_map_Instrument_for_notes(instrument);
-                    Set_midi_channel_for_Sound(id_sound, midi_channel_change);
-                    Update_map_Instrument_for_notes(Session[session].Instrument[instrument].from_note, Session[session].Instrument[instrument].to_note, instrument);
-                    Players_Manager.Update_Preset_midi_channel(session, instrument);
+                    Players_Manager.Multicast_release_players(Sound_id);
+                    Reset_map_Instrument_for_notes(Instrument_id);
+                    Set_midi_channel_for_Sound(Sound_id, midi_channel_change);
+                    Update_map_Instrument_for_notes(Patch[Patch_id].Instrument[Instrument_id].from_note, Patch[Patch_id].Instrument[Instrument_id].to_note, Instrument_id);
+                    Players_Manager.Update_Preset_midi_channel(Patch_id, Instrument_id);
                     AudioInterrupts();
 
                     Macro_Instrument_editing();
@@ -1534,11 +1209,11 @@ void loop()
             }
 
             // Change Instrument PAN
-            if (Read_encoder(3, Sound[id_sound].pan, 16, -16, 1))
+            if (Read_encoder(3, Sound[Sound_id].pan, 16, -16, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_pan(session, instrument);
-                Players_Manager.Multicast_pan(instrument);
+                Players_Manager.Update_Preset_pan(Patch_id, Instrument_id);
+                Players_Manager.Multicast_pan(Instrument_id);
                 AudioInterrupts();
 
                 Macro_Instrument_editing();
@@ -1547,32 +1222,32 @@ void loop()
             // Set PAN to center
             if (Read_pushbutton(3))
             {
-                Sound[id_sound].pan = 0;
+                Sound[Sound_id].pan = 0;
 
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_pan(session, instrument);
-                Players_Manager.Multicast_pan(instrument);
+                Players_Manager.Update_Preset_pan(Patch_id, Instrument_id);
+                Players_Manager.Multicast_pan(Instrument_id);
                 AudioInterrupts();
 
                 Macro_Instrument_editing();
             }
 
             // Change Instrument GAIN
-            if (Read_encoder(4, Sound[id_sound].gain, 40, 0, 1))
+            if (Read_encoder(4, Sound[Sound_id].gain, 40, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_volume(session, instrument, Volume_float[volume_session]);
-                Players_Manager.Multicast_volume_for_instrument_edit(instrument);
+                Players_Manager.Update_Preset_volume(Patch_id, Instrument_id, Volume_float[volume_patch]);
+                Players_Manager.Multicast_volume_for_instrument_edit(Instrument_id);
                 AudioInterrupts();
 
                 Macro_Instrument_editing();
             }
 
             // Change root_key
-            if (Read_encoder(9, Session[session].Instrument[instrument].root_key, 127, 0, 1))
+            if (Read_encoder(9, Patch[Patch_id].Instrument[Instrument_id].root_key, 127, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Multicast_change_players_notes(session, instrument);
+                Players_Manager.Multicast_change_players_notes(Patch_id, Instrument_id);
                 AudioInterrupts();
 
                 Macro_Instrument_editing();
@@ -1583,20 +1258,20 @@ void loop()
             if (result != 0)
             {
                 changed = false;
-                if (result == 1 && Session[session].Instrument[instrument].from_note < Session[session].Instrument[instrument].to_note)
+                if (result == 1 && Patch[Patch_id].Instrument[Instrument_id].from_note < Patch[Patch_id].Instrument[Instrument_id].to_note)
                 {
-                    from_key_change = Session[session].Instrument[instrument].from_note + 1;
+                    from_key_change = Patch[Patch_id].Instrument[Instrument_id].from_note + 1;
                     changed = true;
                 }
-                else if (result == -1 && Session[session].Instrument[instrument].from_note > 0)
+                else if (result == -1 && Patch[Patch_id].Instrument[Instrument_id].from_note > 0)
                 {
-                    from_key_change = Session[session].Instrument[instrument].from_note - 1;
+                    from_key_change = Patch[Patch_id].Instrument[Instrument_id].from_note - 1;
                     changed = true;
                 }
                 if (changed)
                 {
                     AudioNoInterrupts();
-                    Players_Manager.Change_from_key(session, instrument, from_key_change);
+                    Players_Manager.Change_from_key(Patch_id, Instrument_id, from_key_change);
                     AudioInterrupts();
 
                     Macro_Instrument_editing();
@@ -1607,15 +1282,15 @@ void loop()
             if (Read_pushbutton(10))
             {
                 AudioNoInterrupts();
-                Session[session].Instrument[instrument].lock = !Session[session].Instrument[instrument].lock;
-                Players_Manager.Update_Preset_lock(session, instrument);
-                if (Session[session].Instrument[instrument].lock)
+                Patch[Patch_id].Instrument[Instrument_id].lock = !Patch[Patch_id].Instrument[Instrument_id].lock;
+                Players_Manager.Update_Preset_lock(Patch_id, Instrument_id);
+                if (Patch[Patch_id].Instrument[Instrument_id].lock)
                 {
-                    Players_Manager.Multicast_reset_pitch_bend_effects(instrument);
+                    Players_Manager.Multicast_reset_pitch_bend_effects(Instrument_id);
                 }
                 else // lock off, enable effect
                 {
-                    Players_Manager.Broadcast_restore_pitch_bend_and_effects(instrument, pitch_bend_value[Get_midi_channel(session, instrument)]);
+                    Players_Manager.Broadcast_restore_pitch_bend_and_effects(Instrument_id, pitch_bend_value[Get_midi_channel(Patch_id, Instrument_id)]);
                 }
                 AudioInterrupts();
 
@@ -1627,22 +1302,22 @@ void loop()
             if (result != 0)
             {
                 changed = false;
-                if (result == 1 && Session[session].Instrument[instrument].to_note < 127)
+                if (result == 1 && Patch[Patch_id].Instrument[Instrument_id].to_note < 127)
                 {
-                    to_key_change = Session[session].Instrument[instrument].to_note + 1;
+                    to_key_change = Patch[Patch_id].Instrument[Instrument_id].to_note + 1;
                     changed = true;
                 }
 
-                else if (result == -1 && Session[session].Instrument[instrument].to_note > Session[session].Instrument[instrument].from_note)
+                else if (result == -1 && Patch[Patch_id].Instrument[Instrument_id].to_note > Patch[Patch_id].Instrument[Instrument_id].from_note)
                 {
-                    to_key_change = Session[session].Instrument[instrument].to_note - 1;
+                    to_key_change = Patch[Patch_id].Instrument[Instrument_id].to_note - 1;
                     changed = true;
                 }
 
                 if (changed)
                 {
                     AudioNoInterrupts();
-                    Players_Manager.Change_to_key(session, instrument, to_key_change);
+                    Players_Manager.Change_to_key(Patch_id, Instrument_id, to_key_change);
                     AudioInterrupts();
 
                     Macro_Instrument_editing();
@@ -1653,86 +1328,86 @@ void loop()
             if (Read_pushbutton(11))
             {
                 AudioNoInterrupts();
-                Session[session].Instrument[instrument].precedence = !Session[session].Instrument[instrument].precedence;
-                Players_Manager.Update_Preset_precedence(session, instrument);
+                Patch[Patch_id].Instrument[Instrument_id].precedence = !Patch[Patch_id].Instrument[Instrument_id].precedence;
+                Players_Manager.Update_Preset_precedence(Patch_id, Instrument_id);
                 AudioInterrupts();
 
                 Macro_Instrument_editing();
             }
         }
 
-        // Change Session (Patch)
+        // Change Patch (Patch)
         result = Read_encoder_simple(23);
         if (result != 0)
         {
             if (result == +1)
             {
-                session_change = Get_next_Session_existing();
+                patch_change = Get_next_Patch_id_existing();
             }
             else
             {
-                session_change = Get_previous_Session_existing();
+                patch_change = Get_previous_Patch_id_existing();
             }
 
-            if (session_change != session)
+            if (patch_change != Patch_id)
             {
-                if (!Verify_is_Session_original(session))
+                if (!Verify_is_Patch_original(Patch_id))
                 {
-                    Ask_if_change_Session();
-                    if (action == 0) // Exit: remain in this session
+                    Ask_if_change_Patch();
+                    if (action == 0) // Exit: remain in this patch_id
                     {
-                        Serial.println("Remain on this Session");
-                        Golive_with_PERFORMANCE(session);
+                        Serial.println("Remain on this Patch");
+                        Golive_with_PERFORMANCE(Patch_id);
                     }
                     else
                     {
-                        if (action == 1) // No: discharge changings and switch session
+                        if (action == 1) // No: discharge changings and switch patch_id
                         {
-                            Session[session] = Session_cache_P;
+                            Patch[Patch_id] = Patch_cache_P;
                             Pull_all_Sound_from_Sound_cache_P();
                         }
-                        else if (action == 2) // Yes: save changings and switch session
+                        else if (action == 2) // Yes: save changings and switch patch_id
                         {
                             Save_all_Sounds_changed();
-                            Archive.Save_Session(session, Session[session]);
+                            Archive.Save_Patch(Patch_id, Patch[Patch_id]);
                             Read_all_Sounds();
                         }
 
-                        Jump_to_Session(session_change);
+                        Jump_to_Patch(patch_change);
 
-                        // Session Delay: look for delay_<session> in SD
-                        if (Archive.Copy_session_Delay_data_from_SD_to_Eeprom(session))
+                        // Patch Delay: look for delay_<patch_id> in SD
+                        if (Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id))
                         {
                             Serial.println(F("Smooth changing of delay values COULD start..."));
 
                             Delay_data_struct delay_final;
-                            Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(delay_final);
+                            Archive.Copy_patch_Delay_data_from_Eeprom_to_Ram(delay_final);
 
                             AudioNoInterrupts();
                             Delay_manager.New_values(&delay_final); // call using AudioNoInterrupt()
                             AudioInterrupts();
                         }
-                        session_old = session;
+                        patch_old = Patch_id;
                     }
                 }
 
                 else
                 {
-                    Jump_to_Session(session_change);
+                    Jump_to_Patch(patch_change);
 
-                    // Session Delay: look for delay_<session> in SD
-                    if (Archive.Copy_session_Delay_data_from_SD_to_Eeprom(session))
+                    // Patch Delay: look for delay_<patch_id> in SD
+                    if (Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id))
                     {
                         Serial.println(F("Smooth changing of delay values COULD start..."));
 
                         Delay_data_struct delay_final;
-                        Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(delay_final);
+                        Archive.Copy_patch_Delay_data_from_Eeprom_to_Ram(delay_final);
 
                         AudioNoInterrupts();
                         Delay_manager.New_values(&delay_final); // call using AudioNoInterrupt()
                         AudioInterrupts();
                     }
-                    session_old = session;
+                    patch_old = Patch_id;
                 }
             }
         }
@@ -1740,16 +1415,16 @@ void loop()
         // Instrument volume changed from MIDI CC
         if (display_instrument_volume_flag)
         {
-            Display.Show_Instrument_description(session, instrument_volume_changed, false);
+            Display.Show_Instrument_description(Patch_id, instrument_volume_changed, false);
 
             // restore LED
-            if (Performance_led_set.Read_LED_activity(instrument) > 0)
+            if (Performance_led_set.Read_LED_activity(Instrument_id) > 0)
             {
-                Display.Led_PERFORMANCE_instrument(instrument, true);
+                Display.Led_PERFORMANCE_instrument(Instrument_id, true);
             }
             else
             {
-                Display.Led_PERFORMANCE_instrument(instrument, false);
+                Display.Led_PERFORMANCE_instrument(Instrument_id, false);
             }
             display_instrument_volume_flag = false;
         }
@@ -1764,7 +1439,7 @@ void loop()
             if (result == +1)
 #endif
             {
-                if (P_menu < (P_menu_max + Session[session].instruments))
+                if (P_menu < (P_menu_max + Patch[Patch_id].instruments))
                     P_menu_change = P_menu + 1;
             }
             else
@@ -1780,10 +1455,10 @@ void loop()
                 {
                     if (instrument_editing_flag)
                     {
-                        Display.Session_volume_color(false, true);
+                        Display.Patch_volume_color(false, true);
                         Display.Instrument_frame_on_position(0, false);
 
-                        Display.Show_Instrument_description(session, instrument_on_position[0], false);
+                        Display.Show_Instrument_description(Patch_id, instrument_on_position[0], false);
 
                         // restore LED
                         Performance_led_set.Restore_all_LED();
@@ -1798,33 +1473,33 @@ void loop()
                 {
                     if (!instrument_editing_flag)
                     {
-                        Display.Session_volume_color(false, false);
+                        Display.Patch_volume_color(false, false);
                         Display.Delete_all_frame_performance_menu();
                     }
-                    instrument = instrument_on_position[P_menu - P_menu_max - 1];
-                    id_sound = Session[session].Instrument[instrument].id_sound;
+                    Instrument_id = instrument_on_position[P_menu - P_menu_max - 1];
+                    Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
 
                     if (instrument_editing_flag)
                     {
                         Display.Instrument_frame_on_position(position_of_Instrument[last_edited_instrument], false);
 
-                        Display.Show_Instrument_description(session, last_edited_instrument, false);
+                        Display.Show_Instrument_description(Patch_id, last_edited_instrument, false);
 
                         // restore LED
                         Performance_led_set.Restore_all_LED();
                     }
 
-                    Display.Show_Instrument_description(session, instrument, true);
+                    Display.Show_Instrument_description(Patch_id, Instrument_id, true);
 
                     // restore LED
                     Performance_led_set.Restore_all_LED();
 
-                    Display.Instrument_frame_on_position(position_of_Instrument[instrument], true);
+                    Display.Instrument_frame_on_position(position_of_Instrument[Instrument_id], true);
                     instrument_editing_flag = true;
-                    last_edited_instrument = instrument;
+                    last_edited_instrument = Instrument_id;
 
                     Serial.print("Editing instrument: ");
-                    Serial.println(instrument);
+                    Serial.println(Instrument_id);
                 }
             }
         }
@@ -1834,166 +1509,166 @@ void loop()
         {
             if (P_menu <= P_menu_max)
             {
-                int8_t new_session;
+                int8_t new_patch;
 
                 switch (choice_performance_menu)
                 {
                 case 0: // EXIT (drop Sound changes)
                     AudioNoInterrupts();
-                    Session[session] = Session_cache_P;
+                    Patch[Patch_id] = Patch_cache_P;
                     Pull_all_Sound_from_Sound_cache_P();
                     Update_all_maps_Instrument_for_notes();
-                    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]); // Update_all_Preset(int session, float volume_session)
+                    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]); // Update_all_Preset(int patch_id, float volume_patch)
                     Fill_all_Noclick();
                     Fill_all_Wavetable();
                     AudioInterrupts();
 
-                    P_Session(session);
-                    session_original = true;
+                    P_Patch(Patch_id);
+                    patch_original = true;
                     P_menu = 0;
                     Update_Instruments_positions();
                     Select_performance_menu_elements();
                     Display.Performance_menu(); // displays the menu and updates "Value_Max_encoder.performance_menu" used by encoder_menu
                     Display.Frame_performance_menu(P_menu, true);
-                    Display.All_Instrument(session);
+                    Display.All_Instrument(Patch_id);
                     break;
 
-                case 1: // SAVE changes in THIS Session
+                case 1: // SAVE changes in THIS Patch
                     Save_all_Sounds_changed();
-                    Archive.Save_Session(session, Session[session]);
+                    Archive.Save_Patch(Patch_id, Patch[Patch_id]);
                     Read_all_Sounds();
 
-                    Session_cache_P = Session[session];
+                    Patch_cache_P = Patch[Patch_id];
                     Copy_all_Sound_to_Sound_cache_P();
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                     break;
 
-                case 2: // CLONE (same SAVE changes in a NEW Session)
+                case 2: // CLONE (same SAVE changes in a NEW Patch)
 
                     AudioNoInterrupts();
                     Players_statistics.Reset_total_Players_per_instrument();
 
-                    // 1: copy all Instrument in the new session, with same id_sounds
-                    new_session = Get_Session_free();
-                    if (new_session >= 0)
+                    // 1: copy all Instrument in the new patch_id, with same id_sounds
+                    new_patch = Get_Patch_id_free();
+                    if (new_patch >= 0)
                     {
                         Sound_struct Sound_NEW[8];
-                        for (auto I = 0; I < INSTRUMENTS_MAX; ++I)
+                        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
                         {
-                            if (Session[session].Instrument[I].used)
-                                Sound_NEW[I] = Sound[Session[session].Instrument[I].id_sound];
+                            if (Patch[Patch_id].Instrument[instrument_local].used)
+                                Sound_NEW[instrument_local] = Sound[Patch[Patch_id].Instrument[instrument_local].sound_id];
                         }
                         Pull_all_Sound_from_Sound_cache_P(); // 3: restore all original Sound
-                        Session[new_session] = Session[session];
-                        Session[session] = Session_cache_P; // 4: ora session è ripristinata, anche i relativi Sound sono stati ripristinati
+                        Patch[new_patch] = Patch[Patch_id];
+                        Patch[Patch_id] = Patch_cache_P; // 4: ora patch_id è ripristinata, anche i relativi Sound sono stati ripristinati
 
-                        // 5: Per ciascun Instrument utilizzato dalla Session_NEW creo un nuovo Sound
-                        for (auto I = 0; I < INSTRUMENTS_MAX; ++I)
+                        // 5: Per ciascun Instrument utilizzato dalla Patch_NEW creo un nuovo Sound
+                        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
                         {
-                            if (Session[new_session].Instrument[I].used)
+                            if (Patch[new_patch].Instrument[instrument_local].used)
                             {
                                 int S = Get_sound_free();
                                 if (S >= 0)
                                 {
-                                    Sound[S] = Sound_NEW[I];
-                                    Session[new_session].Instrument[I].id_sound = S;
+                                    Sound[S] = Sound_NEW[instrument_local];
+                                    Patch[new_patch].Instrument[instrument_local].sound_id = S;
                                 }
                                 else
-                                    Session[new_session].Instrument[I].used = false;
+                                    Patch[new_patch].Instrument[instrument_local].used = false;
                             }
                         }
 
                         Save_all_Sounds_changed();
-                        session = new_session;
-                        Archive.Save_Session(session, Session[session]);
+                        Patch_id = new_patch;
+                        Archive.Save_Patch(Patch_id, Patch[Patch_id]);
 
-                        // Save Delay_data in delay_<session>.txt in SD
-                        Archive.Copy_session_Delay_data_from_RAM_to_SD(session);
+                        // Save Delay_data in delay_<patch_id>.txt in SD
+                        Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
 
-                        Read_all_Sessions();
+                        Read_all_Patches();
                         Read_all_Sounds();
-                        Update_sessions();
+                        Update_Patches_number();
                         Update_all_maps_Instrument_for_notes();
-                        Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+                        Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
                         Fill_all_Noclick();
                         Fill_all_Wavetable();
                     }
                     AudioInterrupts();
 
-                    Session_cache_P = Session[session];
+                    Patch_cache_P = Patch[Patch_id];
                     Copy_all_Sound_to_Sound_cache_P();
-                    P_Session(session);
+                    P_Patch(Patch_id);
                     Update_Instruments_positions();
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                     break;
 
-                case 3: // SAVE changes in a NEW Session
+                case 3: // SAVE changes in a NEW Patch
 
                     AudioNoInterrupts();
                     Players_statistics.Reset_total_Players_per_instrument();
                     // 0: hunt some "instruments" id_sounds free
 
-                    // 1: copy all Instrument in the new session, with same id_sounds
-                    new_session = Get_Session_free();
-                    if (new_session >= 0)
+                    // 1: copy all Instrument in the new patch_id, with same id_sounds
+                    new_patch = Get_Patch_id_free();
+                    if (new_patch >= 0)
                     {
                         Sound_struct Sound_NEW[INSTRUMENTS_MAX];
-                        for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
                         {
-                            if (Session[session].Instrument[instrument].used)
+                            if (Patch[Patch_id].Instrument[instrument_local].used)
                             {
-                                Sound_NEW[instrument] = Sound[Session[session].Instrument[instrument].id_sound];
+                                Sound_NEW[instrument_local] = Sound[Patch[Patch_id].Instrument[instrument_local].sound_id];
                             }
                         }
                         Pull_all_Sound_from_Sound_cache_P(); // 3: restore all original Sound
-                        Session[new_session] = Session[session];
-                        Session[session] = Session_cache_P; // 4: ora session è ripristinata, anche i relativi Sound sono stati ripristinati
+                        Patch[new_patch] = Patch[Patch_id];
+                        Patch[Patch_id] = Patch_cache_P; // 4: ora patch_id è ripristinata, anche i relativi Sound sono stati ripristinati
 
-                        // 5: Create a new Sound for each Instrument in new_session
-                        for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                        // 5: Create a new Sound for each Instrument in new_patch
+                        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
                         {
-                            if (Session[new_session].Instrument[instrument].used)
+                            if (Patch[new_patch].Instrument[instrument_local].used)
                             {
-                                int id_sound = Get_sound_free();
-                                if (id_sound >= 0)
+                                int id_sound_local = Get_sound_free();
+                                if (id_sound_local >= 0)
                                 {
-                                    Sound[id_sound] = Sound_NEW[instrument];
-                                    Session[new_session].Instrument[instrument].id_sound = id_sound;
+                                    Sound[id_sound_local] = Sound_NEW[instrument_local];
+                                    Patch[new_patch].Instrument[instrument_local].sound_id = id_sound_local;
                                 }
                                 else
-                                    Session[new_session].Instrument[instrument].used = false;
+                                    Patch[new_patch].Instrument[instrument_local].used = false;
                             }
                         }
 
                         Save_all_Sounds_changed();
-                        session = new_session;
-                        Archive.Save_Session(session, Session[session]);
+                        Patch_id = new_patch;
+                        Archive.Save_Patch(Patch_id, Patch[Patch_id]);
 
-                        // Save Delay_data in delay_<session>.txt in SD
-                        Archive.Copy_session_Delay_data_from_RAM_to_SD(session);
+                        // Save Delay_data in delay_<patch_id>.txt in SD
+                        Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
 
-                        Read_all_Sessions();
+                        Read_all_Patches();
                         Read_all_Sounds();
-                        Update_sessions();
+                        Update_Patches_number();
                         Update_all_maps_Instrument_for_notes();
-                        Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+                        Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
                         Fill_all_Noclick();
                         Fill_all_Wavetable();
                     }
                     AudioInterrupts();
 
-                    Session_cache_P = Session[session];
+                    Patch_cache_P = Patch[Patch_id];
                     Copy_all_Sound_to_Sound_cache_P();
-                    P_Session(session);
+                    P_Patch(Patch_id);
                     Update_Instruments_positions();
 
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                     break;
 
-                case 4: // DROP SESSION and go back to PERFORMANCE "Get_first_Session_existing()"
+                case 4: // DROP Patch and go back to PERFORMANCE "Get_first_Patch_id_existing()"
 
                     // ask for confirmation
-                    Ask_if_delete_this_SESSION();
+                    Ask_if_delete_this_Patch();
                     if (action == 1)
                     {
                         Lilla_state = PERFORMANCE;
@@ -2002,26 +1677,26 @@ void loop()
                         Players_Manager.Release_all_players();
                         AudioInterrupts();
 
-                        Session[session].used = false;
-                        for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                        Patch[Patch_id].used = false;
+                        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
                         {
-                            if (Session[session].Instrument[instrument].used)
+                            if (Patch[Patch_id].Instrument[instrument_local].used)
                             {
-                                Sound[Session[session].Instrument[instrument].id_sound].used = false;
+                                Sound[Patch[Patch_id].Instrument[instrument_local].sound_id].used = false;
                             }
                         }
 
                         Save_all_Sounds_changed();
-                        Archive.Save_Session(session, Session[session]);
+                        Archive.Save_Patch(Patch_id, Patch[Patch_id]);
 
-                        // Delete delay_<session>.txt file
-                        Archive.Delete_Delay_data_in_SD(session);
+                        // Delete delay_<patch_id>.txt file
+                        Archive.Delete_Delay_data_in_SD(Patch_id);
 
-                        Read_all_Sessions();
-                        Update_sessions();
+                        Read_all_Patches();
+                        Update_Patches_number();
                         Read_all_Sounds();
 
-                        Jump_to_Session(Get_first_Session_existing());
+                        Jump_to_Patch(Get_first_Patch_id_existing());
                     }
                     else
                     {
@@ -2042,19 +1717,19 @@ void loop()
             {
                 Lilla_state_0 = PERFORMANCE;
                 Lilla_state = SOUND_EDIT;
-                P_Sound(id_sound);
-                samples_in_file = Get_samples_in_raw_file(Sound[id_sound].file);
-                Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
+                P_Sound(Sound_id);
+                samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
+                Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                 trim_step = Calc_trim_step(trim_speed);
-                sound_original = Verify_is_Sound_original(id_sound);
+                sound_original = Verify_is_Sound_original(Sound_id);
                 So_menu = 0;
 
-                Display.Show_sound(id_sound, instrument);
+                Display.Show_sound(Sound_id, Instrument_id);
 
                 // restore LEDs
                 Performance_led_set.Restore_all_LED();
 
-                Display.Show_wave(instrument);
+                Display.Show_wave(Instrument_id);
 
                 Select_sound_edit_menu_elements();
                 Display.SOUND_EDIT_menu(); // displays the menu and updates "SO_menu_max" used by encoder_menuDisplay.Frame_SOUND_EDIT_menu
@@ -2065,28 +1740,28 @@ void loop()
         // Pushbuttons
         if (!Read_pushbutton_fast(35))
         {
-            if (Read_pushbutton(PB_number + 26) && Session[session].Instrument[PB_number].used)
+            if (Read_pushbutton(PB_number + 26) && Patch[Patch_id].Instrument[PB_number].used)
             {
                 Lilla_state_0 = PERFORMANCE;
                 Lilla_state = SOUND_EDIT;
-                instrument = PB_number;
+                Instrument_id = PB_number;
                 Serial.print("Editing Sound: ");
-                Serial.println(instrument);
-                id_sound = Session[session].Instrument[instrument].id_sound;
-                P_Sound(id_sound);
+                Serial.println(Instrument_id);
+                Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
+                P_Sound(Sound_id);
 
-                samples_in_file = Get_samples_in_raw_file(Sound[id_sound].file);
-                Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
+                samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
+                Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                 trim_step = Calc_trim_step(trim_speed);
-                sound_original = Verify_is_Sound_original(id_sound);
+                sound_original = Verify_is_Sound_original(Sound_id);
                 So_menu = 0;
 
-                Display.Show_sound(id_sound, instrument);
+                Display.Show_sound(Sound_id, Instrument_id);
 
                 // restore LEDs
                 Performance_led_set.Restore_all_LED();
 
-                Display.Show_wave(instrument);
+                Display.Show_wave(Instrument_id);
 
                 Select_sound_edit_menu_elements();
                 Display.SOUND_EDIT_menu(); // displays the menu and updates "SO_menu_max" used by encoder_menu
@@ -2100,7 +1775,7 @@ void loop()
             if (Read_pushbutton(27))
             {
                 Lilla_state_0 = PERFORMANCE;
-                session_old = session;
+                patch_old = Patch_id;
                 Switch_to_MIXER();
             }
 
@@ -2108,7 +1783,7 @@ void loop()
             else if (Read_pushbutton(28))
             {
                 Lilla_state_0 = PERFORMANCE;
-                session_old = session;
+                patch_old = Patch_id;
                 Lilla_state = DELAY_SETTINGS;
                 Display.Delay_page();
             }
@@ -2116,14 +1791,14 @@ void loop()
             // Switch to LIVE_SAMPLING
             else if (Read_pushbutton(29))
             {
-                session_old = session;
+                patch_old = Patch_id;
                 Switch_from_PERFORMANCE_to_LIVE_SAMPLING();
             }
 
             // Switch to DIRECT_SAMPLING
             else if (Read_pushbutton(30))
             {
-                session_old = session;
+                patch_old = Patch_id;
                 Switch_to_DIRECT_SAMPLING();
             }
 
@@ -2131,7 +1806,7 @@ void loop()
             else if (Read_pushbutton(31))
             {
                 Lilla_state_0 = PERFORMANCE;
-                session_old = session;
+                patch_old = Patch_id;
                 Golive_MIDI_MONITOR();
             }
 
@@ -2145,7 +1820,7 @@ void loop()
             else if (Read_pushbutton(33))
             {
                 Lilla_state_0 = PERFORMANCE;
-                session_old = session;
+                patch_old = Patch_id;
                 Golive_SETUP();
             }
         }
@@ -2160,25 +1835,25 @@ void loop()
 
     if (Lilla_state == SOUND_EDIT)
     {
-        // Change volume_session
-        if (Read_encoder(15, volume_session, 40, 0, 1))
+        // Change volume_patch
+        if (Read_encoder(15, volume_patch, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+            Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
             Players_Manager.Broadcast_volume();
             AudioInterrupts();
         }
 
         // Change MODE
-        if (Read_encoder(1, Sound[id_sound].mode, 5, 0, 1))
+        if (Read_encoder(1, Sound[Sound_id].mode, 5, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_mode(session, instrument);
-            Fill_Wavetable(instrument); // changing mode, a new Wavetable is needed (using the old NoClick table because A and B are NOT changed);
-            Players_Manager.Multicast_main_settings_editing(session, instrument);
+            Players_Manager.Update_Preset_mode(Patch_id, Instrument_id);
+            Fill_Wavetable(Instrument_id); // changing mode, a new Wavetable is needed (using the old NoClick table because A and B are NOT changed);
+            Players_Manager.Multicast_main_settings_editing(Patch_id, Instrument_id);
             AudioInterrupts();
 
-            Display.Play_mode(instrument);
+            Display.Play_mode(Instrument_id);
             Macro_Sound_menu();
         }
 
@@ -2192,41 +1867,41 @@ void loop()
                 int S_file_change;
                 if (result == 1)
                 {
-                    S_file_change = Get_next_raw_file_in_flash(Sound[id_sound].file);
+                    S_file_change = Get_next_raw_file_in_flash(Sound[Sound_id].file);
                 }
                 else
                 {
-                    S_file_change = Get_previous_raw_file_in_flash(Sound[id_sound].file);
+                    S_file_change = Get_previous_raw_file_in_flash(Sound[Sound_id].file);
                 }
-                if (S_file_change != Sound[id_sound].file)
+                if (S_file_change != Sound[Sound_id].file)
                 {
-                    Sound[id_sound].file = S_file_change;
-                    samples_in_file = Get_samples_in_raw_file(Sound[id_sound].file);
-                    Sound[id_sound].pitch = 0;
-                    Sound[id_sound].A = 0;
-                    Sound[id_sound].B = (samples_in_file > 0 ? samples_in_file - 1 : 0);
+                    Sound[Sound_id].file = S_file_change;
+                    samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
+                    Sound[Sound_id].pitch = 0;
+                    Sound[Sound_id].A = 0;
+                    Sound[Sound_id].B = (samples_in_file > 0 ? samples_in_file - 1 : 0);
                     if (!slicing_mode)
-                        slicing_window = Sound[id_sound].B - Sound[id_sound].A + 1;
-                    // A_value = Sound[id_sound].A;
-                    Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
+                        slicing_window = Sound[Sound_id].B - Sound[Sound_id].A + 1;
+                    // A_value = Sound[sound_id].A;
+                    Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
 
                     AudioNoInterrupts();
-                    Players_Manager.Update_Preset(session, instrument, Volume_float[volume_session]);
-                    Fill_Noclick(instrument);   // DEVE essere preceduto da Update_Preset
-                    Fill_Wavetable(instrument); // DEVE essere preceduto da Fill_Noclick
+                    Players_Manager.Update_Preset(Patch_id, Instrument_id, Volume_float[volume_patch]);
+                    Fill_Noclick(Instrument_id);   // DEVE essere preceduto da Update_Preset
+                    Fill_Wavetable(Instrument_id); // DEVE essere preceduto da Fill_Noclick
                     AudioInterrupts();
 
                     trim_step = Calc_trim_step(trim_speed);
                     So_menu = 0;
-                    Display.File(instrument);
-                    Display.Show_wave(instrument);
+                    Display.File(Instrument_id);
+                    Display.Show_wave(Instrument_id);
                     Macro_Sound_menu();
                 }
             }
             // change Midi Channel
             else
             {
-                midi_channel_change = Get_midi_channel_from_Sound(id_sound);
+                midi_channel_change = Get_midi_channel_from_Sound(Sound_id);
                 if (result == 1)
                 {
                     if (midi_channel_change < 15)
@@ -2241,17 +1916,17 @@ void loop()
                         midi_channel_change--;
                     }
                 }
-                if (midi_channel_change != Get_midi_channel_from_Sound(id_sound))
+                if (midi_channel_change != Get_midi_channel_from_Sound(Sound_id))
                 {
                     AudioNoInterrupts();
-                    Players_Manager.Multicast_release_players(id_sound);
-                    Reset_map_Instrument_for_notes(instrument);
-                    Set_midi_channel_for_Sound(id_sound, midi_channel_change);
-                    Update_map_Instrument_for_notes(Session[session].Instrument[instrument].from_note, Session[session].Instrument[instrument].to_note, instrument);
-                    Players_Manager.Update_Preset_midi_channel(session, instrument);
+                    Players_Manager.Multicast_release_players(Sound_id);
+                    Reset_map_Instrument_for_notes(Instrument_id);
+                    Set_midi_channel_for_Sound(Sound_id, midi_channel_change);
+                    Update_map_Instrument_for_notes(Patch[Patch_id].Instrument[Instrument_id].from_note, Patch[Patch_id].Instrument[Instrument_id].to_note, Instrument_id);
+                    Players_Manager.Update_Preset_midi_channel(Patch_id, Instrument_id);
                     AudioInterrupts();
 
-                    Display.Midi_channel(instrument);
+                    Display.Midi_channel(Instrument_id);
                     Macro_Sound_menu();
                 }
             }
@@ -2261,46 +1936,46 @@ void loop()
         if (Read_pushbutton(2))
         {
             file_midi_ch_flag = !file_midi_ch_flag;
-            Display.File(instrument);
-            Display.Midi_channel(instrument);
+            Display.File(Instrument_id);
+            Display.Midi_channel(Instrument_id);
         }
 
         // Change PAN
-        if (Read_encoder(3, Sound[id_sound].pan, 16, -16, 1))
+        if (Read_encoder(3, Sound[Sound_id].pan, 16, -16, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_pan(session, instrument);
-            Players_Manager.Multicast_pan(instrument);
+            Players_Manager.Update_Preset_pan(Patch_id, Instrument_id);
+            Players_Manager.Multicast_pan(Instrument_id);
             AudioInterrupts();
 
-            Display.Pan(instrument);
+            Display.Pan(Instrument_id);
             Macro_Sound_menu();
         }
 
         // Set PAN to center
         if (Read_pushbutton(3))
         {
-            Sound[id_sound].pan = 0;
+            Sound[Sound_id].pan = 0;
 
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_pan(session, instrument);
-            Players_Manager.Multicast_pan(instrument);
+            Players_Manager.Update_Preset_pan(Patch_id, Instrument_id);
+            Players_Manager.Multicast_pan(Instrument_id);
             AudioInterrupts();
 
-            Display.Pan(instrument);
+            Display.Pan(Instrument_id);
             Macro_Sound_menu();
         }
 
         // change GAIN
-        if (Read_encoder(4, Sound[id_sound].gain, 40, 0, 1))
+        if (Read_encoder(4, Sound[Sound_id].gain, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_volume(session, instrument, Volume_float[volume_session]);
-            Players_Manager.Multicast_volume_for_instrument_edit(instrument);
+            Players_Manager.Update_Preset_volume(Patch_id, Instrument_id, Volume_float[volume_patch]);
+            Players_Manager.Multicast_volume_for_instrument_edit(Instrument_id);
             AudioInterrupts();
 
-            Display.Gain_sound(session, instrument);
-            Display.Show_wave(instrument);
+            Display.Gain_sound(Patch_id, Instrument_id);
+            Display.Show_wave(Instrument_id);
             Macro_Sound_menu();
         }
 
@@ -2311,38 +1986,38 @@ void loop()
             changed = false;
             if (result == 1)
             {
-                if (Sound[id_sound].Noclick < Noclick_max)
+                if (Sound[Sound_id].Noclick < Noclick_max)
                 {
-                    if (Sound[id_sound].Noclick >= 90)
+                    if (Sound[Sound_id].Noclick >= 90)
                     {
-                        Sound[id_sound].Noclick += 10;
+                        Sound[Sound_id].Noclick += 10;
                     }
-                    else if (Sound[id_sound].Noclick >= 30)
+                    else if (Sound[Sound_id].Noclick >= 30)
                     {
-                        Sound[id_sound].Noclick += 4;
+                        Sound[Sound_id].Noclick += 4;
                     }
                     else
                     {
-                        Sound[id_sound].Noclick += 2;
+                        Sound[Sound_id].Noclick += 2;
                     }
                     changed = true;
                 }
             }
             else
             {
-                if (Sound[id_sound].Noclick > 0)
+                if (Sound[Sound_id].Noclick > 0)
                 {
-                    if (Sound[id_sound].Noclick <= 30)
+                    if (Sound[Sound_id].Noclick <= 30)
                     {
-                        Sound[id_sound].Noclick -= 2;
+                        Sound[Sound_id].Noclick -= 2;
                     }
-                    else if (Sound[id_sound].Noclick <= 90)
+                    else if (Sound[Sound_id].Noclick <= 90)
                     {
-                        Sound[id_sound].Noclick -= 4;
+                        Sound[Sound_id].Noclick -= 4;
                     }
                     else
                     {
-                        Sound[id_sound].Noclick -= 10;
+                        Sound[Sound_id].Noclick -= 10;
                     }
                     changed = true;
                 }
@@ -2350,17 +2025,17 @@ void loop()
             if (changed)
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_Noclick(session, instrument);
-                Fill_Noclick(instrument);
-                Fill_Wavetable(instrument); // MUST be preceded by "Fill_Noclick(instrument)"
-                Players_Manager.Multicast_main_settings_editing(session, instrument);
+                Players_Manager.Update_Preset_Noclick(Patch_id, Instrument_id);
+                Fill_Noclick(Instrument_id);
+                Fill_Wavetable(Instrument_id); // MUST be preceded by "Fill_Noclick(instrument)"
+                Players_Manager.Multicast_main_settings_editing(Patch_id, Instrument_id);
                 AudioInterrupts();
 
-                sound_original = Verify_is_Sound_original(id_sound);
+                sound_original = Verify_is_Sound_original(Sound_id);
                 So_menu = 0;
 
-                Display.Noclick(instrument, true);
-                Display.Show_wave(instrument);
+                Display.Noclick(Instrument_id, true);
+                Display.Show_wave(Instrument_id);
                 Macro_Sound_menu();
             }
         }
@@ -2374,21 +2049,21 @@ void loop()
             {
                 if (slicing_mode)
                 {
-                    if ((Sound[id_sound].B - Sound[id_sound].A + 1) >= (trim_step + MIN_SNIPPET))
+                    if ((Sound[Sound_id].B - Sound[Sound_id].A + 1) >= (trim_step + MIN_SNIPPET))
                     {
-                        So_A_change = Sound[id_sound].A + trim_step;
+                        So_A_change = Sound[Sound_id].A + trim_step;
                     }
                     else
                     {
-                        So_A_change = Sound[id_sound].B - MIN_SNIPPET + 1;
+                        So_A_change = Sound[Sound_id].B - MIN_SNIPPET + 1;
                     }
                 }
 
                 else
                 {
-                    if ((Sound[id_sound].A + slicing_window + trim_step) <= samples_in_file)
+                    if ((Sound[Sound_id].A + slicing_window + trim_step) <= samples_in_file)
                     {
-                        So_A_change = Sound[id_sound].A + trim_step;
+                        So_A_change = Sound[Sound_id].A + trim_step;
                     }
                     else
                     {
@@ -2398,44 +2073,44 @@ void loop()
             }
             else
             {
-                if (Sound[id_sound].A >= trim_step)
+                if (Sound[Sound_id].A >= trim_step)
                 {
-                    So_A_change = Sound[id_sound].A - trim_step;
+                    So_A_change = Sound[Sound_id].A - trim_step;
                 }
                 else
                 {
                     So_A_change = 0;
                 }
             }
-            if (So_A_change != Sound[id_sound].A)
+            if (So_A_change != Sound[Sound_id].A)
             {
-                Sound[id_sound].A = So_A_change;
+                Sound[Sound_id].A = So_A_change;
 
                 AudioNoInterrupts();
                 if (!slicing_mode) // slicing A-Samples
                 {
-                    Sound[id_sound].B = Sound[id_sound].A + slicing_window - 1;
+                    Sound[Sound_id].B = Sound[Sound_id].A + slicing_window - 1;
                 }
                 if (trim_speed == 5)
                     trim_step = Calc_trim_step(5);
 
                 // verify if stop players: it can happend if use_Wavetable switches to "false". Than update Preset[I].A (DO NOT invert the sequence)
-                Players_Manager.Verify_if_stop_players(session, instrument);
-                Players_Manager.Update_Preset_A_B_Wavetable(session, instrument);
-                Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
-                if (Sound[id_sound].Noclick > Noclick_max)
+                Players_Manager.Verify_if_stop_players(Patch_id, Instrument_id);
+                Players_Manager.Update_Preset_A_B_Wavetable(Patch_id, Instrument_id);
+                Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
+                if (Sound[Sound_id].Noclick > Noclick_max)
                 {
-                    Sound[id_sound].Noclick = Noclick_max;
-                    Players_Manager.Update_Preset_Noclick(session, instrument);
+                    Sound[Sound_id].Noclick = Noclick_max;
+                    Players_Manager.Update_Preset_Noclick(Patch_id, Instrument_id);
                 }
                 // create new Noclick and Wavetable wavetables, than communicate the new references to the Players
-                Fill_Noclick(instrument);
-                Fill_Wavetable(instrument); // MUST be preceded by "Fill_Noclick(instrument)"
-                Players_Manager.Multicast_main_settings_editing(session, instrument);
+                Fill_Noclick(Instrument_id);
+                Fill_Wavetable(Instrument_id); // MUST be preceded by "Fill_Noclick(instrument)"
+                Players_Manager.Multicast_main_settings_editing(Patch_id, Instrument_id);
                 AudioInterrupts();
 
-                Display.Pitch_voices_max(instrument);
-                Display.Show_wave(instrument);
+                Display.Pitch_voices_max(Instrument_id);
+                Display.Show_wave(Instrument_id);
                 Macro_Sound_menu();
             }
         }
@@ -2447,9 +2122,9 @@ void loop()
             uint32_t So_B_change;
             if (result == 1)
             {
-                if ((Sound[id_sound].B + 1 + trim_step) <= samples_in_file)
+                if ((Sound[Sound_id].B + 1 + trim_step) <= samples_in_file)
                 {
-                    So_B_change = Sound[id_sound].B + trim_step;
+                    So_B_change = Sound[Sound_id].B + trim_step;
                 }
                 else
                 {
@@ -2458,19 +2133,19 @@ void loop()
             }
             else
             {
-                if ((Sound[id_sound].B - Sound[id_sound].A + 1) >= (MIN_SNIPPET + trim_step))
+                if ((Sound[Sound_id].B - Sound[Sound_id].A + 1) >= (MIN_SNIPPET + trim_step))
                 {
-                    So_B_change = Sound[id_sound].B - trim_step;
+                    So_B_change = Sound[Sound_id].B - trim_step;
                 }
                 else
                 {
-                    So_B_change = Sound[id_sound].A + MIN_SNIPPET - 1;
+                    So_B_change = Sound[Sound_id].A + MIN_SNIPPET - 1;
                 }
             }
 
-            if (So_B_change != Sound[id_sound].B)
+            if (So_B_change != Sound[Sound_id].B)
             {
-                Sound[id_sound].B = So_B_change;
+                Sound[Sound_id].B = So_B_change;
 
                 AudioNoInterrupts();
                 if (trim_speed == 5)
@@ -2479,28 +2154,28 @@ void loop()
                 }
 
                 // verify if stop players: it can happend if use_Wavetable switches to "false". Than update Preset[I].A (DO NOT invert the sequence)
-                Players_Manager.Verify_if_stop_players(session, instrument); // MUST be done BEFORE updating Preset
-                Players_Manager.Update_Preset_A_B_Wavetable(session, instrument);
-                Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
-                if (Sound[id_sound].Noclick > Noclick_max)
+                Players_Manager.Verify_if_stop_players(Patch_id, Instrument_id); // MUST be done BEFORE updating Preset
+                Players_Manager.Update_Preset_A_B_Wavetable(Patch_id, Instrument_id);
+                Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
+                if (Sound[Sound_id].Noclick > Noclick_max)
                 {
-                    Sound[id_sound].Noclick = Noclick_max;
-                    Players_Manager.Update_Preset_Noclick(session, instrument);
+                    Sound[Sound_id].Noclick = Noclick_max;
+                    Players_Manager.Update_Preset_Noclick(Patch_id, Instrument_id);
                 }
 
                 // create new Noclick and Wavetable wavetables, than communicate the new references to the Players
-                Fill_Noclick(instrument);
-                Fill_Wavetable(instrument); // MUST be preceded by "Fill_Noclick(instrument)"
-                Players_Manager.Multicast_main_settings_editing(session, instrument);
+                Fill_Noclick(Instrument_id);
+                Fill_Wavetable(Instrument_id); // MUST be preceded by "Fill_Noclick(instrument)"
+                Players_Manager.Multicast_main_settings_editing(Patch_id, Instrument_id);
                 AudioInterrupts();
 
                 if (!slicing_mode)
                 {
-                    slicing_window = Sound[id_sound].B - Sound[id_sound].A + 1;
+                    slicing_window = Sound[Sound_id].B - Sound[Sound_id].A + 1;
                 }
 
-                Display.Pitch_voices_max(instrument);
-                Display.Show_wave(instrument);
+                Display.Pitch_voices_max(Instrument_id);
+                Display.Show_wave(Instrument_id);
                 Macro_Sound_menu();
             }
         }
@@ -2511,9 +2186,9 @@ void loop()
             slicing_mode = !slicing_mode;
             if (!slicing_mode)
             {
-                slicing_window = Sound[id_sound].B - Sound[id_sound].A + 1;
+                slicing_window = Sound[Sound_id].B - Sound[Sound_id].A + 1;
             }
-            Display.Show_wave(instrument);
+            Display.Show_wave(Instrument_id);
         }
 
         // Change trim speed
@@ -2538,28 +2213,28 @@ void loop()
             changed = false;
             if (result == 1)
             {
-                if (Sound[id_sound].pitch < 96)
+                if (Sound[Sound_id].pitch < 96)
                 {
-                    Sound[id_sound].pitch++;
+                    Sound[Sound_id].pitch++;
                     changed = true;
                 }
             }
             else
             {
-                if (Sound[id_sound].pitch > -96)
+                if (Sound[Sound_id].pitch > -96)
                 {
-                    Sound[id_sound].pitch--;
+                    Sound[Sound_id].pitch--;
                     changed = true;
                 }
             }
             if (changed)
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_pitch(session, instrument);
-                Players_Manager.Multicast_pitch_for_sound_edit(instrument);
+                Players_Manager.Update_Preset_pitch(Patch_id, Instrument_id);
+                Players_Manager.Multicast_pitch_for_sound_edit(Instrument_id);
                 AudioInterrupts();
 
-                Display.Pitch(instrument);
+                Display.Pitch(Instrument_id);
                 Macro_Sound_menu();
             }
         }
@@ -2567,28 +2242,28 @@ void loop()
         // Set Pitch flat
         if (Read_pushbutton(17))
         {
-            if (Sound[id_sound].pitch != 0)
+            if (Sound[Sound_id].pitch != 0)
             {
-                Sound[id_sound].pitch = 0;
+                Sound[Sound_id].pitch = 0;
 
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_pitch(session, instrument);
-                Players_Manager.Multicast_pitch_for_sound_edit(instrument);
+                Players_Manager.Update_Preset_pitch(Patch_id, Instrument_id);
+                Players_Manager.Multicast_pitch_for_sound_edit(Instrument_id);
                 AudioInterrupts();
 
-                Display.Pitch(instrument);
+                Display.Pitch(Instrument_id);
                 Macro_Sound_menu();
             }
         }
 
         // change Attack
-        if (Read_encoder(18, Sound[id_sound].attack, 255, 0, 1))
+        if (Read_encoder(18, Sound[Sound_id].attack, 255, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_attack(session, instrument);
+            Players_Manager.Update_Preset_attack(Patch_id, Instrument_id);
             AudioInterrupts();
 
-            Display.Attack(instrument);
+            Display.Attack(Instrument_id);
             Macro_Sound_menu();
         }
 
@@ -2596,45 +2271,45 @@ void loop()
         if (Read_pushbutton(18))
         {
             AudioNoInterrupts();
-            bitWrite(Sound[id_sound].data, 0, !bitRead(Sound[id_sound].data, 0));
-            Players_Manager.Update_Preset_attack_type(session, instrument);
+            bitWrite(Sound[Sound_id].data, 0, !bitRead(Sound[Sound_id].data, 0));
+            Players_Manager.Update_Preset_attack_type(Patch_id, Instrument_id);
             So_menu = 0;
             AudioInterrupts();
 
-            Display.Attack(instrument);
+            Display.Attack(Instrument_id);
             Macro_Sound_menu();
         }
 
         // change Decay
-        if (Read_encoder(19, Sound[id_sound].decay, 255, 0, 1))
+        if (Read_encoder(19, Sound[Sound_id].decay, 255, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_decay(session, instrument);
+            Players_Manager.Update_Preset_decay(Patch_id, Instrument_id);
             AudioInterrupts();
 
-            Display.Decay(instrument);
+            Display.Decay(Instrument_id);
             Macro_Sound_menu();
         }
 
         // change Sustain
-        if (Read_encoder(20, Sound[id_sound].sustain, 46, 4, 5))
+        if (Read_encoder(20, Sound[Sound_id].sustain, 46, 4, 5))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_sustain(session, instrument);
+            Players_Manager.Update_Preset_sustain(Patch_id, Instrument_id);
             AudioInterrupts();
 
-            Display.Sustain(instrument);
+            Display.Sustain(Instrument_id);
             Macro_Sound_menu();
         }
 
         // change Release
-        if (Read_encoder(21, Sound[id_sound].release, 50, 0, 1))
+        if (Read_encoder(21, Sound[Sound_id].release, 50, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_release(session, instrument);
+            Players_Manager.Update_Preset_release(Patch_id, Instrument_id);
             AudioInterrupts();
 
-            Display.Release(instrument);
+            Display.Release(Instrument_id);
             Macro_Sound_menu();
         }
 
@@ -2645,15 +2320,15 @@ void loop()
             {
                 solo_flag = true;
                 AudioNoInterrupts();
-                Players_Manager.Release_all_players_for_instrument_solo(instrument);
-                Map_one_Instrument_for_all_notes(instrument);
+                Players_Manager.Release_all_players_for_instrument_solo(Instrument_id);
+                Map_one_Instrument_for_all_notes(Instrument_id);
                 AudioInterrupts();
             }
             else
             {
                 Set_Sound_SOLO_OFF();
             }
-            Display.Show_wave(instrument);
+            Display.Show_wave(Instrument_id);
         }
 
         // change MENU position
@@ -2673,79 +2348,79 @@ void loop()
                 Set_Sound_SOLO_OFF();
 
                 Lilla_state = PERFORMANCE;
-                session_original = Verify_is_Session_original(session);
+                patch_original = Verify_is_Patch_original(Patch_id);
 
-                Display.Session_header(true, true); // Session_header(bool change_session, bool change_vol)
-                P_menu = P_menu_max + position_of_Instrument[instrument] + 1;
+                Display.Patch_header(true, true); // Patch_header(bool change_patch, bool change_vol)
+                P_menu = P_menu_max + position_of_Instrument[Instrument_id] + 1;
                 Select_performance_menu_elements();
                 Display.Performance_menu(); // display the menu and update P_menu_max
                 Display.Instruments_header();
-                Display.All_Instrument(session);
+                Display.All_Instrument(Patch_id);
 
-                Display.Show_Instrument_description(session, instrument, true);
+                Display.Show_Instrument_description(Patch_id, Instrument_id, true);
 
                 // restore LED
                 Performance_led_set.Restore_all_LED();
 
-                Display.Instrument_frame_on_position(position_of_Instrument[instrument], true);
+                Display.Instrument_frame_on_position(position_of_Instrument[Instrument_id], true);
                 instrument_editing_flag = true;
-                last_edited_instrument = instrument;
+                last_edited_instrument = Instrument_id;
                 break;
 
             case 1: // Clone this Instrument and go back to PERFORMANCE
 
                 AudioNoInterrupts();
-                instrument = Clone_Instrument(instrument); // also increments instruments
-                id_sound = Session[session].Instrument[instrument].id_sound;
-                Update_map_Instrument_for_notes(Session[session].Instrument[instrument].from_note, Session[session].Instrument[instrument].to_note, instrument);
-                Players_Manager.Update_Preset(session, instrument, Volume_float[volume_session]);
-                Fill_Noclick(instrument);
-                Fill_Wavetable(instrument);
+                Instrument_id = Clone_Instrument(Instrument_id); // also increments instruments
+                Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
+                Update_map_Instrument_for_notes(Patch[Patch_id].Instrument[Instrument_id].from_note, Patch[Patch_id].Instrument[Instrument_id].to_note, Instrument_id);
+                Players_Manager.Update_Preset(Patch_id, Instrument_id, Volume_float[volume_patch]);
+                Fill_Noclick(Instrument_id);
+                Fill_Wavetable(Instrument_id);
                 AudioInterrupts();
 
                 Set_Sound_SOLO_OFF();
                 Lilla_state = PERFORMANCE;
                 Update_Instruments_positions();
-                session_original = Verify_is_Session_original(session);
-                Display.Session_header(true, true); // Session_header(bool change_session, bool change_vol)
-                P_menu = P_menu_max + position_of_Instrument[instrument] + 1;
+                patch_original = Verify_is_Patch_original(Patch_id);
+                Display.Patch_header(true, true); // Patch_header(bool change_patch, bool change_vol)
+                P_menu = P_menu_max + position_of_Instrument[Instrument_id] + 1;
                 Select_performance_menu_elements();
                 Display.Performance_menu(); // display the menu and update P_menu_max
                 Display.Instruments_header();
-                Display.All_Instrument(session);
+                Display.All_Instrument(Patch_id);
 
-                Display.Show_Instrument_description(session, instrument, true);
+                Display.Show_Instrument_description(Patch_id, Instrument_id, true);
 
                 // restore LED
                 Performance_led_set.Restore_all_LED();
 
-                Display.Instrument_frame_on_position(position_of_Instrument[instrument], true);
+                Display.Instrument_frame_on_position(position_of_Instrument[Instrument_id], true);
                 instrument_editing_flag = true;
-                last_edited_instrument = instrument;
+                last_edited_instrument = Instrument_id;
                 break;
 
             case 2: // Delete this Instrument and go back to PERFORMANCE
-                // PB_state[instrument] = 5; // Session, PB down
+                // PB_state[instrument] = 5; // Patch, PB down
 
                 AudioNoInterrupts();
-                Players_Manager.Release_all_players_for_instrument(instrument);
-                Delete_one_map_Instrument_for_notes(instrument);
-                Drop_Instrument(instrument); // instruments is decremented by 1
+                Players_Manager.Release_all_players_for_instrument(Instrument_id);
+                Delete_one_map_Instrument_for_notes(Instrument_id);
+                Drop_Instrument(Instrument_id); // instruments is decremented by 1
                 AudioInterrupts();
 
                 Lilla_state = PERFORMANCE;
                 Update_Instruments_positions();
-                session_original = Verify_is_Session_original(session);
-                instrument = instrument_on_position[0];
-                Display.Session_header(true, false); // Session_header(bool change_session, bool change_vol)
+                patch_original = Verify_is_Patch_original(Patch_id);
+                Instrument_id = instrument_on_position[0];
+                Display.Patch_header(true, false); // Patch_header(bool change_patch, bool change_vol)
                 Select_performance_menu_elements();
                 Display.Performance_menu(); // displays the menu and updates P_menu_max used by encoder_menu
                 P_menu = P_menu_max + 1;
                 Display.Instruments_header();
-                Display.All_Instrument(session);
-                Display.Instrument_frame_on_position(position_of_Instrument[instrument], true);
+                Display.All_Instrument(Patch_id);
+                Display.Instrument_frame_on_position(position_of_Instrument[Instrument_id], true);
                 instrument_editing_flag = true;
-                last_edited_instrument = instrument;
+                last_edited_instrument = Instrument_id;
                 break;
 
             default:
@@ -2759,16 +2434,16 @@ void loop()
         {
             if (Read_pushbutton(PB_number + 26))
             {
-                if (PB_number == instrument)
+                if (PB_number == Instrument_id)
                 {
                     Lilla_state = INSTRUMENT_VCF;
 
-                    Display.Instrument_VCF_page(session, instrument);
+                    Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                     // restore all LED
                     Performance_led_set.Restore_all_LED();
                 }
-                else if (Session[session].Instrument[PB_number].used)
+                else if (Patch[Patch_id].Instrument[PB_number].used)
                 {
                     AudioNoInterrupts();
                     if (solo_flag)
@@ -2778,16 +2453,16 @@ void loop()
                     }
                     AudioInterrupts();
 
-                    instrument = PB_number;
-                    id_sound = Session[session].Instrument[instrument].id_sound;
-                    P_Sound(id_sound);
-                    samples_in_file = Get_samples_in_raw_file(Sound[id_sound].file);
-                    Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
+                    Instrument_id = PB_number;
+                    Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
+                    P_Sound(Sound_id);
+                    samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
+                    Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                     trim_step = Calc_trim_step(trim_speed);
-                    sound_original = Verify_is_Sound_original(id_sound);
+                    sound_original = Verify_is_Sound_original(Sound_id);
                     So_menu = 0;
 
-                    Display.Show_sound(id_sound, instrument);
+                    Display.Show_sound(Sound_id, Instrument_id);
                     if (Lilla_state_0 != MIDI_LOOP)
                     {
                         // restore all LED
@@ -2796,7 +2471,7 @@ void loop()
 
                     // to do: display LED for MIDI_LOOP
 
-                    Display.Show_wave(instrument);
+                    Display.Show_wave(Instrument_id);
 
                     if (Lilla_state_0 != MIDI_LOOP)
                     {
@@ -2814,7 +2489,7 @@ void loop()
             if (Read_pushbutton(26))
             {
                 Set_Sound_SOLO_OFF();
-                Golive_with_PERFORMANCE(session);
+                Golive_with_PERFORMANCE(Patch_id);
             }
 
             // Switch to MIXER
@@ -2876,7 +2551,7 @@ void loop()
         {
             Lilla_state = INSTRUMENT_VCF;
 
-            Display.Instrument_VCF_page(session, instrument);
+            Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
             // restore LED
             Performance_led_set.Restore_all_LED();
@@ -2893,48 +2568,48 @@ void loop()
     {
         if (Lilla_state_0 == LIVE_SAMPLING)
         {
-            // change volume_session
-            if (Read_encoder(15, volume_session, 40, 0, 1))
+            // change volume_patch
+            if (Read_encoder(15, volume_patch, 40, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+                Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
                 Players_Manager.Broadcast_volume();
                 AudioInterrupts();
-                Display.Session_volume_value(true); // true: YELLOW
+                Display.Patch_volume_value(true); // true: YELLOW
             }
         }
 
         else if (Lilla_state_0 == PERFORMANCE || Lilla_state_0 == MIDI_LOOP)
         {
             // Change GAIN
-            if (Read_encoder(4, Sound[id_sound].gain, 40, 0, 1))
+            if (Read_encoder(4, Sound[Sound_id].gain, 40, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_volume(session, instrument, Volume_float[volume_session]);
-                Players_Manager.Multicast_volume_for_instrument_edit(instrument);
+                Players_Manager.Update_Preset_volume(Patch_id, Instrument_id, Volume_float[volume_patch]);
+                Players_Manager.Multicast_volume_for_instrument_edit(Instrument_id);
                 AudioInterrupts();
-                Display.Show_VCF_gain(id_sound);
+                Display.Show_VCF_gain(Sound_id);
             }
 
-            // Change volume_session
-            if (Read_encoder(15, volume_session, 40, 0, 1))
+            // Change volume_patch
+            if (Read_encoder(15, volume_patch, 40, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+                Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
                 Players_Manager.Broadcast_volume();
                 AudioInterrupts();
             }
         }
 
         // VFC type (Lowpass, Highpass...)
-        if (Read_encoder(5, Session[session].Instrument[instrument].Filter.type, 3, 0, 1))
+        if (Read_encoder(5, Patch[Patch_id].Instrument[Instrument_id].Filter.type, 3, 0, 1))
         {
             if (Lilla_state_0 == LIVE_SAMPLING)
             {
-                Session[session].Instrument[1].Filter.type = Session[session].Instrument[0].Filter.type;
+                Patch[Patch_id].Instrument[1].Filter.type = Patch[Patch_id].Instrument[0].Filter.type;
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_IF(session, 0);
-                Players_Manager.Update_Preset_IF(session, 1);
+                Players_Manager.Update_Preset_IF(Patch_id, 0);
+                Players_Manager.Update_Preset_IF(Patch_id, 1);
                 Players_Manager.Multicast_IF_update_filter_type(0);
                 Players_Manager.Multicast_IF_update_filter_type(1);
                 AudioInterrupts();
@@ -2942,150 +2617,150 @@ void loop()
             else
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_IF(session, instrument);
-                Players_Manager.Multicast_IF_update_filter_type(instrument);
+                Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
+                Players_Manager.Multicast_IF_update_filter_type(Instrument_id);
                 AudioInterrupts();
             }
-            Display.Show_VCF_filter_type(instrument);
+            Display.Show_VCF_filter_type(Instrument_id);
         }
 
         // VCF filter ON/none
         if (Read_pushbutton(5))
         {
             Macro_VCF_filter_on_none();
-            Display.Show_VCF_filter_type(instrument);
+            Display.Show_VCF_filter_type(Instrument_id);
         }
 
         // VCF modulation (none, trail up, trail down, sinus)
-        if (Read_encoder(6, Session[session].Instrument[instrument].Filter.modulation, 4, 0, 1))
+        if (Read_encoder(6, Patch[Patch_id].Instrument[Instrument_id].Filter.modulation, 4, 0, 1))
         {
             if (Lilla_state_0 == LIVE_SAMPLING)
             {
-                Session[session].Instrument[1].Filter.modulation = Session[session].Instrument[0].Filter.modulation;
+                Patch[Patch_id].Instrument[1].Filter.modulation = Patch[Patch_id].Instrument[0].Filter.modulation;
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_IF_modulation(session, 0);
-                Players_Manager.Update_Preset_IF_modulation(session, 1);
+                Players_Manager.Update_Preset_IF_modulation(Patch_id, 0);
+                Players_Manager.Update_Preset_IF_modulation(Patch_id, 1);
                 AudioInterrupts();
             }
             else
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_IF_modulation(session, instrument);
+                Players_Manager.Update_Preset_IF_modulation(Patch_id, Instrument_id);
                 AudioInterrupts();
             }
-            Display.Show_VCF_lfo_type(instrument);
+            Display.Show_VCF_lfo_type(Instrument_id);
         }
 
         // VCF modulation "NONE"
         if (Read_pushbutton(6))
         {
             Macro_VCF_modulation_none();
-            Display.Show_VCF_lfo_type(instrument);
+            Display.Show_VCF_lfo_type(Instrument_id);
         }
 
         // VCF filter Cutoff frequency
-        if (Read_encoder(13, Session[session].Instrument[instrument].Filter.pivot, 100, 0, 1))
+        if (Read_encoder(13, Patch[Patch_id].Instrument[Instrument_id].Filter.pivot, 100, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_IF(session, instrument);
-            if (Preset[instrument].Filter.use == 1)
+            Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
+            if (Preset[Instrument_id].Filter.use == 1)
             {
-                Players_Manager.Multicast_IF_pivot(instrument);
+                Players_Manager.Multicast_IF_pivot(Instrument_id);
             }
 
             if (Lilla_state_0 == LIVE_SAMPLING)
             {
-                Session[session].Instrument[1].Filter.pivot = Session[session].Instrument[0].Filter.pivot;
-                instrument = 1;
+                Patch[Patch_id].Instrument[1].Filter.pivot = Patch[Patch_id].Instrument[0].Filter.pivot;
+                Instrument_id = 1;
 
-                Players_Manager.Update_Preset_IF(session, instrument);
-                if (Preset[instrument].Filter.use == 1)
+                Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
+                if (Preset[Instrument_id].Filter.use == 1)
                 {
-                    Players_Manager.Multicast_IF_pivot(instrument);
+                    Players_Manager.Multicast_IF_pivot(Instrument_id);
                 }
 
-                instrument = 0;
+                Instrument_id = 0;
             }
             AudioInterrupts();
-            Display.Show_VCF_cutoff(instrument);
+            Display.Show_VCF_cutoff(Instrument_id);
         }
 
         // VCF modulation frequency or time
-        if (Read_encoder(14, Session[session].Instrument[instrument].Filter.frequency_time, 40, 0, 1))
+        if (Read_encoder(14, Patch[Patch_id].Instrument[Instrument_id].Filter.frequency_time, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_IF(session, instrument);
-            if ((Preset[instrument].Filter.use == 1) && (Preset[instrument].Filter.modulation > 0) && (Preset[instrument].Filter.periodic == 1))
+            Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
+            if ((Preset[Instrument_id].Filter.use == 1) && (Preset[Instrument_id].Filter.modulation > 0) && (Preset[Instrument_id].Filter.periodic == 1))
             {
-                Players_Manager.Multicast_IF_frequency_filter(instrument);
+                Players_Manager.Multicast_IF_frequency_filter(Instrument_id);
             }
 
             if (Lilla_state_0 == LIVE_SAMPLING)
             {
-                Session[session].Instrument[1].Filter.frequency_time = Session[session].Instrument[0].Filter.frequency_time;
-                instrument = 1;
-                Players_Manager.Update_Preset_IF(session, instrument);
-                if ((Preset[instrument].Filter.use == 1) && (Preset[instrument].Filter.modulation > 0) && (Preset[instrument].Filter.periodic == 1))
+                Patch[Patch_id].Instrument[1].Filter.frequency_time = Patch[Patch_id].Instrument[0].Filter.frequency_time;
+                Instrument_id = 1;
+                Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
+                if ((Preset[Instrument_id].Filter.use == 1) && (Preset[Instrument_id].Filter.modulation > 0) && (Preset[Instrument_id].Filter.periodic == 1))
                 {
-                    Players_Manager.Multicast_IF_frequency_filter(instrument);
+                    Players_Manager.Multicast_IF_frequency_filter(Instrument_id);
                 }
 
-                instrument = 0;
+                Instrument_id = 0;
             }
             AudioInterrupts();
-            Display.Show_VCF_lfo_freq_time(instrument);
+            Display.Show_VCF_lfo_freq_time(Instrument_id);
         }
 
 // VCF resonance
 #ifdef PCB_2022
-        if (Read_encoder(21, Session[session].Instrument[instrument].Filter.resonance, 40, 0, 1))
+        if (Read_encoder(21, Patch[patch_id].Instrument[instrument].Filter.resonance, 40, 0, 1))
 #else
-        if (Read_encoder(22, Session[session].Instrument[instrument].Filter.resonance, 40, 0, 1))
+        if (Read_encoder(22, Patch[Patch_id].Instrument[Instrument_id].Filter.resonance, 40, 0, 1))
 #endif
         {
 
             AudioNoInterrupts();
-            Players_Manager.Update_IF_resonance(session, instrument);
+            Players_Manager.Update_IF_resonance(Patch_id, Instrument_id);
             if (Lilla_state_0 == LIVE_SAMPLING)
             {
-                Session[session].Instrument[1].Filter.resonance = Session[session].Instrument[0].Filter.resonance;
-                instrument = 1;
-                Players_Manager.Update_IF_resonance(session, instrument);
-                instrument = 0;
+                Patch[Patch_id].Instrument[1].Filter.resonance = Patch[Patch_id].Instrument[0].Filter.resonance;
+                Instrument_id = 1;
+                Players_Manager.Update_IF_resonance(Patch_id, Instrument_id);
+                Instrument_id = 0;
             }
             AudioInterrupts();
-            Display.Show_VCF_resonance(instrument);
+            Display.Show_VCF_resonance(Instrument_id);
         }
 
         // Solo
         if (Read_pushbutton(21))
         {
             AudioNoInterrupts();
-            Players_Manager.Release_all_players_for_instrument_solo(instrument);
-            Map_one_Instrument_for_all_notes(instrument);
+            Players_Manager.Release_all_players_for_instrument_solo(Instrument_id);
+            Map_one_Instrument_for_all_notes(Instrument_id);
             AudioInterrupts();
             Display.Show_VCF_solo();
         }
 
 // VCF modulation rate
 #ifdef PCB_2022
-        if (Read_encoder(22, Session[session].Instrument[instrument].Filter.index, 20, 0, 1))
+        if (Read_encoder(22, Patch[patch_id].Instrument[instrument].Filter.index, 20, 0, 1))
 #else
-        if (Read_encoder(23, Session[session].Instrument[instrument].Filter.index, 20, 0, 1))
+        if (Read_encoder(23, Patch[Patch_id].Instrument[Instrument_id].Filter.index, 20, 0, 1))
 #endif
         {
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_IF_index(session, instrument);
+            Players_Manager.Update_Preset_IF_index(Patch_id, Instrument_id);
 
             if (Lilla_state_0 == LIVE_SAMPLING)
             {
-                Session[session].Instrument[1].Filter.index = Session[session].Instrument[0].Filter.index;
-                instrument = 1;
-                Players_Manager.Update_Preset_IF_index(session, instrument);
-                instrument = 0;
+                Patch[Patch_id].Instrument[1].Filter.index = Patch[Patch_id].Instrument[0].Filter.index;
+                Instrument_id = 1;
+                Players_Manager.Update_Preset_IF_index(Patch_id, Instrument_id);
+                Instrument_id = 0;
             }
             AudioInterrupts();
-            Display.Show_VCF_lfo_index(instrument);
+            Display.Show_VCF_lfo_index(Instrument_id);
         }
 
         // pushbuttons
@@ -3095,30 +2770,30 @@ void loop()
             {
                 if (Read_pushbutton(PB_number + 26))
                 {
-                    if (PB_number == instrument)
+                    if (PB_number == Instrument_id)
                     {
                         Set_Sound_SOLO_OFF();
 
                         Lilla_state = PERFORMANCE;
-                        session_original = Verify_is_Session_original(session);
+                        patch_original = Verify_is_Patch_original(Patch_id);
 
                         Select_performance_menu_elements();
-                        P_menu = P_menu_max + position_of_Instrument[instrument] + 1;
+                        P_menu = P_menu_max + position_of_Instrument[Instrument_id] + 1;
 
                         Display.Performance_page(true, true);
                         instrument_editing_flag = true;
-                        P_menu = P_menu_max + position_of_Instrument[instrument] + 1;
+                        P_menu = P_menu_max + position_of_Instrument[Instrument_id] + 1;
 
-                        Display.Show_Instrument_description(session, instrument, true);
+                        Display.Show_Instrument_description(Patch_id, Instrument_id, true);
 
                         // restore LED
                         Performance_led_set.Restore_all_LED();
 
-                        Display.Instrument_frame_on_position(position_of_Instrument[instrument], true);
+                        Display.Instrument_frame_on_position(position_of_Instrument[Instrument_id], true);
                         instrument_editing_flag = true;
-                        last_edited_instrument = instrument;
+                        last_edited_instrument = Instrument_id;
                     }
-                    else if (Session[session].Instrument[PB_number].used)
+                    else if (Patch[Patch_id].Instrument[PB_number].used)
                     {
                         AudioNoInterrupts();
                         if (solo_flag)
@@ -3130,23 +2805,23 @@ void loop()
 
                         Lilla_state = SOUND_EDIT;
 
-                        instrument = PB_number;
-                        id_sound = Session[session].Instrument[instrument].id_sound;
+                        Instrument_id = PB_number;
+                        Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
 
-                        P_Sound(id_sound);
-                        samples_in_file = Get_samples_in_raw_file(Sound[id_sound].file);
-                        Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
+                        P_Sound(Sound_id);
+                        samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
+                        Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                         trim_step = Calc_trim_step(trim_speed);
-                        sound_original = Verify_is_Sound_original(id_sound);
+                        sound_original = Verify_is_Sound_original(Sound_id);
 
                         So_menu = 0;
 
-                        Display.Show_sound(id_sound, instrument);
+                        Display.Show_sound(Sound_id, Instrument_id);
 
                         // restore LED
                         Performance_led_set.Restore_all_LED();
 
-                        Display.Show_wave(instrument);
+                        Display.Show_wave(Instrument_id);
 
                         Select_sound_edit_menu_elements();
                         Display.SOUND_EDIT_menu(); // displays the menu and updates "SO_menu_max" used by encoder_menu
@@ -3162,7 +2837,7 @@ void loop()
                     // VCF left channel
                     if (Read_pushbutton(26))
                     {
-                        if (instrument == 0)
+                        if (Instrument_id == 0)
                         {
                             LS_instrument = 0;        // Left
                             LS_id_sound = SOUNDS_MAX; // Left
@@ -3170,10 +2845,10 @@ void loop()
                         }
                         else
                         {
-                            instrument = 0;
-                            id_sound = SOUNDS_MAX;
+                            Instrument_id = 0;
+                            Sound_id = SOUNDS_MAX;
 
-                            Display.Instrument_VCF_page(session, instrument);
+                            Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                             // restore LED
                             Performance_led_set.Restore_all_LED();
@@ -3182,7 +2857,7 @@ void loop()
                     // VCF right channel
                     if (Read_pushbutton(27))
                     {
-                        if (instrument == 1)
+                        if (Instrument_id == 1)
                         {
                             LS_instrument = 1;            // Right
                             LS_id_sound = SOUNDS_MAX + 1; // Right
@@ -3190,9 +2865,9 @@ void loop()
                         }
                         else
                         {
-                            instrument = 1;
-                            id_sound = SOUNDS_MAX + 1;
-                            Display.Instrument_VCF_page(session, instrument);
+                            Instrument_id = 1;
+                            Sound_id = SOUNDS_MAX + 1;
+                            Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                             // restore LED
                             Performance_led_set.Restore_all_LED();
@@ -3219,14 +2894,14 @@ void loop()
             {
                 if (Read_pushbutton(PB_number + 26))
                 {
-                    if (PB_number == instrument)
+                    if (PB_number == Instrument_id)
                     {
                         Set_Sound_SOLO_OFF();
 
                         // Ritorna a MIDI_LOOP
                         Golive_with_MIDI_LOOP(false);
                     }
-                    else if (Session[session].Instrument[PB_number].used)
+                    else if (Patch[Patch_id].Instrument[PB_number].used)
                     {
                         AudioNoInterrupts();
                         if (solo_flag)
@@ -3237,21 +2912,21 @@ void loop()
                         AudioInterrupts();
 
                         Lilla_state = SOUND_EDIT;
-                        instrument = PB_number;
+                        Instrument_id = PB_number;
                         // PB_state[instrument] = 1; // Sound_edit, PB down
-                        id_sound = Session[session].Instrument[instrument].id_sound;
-                        P_Sound(id_sound);
-                        samples_in_file = Get_samples_in_raw_file(Sound[id_sound].file);
-                        Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
+                        Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
+                        P_Sound(Sound_id);
+                        samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
+                        Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                         trim_step = Calc_trim_step(trim_speed);
-                        sound_original = Verify_is_Sound_original(id_sound);
+                        sound_original = Verify_is_Sound_original(Sound_id);
 
                         So_menu = 0;
 
-                        Display.Show_sound(id_sound, instrument);
+                        Display.Show_sound(Sound_id, Instrument_id);
                         // to do: display LED
 
-                        Display.Show_wave(instrument);
+                        Display.Show_wave(Instrument_id);
                         Display.SOUND_EDIT_menu(); // displays the menu and updates "SO_menu_max" used by encoder_menu
                         Display.Frame_SOUND_EDIT_menu(So_menu);
                     }
@@ -3268,7 +2943,7 @@ void loop()
                 if (Lilla_state_0 == PERFORMANCE)
                 {
                     Set_Sound_SOLO_OFF();
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                 }
                 else
                 {
@@ -3354,7 +3029,7 @@ void loop()
         {
             if (Read_pushbutton(25))
             {
-                Golive_with_PERFORMANCE(session);
+                Golive_with_PERFORMANCE(Patch_id);
             }
         }
         else if (Lilla_state_0 == LIVE_SAMPLING)
@@ -3371,7 +3046,7 @@ void loop()
             Lilla_state = SOUND_EDIT;
             So_menu = 0;
 
-            Display.Show_sound(id_sound, instrument);
+            Display.Show_sound(Sound_id, Instrument_id);
             if (Lilla_state_0 == PERFORMANCE)
             {
 
@@ -3381,7 +3056,7 @@ void loop()
 
             // to do: display LED per Lilla_state_0 == MIDI_LOOP
 
-            Display.Show_wave(instrument);
+            Display.Show_wave(Instrument_id);
 
             if (Lilla_state_0 != MIDI_LOOP)
             {
@@ -3403,10 +3078,10 @@ void loop()
     {
         if (Lilla_state_0 == PERFORMANCE || (Lilla_state_0 == DIRECT_SAMPLING && DS_state == 0) || Lilla_state_0 == LIVE_SAMPLING)
         {
-            if (Read_encoder(15, volume_session, 40, 0, 1))
+            if (Read_encoder(15, volume_patch, 40, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+                Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
                 Players_Manager.Broadcast_volume();
                 AudioInterrupts();
             }
@@ -3415,13 +3090,13 @@ void loop()
         // Choose source instrument: MX_sources 0 --> 7
         if (!Read_pushbutton_fast(35))
         {
-            if (Read_pushbutton(PB_number + 26) && Session[session].Instrument[PB_number].used)
+            if (Read_pushbutton(PB_number + 26) && Patch[Patch_id].Instrument[PB_number].used)
             {
                 Display.MX_source_values_jump(MX_source, PB_number); // MX_source_values_jump(const uint8_t &old_source, const uint8_t &new_source) - qui si assegna il nuovo valore MX_source
-                instrument = MX_source;
-                id_sound = Session[session].Instrument[instrument].id_sound;
-                Serial.print("id_sound: ");
-                Serial.println(id_sound);
+                Instrument_id = MX_source;
+                Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
+                Serial.print("sound_id: ");
+                Serial.println(Sound_id);
             }
 
             // Choose source LINE IN: MX_source 8
@@ -3435,21 +3110,21 @@ void loop()
         }
 
         // Change GAIN
-        if (MX_source < 8)
+        if (MX_source < INSTRUMENTS_MAX)
         {
-            if (Read_encoder(4, Sound[id_sound].gain, 40, 0, 1))
+            if (Read_encoder(4, Sound[Sound_id].gain, 40, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_volume(session, instrument, Volume_float[volume_session]);
-                Players_Manager.Multicast_volume_for_instrument_edit(instrument);
+                Players_Manager.Update_Preset_volume(Patch_id, Instrument_id, Volume_float[volume_patch]);
+                Players_Manager.Multicast_volume_for_instrument_edit(Instrument_id);
                 AudioInterrupts();
 
-                Serial.println(Sound[id_sound].gain);
+                Serial.println(Sound[Sound_id].gain);
                 Serial.println(MX_source);
                 Display.MX_source_values_edit(MX_source);
             }
         }
-        else if (MX_source == 8)
+        else if (MX_source == INSTRUMENTS_MAX)
         {
             if (Read_encoder(4, DS_gain, 40, 1, 1))
             {
@@ -3459,13 +3134,13 @@ void loop()
         }
 
         // Change PAN
-        if (MX_source < 8)
+        if (MX_source < INSTRUMENTS_MAX)
         {
-            if (Read_encoder(3, Sound[id_sound].pan, 16, -16, 1))
+            if (Read_encoder(3, Sound[Sound_id].pan, 16, -16, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_pan(session, instrument);
-                Players_Manager.Multicast_pan(instrument);
+                Players_Manager.Update_Preset_pan(Patch_id, Instrument_id);
+                Players_Manager.Multicast_pan(Instrument_id);
                 AudioInterrupts();
 
                 Display.MX_source_values_edit(MX_source);
@@ -3477,14 +3152,14 @@ void loop()
         {
             MX_mute[MX_source] = !MX_mute[MX_source];
 
-            if (MX_source < 8)
+            if (MX_source < INSTRUMENTS_MAX)
             {
-                Serial.print((MX_mute[instrument] ? "Mute MX_source:" : "umute MX_source:"));
-                Serial.println(instrument);
+                Serial.print((MX_mute[Instrument_id] ? "Mute MX_source:" : "umute MX_source:"));
+                Serial.println(Instrument_id);
 
                 AudioNoInterrupts();
-                Players_Manager.Update_Preset_volume(session, instrument, Volume_float[volume_session]);
-                Players_Manager.Multicast_volume_for_instrument_edit(instrument);
+                Players_Manager.Update_Preset_volume(Patch_id, Instrument_id, Volume_float[volume_patch]);
+                Players_Manager.Multicast_volume_for_instrument_edit(Instrument_id);
                 AudioInterrupts();
             }
             else if (MX_source == 8)
@@ -3554,10 +3229,10 @@ void loop()
                 MX_routing_source[MX_source] = 1;
             }
 
-            if (MX_source < 8)
+            if (MX_source < INSTRUMENTS_MAX)
             {
                 AudioNoInterrupts();
-                Players_Manager.MX_multicast_change_routing(instrument);
+                Players_Manager.MX_multicast_change_routing(Instrument_id);
                 AudioInterrupts();
             }
 
@@ -3613,10 +3288,10 @@ void loop()
                 MX_routing_source[MX_source] = 2;
             }
 
-            if (MX_source < 8)
+            if (MX_source < INSTRUMENTS_MAX)
             {
                 AudioNoInterrupts();
-                Players_Manager.MX_multicast_change_routing(instrument);
+                Players_Manager.MX_multicast_change_routing(Instrument_id);
                 AudioInterrupts();
             }
 
@@ -3660,7 +3335,7 @@ void loop()
                 switch (Lilla_state_0)
                 {
                 case PERFORMANCE:
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                     break;
 
                 case DIRECT_SAMPLING:
@@ -3793,15 +3468,15 @@ void loop()
     // *************************************************************
     if (Lilla_state == DELAY_SETTINGS)
     {
-        // Change Session VOLUME
-        if (Read_encoder(15, volume_session, 40, 0, 1))
+        // Change Patch VOLUME
+        if (Read_encoder(15, volume_patch, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+            Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
             Players_Manager.Broadcast_volume();
             AudioInterrupts();
 
-            Display.Session_volume_value(true);
+            Display.Patch_volume_value(true);
         }
 
         // Change feddback (gain tap 0)
@@ -3995,10 +3670,10 @@ void loop()
                         Serial.println(F("... has been saved in EEPROM."));
                     }
 
-                    // Save Delay_data in delay_<session>.txt in SD
-                    Archive.Copy_session_Delay_data_from_RAM_to_SD(session);
+                    // Save Delay_data in delay_<patch_id>.txt in SD
+                    Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
 
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                     break;
 
                 case DIRECT_SAMPLING:
@@ -4010,8 +3685,8 @@ void loop()
                     break;
 
                 case MIDI_LOOP:
-                    // Session delay
-                    Archive.Copy_session_Delay_data_from_RAM_to_SD(session);
+                    // Patch delay
+                    Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
 
                     Switch_from_MIDI_LOOP_to_PERFORMANCE();
                     break;
@@ -4052,9 +3727,9 @@ void loop()
 
                     AudioNoInterrupts();
                     // Ferma i track running
-                    for (auto i = 0; i < TRACKS; ++i) // true --> il track va suonato
+                    for (auto local_track = 0; local_track < TRACKS; ++local_track) // true --> il track va suonato
                     {
-                        LOOP_track_run[i] = false;
+                        LOOP_track_run[local_track] = false;
                     }
 
                     // Ferma i Player dei track
@@ -4095,9 +3770,9 @@ void loop()
 
                     AudioNoInterrupts();
                     // Ferma i track running
-                    for (auto i = 0; i < TRACKS; ++i) // true --> il track va suonato
+                    for (auto local_track = 0; local_track < TRACKS; ++local_track) // true --> il track va suonato
                     {
-                        LOOP_track_run[i] = false;
+                        LOOP_track_run[local_track] = false;
                     }
 
                     // Ferma i Player dei loop
@@ -4149,10 +3824,10 @@ void loop()
 
         /*
 
-        Live Sampling (LIVE SAMPLER) consente la registrazione sia Mono che Stereo. Prevede l'uso della Session SESSION_MAX.
+        Live Sampling (LIVE SAMPLER) consente la registrazione sia Mono che Stereo. Prevede l'uso della Patch PATCHES_MAX.
 
-        Se la registrazione è mono, SESSION_MAX comprende 1 Instrument e il Sound SOUNDS_MAX:
-        - Session[SESSION_MAX].Instrument[0].id.sound == SOUNDS_MAX
+        Se la registrazione è mono, PATCHES_MAX comprende 1 Instrument e il Sound SOUNDS_MAX:
+        - Patch[PATCHES_MAX].Instrument[0].id.sound == PATCHES_MAX
 
         L'Instrument ha:
         from_note = 0
@@ -4164,9 +3839,9 @@ void loop()
         Sound[SOUNDS_MAX].file = FIRST_LIVE_SAMPLING_FILE;
 
 
-        Se la registrazione è stereo, SESSION_MAX comprende 2 Instrument, i Sound SOUNDS_MAX e (SOUNDS_MAX + 1):
-        - Session[SESSION_MAX].Instrument[0].id.sound == SOUNDS_MAX --> associato a ch. Left
-        - Session[SESSION_MAX].Instrument[1].id.sound == SOUNDS_MAX + 1 --> associato a ch. Right
+        Se la registrazione è stereo, PATCHES_MAX comprende 2 Instrument, i Sound SOUNDS_MAX e (SOUNDS_MAX + 1):
+        - Patch[PATCHES_MAX].Instrument[0].id.sound == SOUNDS_MAX --> associato a ch. Left
+        - Patch[PATCHES_MAX].Instrument[1].id.sound == SOUNDS_MAX + 1 --> associato a ch. Right
 
         Entrambi gli Instrument hanno:
         from_note = 0
@@ -4248,13 +3923,13 @@ void loop()
         {
             AudioNoInterrupts();
             Sound[SOUNDS_MAX].mode = LS_mode;
-            Players_Manager.Update_Preset_mode(session, 0);
-            Players_Manager.Multicast_main_settings_editing(session, 0);
+            Players_Manager.Update_Preset_mode(Patch_id, 0);
+            Players_Manager.Multicast_main_settings_editing(Patch_id, 0);
             if (LS_stereo)
             {
                 Sound[SOUNDS_MAX + 1].mode = LS_mode;
-                Players_Manager.Update_Preset_mode(session, 1);
-                Players_Manager.Multicast_main_settings_editing(session, 1);
+                Players_Manager.Update_Preset_mode(Patch_id, 1);
+                Players_Manager.Multicast_main_settings_editing(Patch_id, 1);
             }
             AudioInterrupts();
 
@@ -4274,11 +3949,11 @@ void loop()
             }
         }
 
-        // Change volume_session
-        if (Read_encoder(15, volume_session, 40, 0, 1))
+        // Change volume_patch
+        if (Read_encoder(15, volume_patch, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+            Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
             Players_Manager.Broadcast_volume();
             AudioInterrupts();
             Display.LS_volume();
@@ -4385,10 +4060,10 @@ void loop()
             if (LS_mode > 1)
             {
                 AudioNoInterrupts();
-                Players_Manager.Multicast_main_settings_editing(session, 0);
+                Players_Manager.Multicast_main_settings_editing(Patch_id, 0);
                 if (LS_stereo)
                 {
-                    Players_Manager.Multicast_main_settings_editing(session, 1);
+                    Players_Manager.Multicast_main_settings_editing(Patch_id, 1);
                 }
                 AudioInterrupts();
             }
@@ -4463,10 +4138,10 @@ void loop()
             LS_XY_delta = constrain(LS_XY_delta, LS_XY_DELTA_MIN, LS_buffer_dim - 1);
 
             AudioNoInterrupts();
-            Players_Manager.Multicast_main_settings_editing(session, 0);
+            Players_Manager.Multicast_main_settings_editing(Patch_id, 0);
             if (LS_stereo)
             {
-                Players_Manager.Multicast_main_settings_editing(session, 1);
+                Players_Manager.Multicast_main_settings_editing(Patch_id, 1);
             }
             AudioInterrupts();
 
@@ -4587,14 +4262,14 @@ void loop()
                 LS_window_width = LS_buffer_dim;
                 LS_window_step = LS_window_width / 8;
                 LS_Setup_buffers(LS_stereo, false); // LS_Setup_buffers(bool stereo, bool first)
-                LS_setup_LS_Session(LS_stereo);
+                LS_setup_LS_Patch(LS_stereo);
                 Update_all_maps_Instrument_for_notes();
 
                 AudioNoInterrupts();
-                Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+                Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
                 AudioInterrupts();
 
-                P_Session(session);
+                P_Patch(Patch_id);
                 LS_id_sound = SOUNDS_MAX; // mostra sempre il primo Sound
                 LS_instrument = 0;
                 LS_X_delta = 0;
@@ -4712,12 +4387,12 @@ void loop()
 
                     else
                     {
-                        instrument = 0;
-                        id_sound = SOUNDS_MAX;
+                        Instrument_id = 0;
+                        Sound_id = SOUNDS_MAX;
                         Lilla_state_0 = LIVE_SAMPLING;
                         Lilla_state = INSTRUMENT_VCF;
 
-                        Display.Instrument_VCF_page(session, instrument);
+                        Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                         // restore all LED
                         Performance_led_set.Restore_all_LED();
@@ -4747,12 +4422,12 @@ void loop()
 
                     else
                     {
-                        instrument = 1;
-                        id_sound = SOUNDS_MAX + 1;
+                        Instrument_id = 1;
+                        Sound_id = SOUNDS_MAX + 1;
                         Lilla_state_0 = LIVE_SAMPLING;
                         Lilla_state = INSTRUMENT_VCF;
 
-                        Display.Instrument_VCF_page(session, instrument);
+                        Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                         // restore all LED
                         Performance_led_set.Restore_all_LED();
@@ -4764,12 +4439,12 @@ void loop()
             {
                 if (Read_pushbutton(26))
                 {
-                    instrument = 0;
-                    id_sound = SOUNDS_MAX;
+                    Instrument_id = 0;
+                    Sound_id = SOUNDS_MAX;
                     Lilla_state_0 = LIVE_SAMPLING;
                     Lilla_state = INSTRUMENT_VCF;
 
-                    Display.Instrument_VCF_page(session, instrument);
+                    Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                     // restore all LED
                     Performance_led_set.Restore_all_LED();
@@ -4835,9 +4510,9 @@ void loop()
 
     /*
 
-    Direct Sampling (SAMPLER) consente la registrazione sia Mono che Stereo. Prevede l'uso della Session SESSION_MAX, dei Sound SOUNDS_MAX e (SOUNDS_MAX + 1) e di 2 Instrument:
-    - Session[SESSION_MAX].Instrument[0].id.sound == SOUNDS_MAX --> associato a ch. Left oppure Mono
-    - Session[SESSION_MAX].Instrument[1].id.sound == SOUNDS_MAX + 1 --> associato a ch. Right
+    Direct Sampling (SAMPLER) consente la registrazione sia Mono che Stereo. Prevede l'uso della Patch PATCHES_MAX, dei Sound SOUNDS_MAX e (SOUNDS_MAX + 1) e di 2 Instrument:
+    - Patch[PATCHES_MAX].Instrument[0].id.sound == SOUNDS_MAX --> associato a ch. Left oppure Mono
+    - Patch[PATCHES_MAX].Instrument[1].id.sound == SOUNDS_MAX + 1 --> associato a ch. Right
 
     Entrambi gli instrument hanno:
     from_note = 0
@@ -4851,11 +4526,11 @@ void loop()
 
     if (Lilla_state == DIRECT_SAMPLING)
     {
-        // Change volume_session
-        if (DS_state == 0 && Read_encoder(15, volume_session, 40, 0, 1))
+        // Change volume_patch
+        if (DS_state == 0 && Read_encoder(15, volume_patch, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+            Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
             Players_Manager.Broadcast_volume();
             AudioInterrupts();
 
@@ -5348,7 +5023,7 @@ void loop()
                 // Return
                 DS_state = 0;
                 DS_menu = 0;
-                Display.DS_page(instrument, recording);
+                Display.DS_page(Instrument_id, recording);
                 DS_define_model();
                 Display.DS_menu();
                 Display.DS_frame_menu(DS_menu);
@@ -5376,13 +5051,13 @@ void loop()
                 String DS_export_R_RAW;
 
                 // check SD presence
-                if (!SD.begin(SDcardSelect))
+                if (!SD.begin(BUILTIN_SDCARD))
                 {
                     Display.Popup("SD CARD MISSING", ILI9341_WHITE, ILI9341_RED);
                     delay(2000);
                     DS_state = 0;
                     DS_menu = 0;
-                    Display.DS_page(instrument, recording);
+                    Display.DS_page(Instrument_id, recording);
                     DS_define_model();
                     Display.DS_menu(); // display the menu and updates DS_menu_max
                     Display.DS_frame_menu(DS_menu);
@@ -5402,7 +5077,7 @@ void loop()
                     delay(2000);
                     DS_state = 0;
                     DS_menu = 0;
-                    Display.DS_page(instrument, recording);
+                    Display.DS_page(Instrument_id, recording);
                     DS_define_model();
                     Display.DS_menu(); // display the menu and updates DS_menu_max
                     Display.DS_frame_menu(DS_menu);
@@ -5491,7 +5166,7 @@ void loop()
 
                         DS_state = 0;
                         DS_menu = 0;
-                        Display.DS_page(instrument, recording);
+                        Display.DS_page(Instrument_id, recording);
                         DS_define_model();
                         Display.DS_menu(); // display the menu and updates DS_menu_max
                         Display.DS_frame_menu(DS_menu);
@@ -5566,7 +5241,7 @@ void loop()
 
                             DS_state = 0;
                             DS_menu = 0;
-                            Display.DS_page(instrument, recording);
+                            Display.DS_page(Instrument_id, recording);
                             DS_define_model();
                             Display.DS_menu(); // display the menu and updates DS_menu_max
                             Display.DS_frame_menu(DS_menu);
@@ -5688,7 +5363,7 @@ void loop()
                     delay(2000);
                     DS_state = 0;
                     DS_menu = 0;
-                    Display.DS_page(instrument, recording);
+                    Display.DS_page(Instrument_id, recording);
                     DS_define_model();
                     Display.DS_menu(); // display the menu and updates DS_menu_max
                     Display.DS_frame_menu(DS_menu);
@@ -5770,13 +5445,13 @@ void loop()
     // *************************************************************
     if (Lilla_state == MIDI_MONITOR)
     {
-        // Change Session VOLUME
+        // Change Patch VOLUME
         if (!instrument_editing_flag)
         {
-            if (Read_encoder(15, volume_session, 40, 0, 1))
+            if (Read_encoder(15, volume_patch, 40, 0, 1))
             {
                 AudioNoInterrupts();
-                Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+                Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
                 Players_Manager.Broadcast_volume();
                 AudioInterrupts();
             }
@@ -5829,7 +5504,7 @@ void loop()
                 switch (Lilla_state_0)
                 {
                 case PERFORMANCE:
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                     break;
 
                 case DIRECT_SAMPLING:
@@ -5961,15 +5636,15 @@ void loop()
 
     if (Lilla_state == MIDI_LOOP)
     {
-        // Change volume_session
-        if (Read_encoder(15, volume_session, 40, 0, 1))
+        // Change volume_patch
+        if (Read_encoder(15, volume_patch, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+            Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
             Players_Manager.Broadcast_volume();
             AudioInterrupts();
 
-            Display.Session_volume_value(true);
+            Display.Patch_volume_value(true);
         }
 
         // Change LOOP_id
@@ -6004,9 +5679,9 @@ void loop()
                 Display.Loop_time_stretched();
 
                 // update tracks infos on display
-                for (auto i = 0; i < TRACKS; ++i)
+                for (auto local_track = 0; local_track < TRACKS; ++local_track)
                 {
-                    Display.Loop_track_data(i);
+                    Display.Loop_track_data(local_track);
                 }
 
                 // update menu on display
@@ -6029,25 +5704,25 @@ void loop()
                 LOOP_restart_clock();
 
                 // set first event for each track
-                for (auto track = 0; track < TRACKS; ++track)
+                for (auto local_track = 0; local_track < TRACKS; ++local_track)
                 {
-                    LOOP_play_event[track] = 0;
+                    LOOP_play_event[local_track] = 0;
                 }
 
                 // effettua l'ordinamento temporale degli eventi
-                for (auto track = 0; track < TRACKS; ++track)
+                for (auto local_track = 0; local_track < TRACKS; ++local_track)
                 {
-                    LOOP_set_time_order(track);
+                    LOOP_set_time_order(local_track);
                 }
 
                 // simula Start/Stop all tracks con tutte le tracks attive
                 LOOP_run_button_state = false;
 
                 // memorizza lo stato dei track prima di fermarli
-                for (auto track = 0; track < TRACKS; ++track)
+                for (auto local_track = 0; local_track < TRACKS; ++local_track)
                 {
-                    LOOP_track_run_memo[track] = LOOP_events[track] > 0;
-                    LOOP_track_run[track] = false;
+                    LOOP_track_run_memo[local_track] = LOOP_events[local_track] > 0;
+                    LOOP_track_run[local_track] = false;
                 }
 
                 Serial.println("Loop uploaded; data in RAM:");
@@ -6067,25 +5742,25 @@ void loop()
                 AudioNoInterrupts();
                 if (LOOP_events[LOOP_learning_track] != 0)
                 {
-                    // se si tratta del track master (0) si fermano e cancellano tutti i track
-                    if (LOOP_learning_track == 0)
+                    // se si tratta di MASTER_TRACK (0) si fermano e cancellano tutti i track
+                    if (LOOP_learning_track == MASTER_TRACK)
                     {
                         // Interrompi i Player che eseguono note di qualsiasi track
                         Players_Manager.Release_all_players_loop();
 
-                        for (auto i = 0; i < TRACKS; ++i)
+                        for (auto local_track = 0; local_track < TRACKS; ++local_track)
                         {
                             // Interrompe la lettura
-                            LOOP_track_run[i] = false;
+                            LOOP_track_run[local_track] = false;
 
                             // Cancella il loop
-                            LOOP_events[i] = 0;
+                            LOOP_events[local_track] = 0;
 
                             // Resetta slide
-                            LOOP_slide[i] = 0;
+                            LOOP_slide[local_track] = 0;
 
                             // Resetta pitch
-                            LOOP_pitch_int[i] = 0;
+                            LOOP_pitch_int[local_track] = 0;
                         }
 
                         // ferma il metronomo
@@ -6124,13 +5799,13 @@ void loop()
                 AudioInterrupts();
 
                 // attivita' sul display - NO AudioNoInterrupts()
-                if (LOOP_learning_track == 0)
+                if (LOOP_learning_track == MASTER_TRACK)
                 {
                     // Spegni i led del metronomo
                     LOOP_metronomo.Leds_off(); // va eseguito fuori da AudioNoInterrupt()
 
                     // nomina loop_id
-                    LOOP_id = -1;
+                    LOOP_id = NEW_LOOP;
                     Display.Loop_loop_id();
 
                     LOOP_time = 0;
@@ -6138,12 +5813,12 @@ void loop()
                 }
 
                 // Se si tratta del track master (0) non ancora esistente, oppure si tratta di un altro track ma con track master esistente
-                if (LOOP_learning_track == 0 || (LOOP_learning_track > 0 && LOOP_events[0] != 0))
+                if (LOOP_learning_track == MASTER_TRACK || (LOOP_learning_track > MASTER_TRACK && LOOP_events[MASTER_TRACK] != 0))
                 {
                     // show (or delete) all tracks infos
-                    for (auto L = 0; L < TRACKS; ++L)
+                    for (auto local_track = 0; local_track < TRACKS; ++local_track)
                     {
-                        Display.Loop_track_data(L);
+                        Display.Loop_track_data(local_track);
                     }
 
                     // display "n-REC"
@@ -6198,7 +5873,7 @@ void loop()
                         }
 
                         // se si tratta del track master (0), MidiReader chiede l'accensione del primo led del metronomo quando riceve il primo NoteOn
-                        else if (LOOP_learning_track == 0 && LOOP_metronomo_flag_IN[0])
+                        else if (LOOP_learning_track == MASTER_TRACK && LOOP_metronomo_flag_IN[0])
                         {
                             LOOP_metronomo_flag_IN[0] = false;
                             // ask metronomo to switch on first led (metronomo is not runnig)
@@ -6225,7 +5900,7 @@ void loop()
                     if (LOOP_events[LOOP_learning_track] > 0)
                     {
                         // se e' il loop_master:
-                        if (LOOP_learning_track == 0)
+                        if (LOOP_learning_track == MASTER_TRACK)
                         {
                             // Setup di LOOP_time (durata di tutti i loop)
                             LOOP_time = LOOP_learn_clock;
@@ -6250,7 +5925,7 @@ void loop()
                         LOOP_play_event[LOOP_learning_track] = 0;
 
                         // calcolo istante esecuzione evento di avvio (LOOP_play_time) e prossimo switch del metronomo rispetto a LOOP_Clock
-                        if (LOOP_learning_track == 0)
+                        if (LOOP_learning_track == MASTER_TRACK)
                         {
                             LOOP_play_time[LOOP_learning_track] = 0;
 
@@ -6274,17 +5949,17 @@ void loop()
                         LOOP_track_run[LOOP_learning_track] = true;
 
                         // update menu
-                        if (LOOP_id == -1)
+                        if (LOOP_id == NEW_LOOP)
                         {
                             LOOP_original = true;
                         }
 
-                        else if (LOOP_learning_track == 0 && LOOP_original)
+                        else if (LOOP_learning_track == MASTER_TRACK && LOOP_original)
                         {
                             LOOP_original = false;
                         }
 
-                        else if (LOOP_learning_track > 0)
+                        else if (LOOP_learning_track > MASTER_TRACK)
                         {
                             LOOP_original = false;
                         }
@@ -6299,24 +5974,25 @@ void loop()
                         Serial.println(" **************** ");
                         Serial.print("eventi:");
                         Serial.println(LOOP_events[LOOP_learning_track]);
-                        for (auto i = 0; i < LOOP_events[LOOP_learning_track]; ++i)
+                        for (auto event = 0; event < LOOP_events[LOOP_learning_track]; ++event)
                         {
-                            Serial.print(i);
+                            Serial.print(event);
                             Serial.print(" time:");
-                            Serial.print(LOOP_element[LOOP_learning_track][i].time);
+                            Serial.print(LOOP_element[LOOP_learning_track][event].time);
                             Serial.print(" midi_channel:");
-                            Serial.print(LOOP_element[LOOP_learning_track][i].midi_channel);
+                            Serial.print(LOOP_element[LOOP_learning_track][event].midi_channel);
                             Serial.print(" note_number:");
-                            Serial.print(LOOP_element[LOOP_learning_track][i].note_number);
+                            Serial.print(LOOP_element[LOOP_learning_track][event].note_number);
                             Serial.print(" velocity:");
-                            Serial.print(LOOP_element[LOOP_learning_track][i].velocity);
+                            Serial.print(LOOP_element[LOOP_learning_track][event].velocity);
                             Serial.print(" note_on:");
-                            Serial.println(LOOP_element[LOOP_learning_track][i].note_on ? "NoteOn" : "NoteOff");
+                            Serial.println(LOOP_element[LOOP_learning_track][event].note_on ? "NoteOn" : "NoteOff");
                         }
+
                         Serial.print("Ordine temporale degli eventi: ");
-                        for (auto i = 0; i < LOOP_events[LOOP_learning_track]; ++i)
+                        for (auto event = 0; event < LOOP_events[LOOP_learning_track]; ++event)
                         {
-                            Serial.print(LOOP_time_order[LOOP_learning_track][i]);
+                            Serial.print(LOOP_time_order[LOOP_learning_track][event]);
                             Serial.print(" - ");
                         }
                         Serial.println();
@@ -6327,7 +6003,7 @@ void loop()
                         Serial.println("*************");
                     }
 
-                    else if (LOOP_events[0] == 0)
+                    else if (LOOP_events[MASTER_TRACK] == 0)
                     {
                         // spegni il primo led se acceso
                         LOOP_metronomo.Leds_off();
@@ -6339,7 +6015,7 @@ void loop()
                     Display.Loop_track_data(track);
 
                     // visualizza durata totale
-                    if (LOOP_learning_track == 0)
+                    if (LOOP_learning_track == MASTER_TRACK)
                     {
                         Display.Loop_time_stretched();
                     }
@@ -6347,7 +6023,7 @@ void loop()
             }
             // qui sopra le funzionalita' learn
 
-            // Track existing
+            // Existing track
             if (LOOP_events[track] > 0)
             {
                 // Track start-stop
@@ -6422,9 +6098,9 @@ void loop()
                     Serial.println(jump);
 
                     AudioNoInterrupts();
-                    for (auto i = 0; i < LOOP_events[track]; ++i)
+                    for (auto event = 0; event < LOOP_events[track]; ++event)
                     {
-                        LOOP_element[track][i].time = (LOOP_element[track][i].time + jump) % LOOP_time;
+                        LOOP_element[track][event].time = (LOOP_element[track][event].time + jump) % LOOP_time;
                     }
 
                     // Interrompi i Player di track
@@ -6451,9 +6127,9 @@ void loop()
                         int jump = LOOP_time - LOOP_slide[track];
 
                         AudioNoInterrupts();
-                        for (auto i = 0; i < LOOP_events[track]; ++i)
+                        for (auto event = 0; event < LOOP_events[track]; ++event)
                         {
-                            LOOP_element[track][i].time = (LOOP_element[track][i].time + jump) % LOOP_time;
+                            LOOP_element[track][event].time = (LOOP_element[track][event].time + jump) % LOOP_time;
                         }
 
                         // Interrompi i Player di loop
@@ -6500,10 +6176,9 @@ void loop()
             }
         }
 
-        // Comandi attivi se esiste il track_master, comuni a tutti i track
-        if (LOOP_events[0] > 0)
+        // Comandi attivi se esiste MASTER_TRACK, comuni a tutti i track
+        if (LOOP_events[MASTER_TRACK] > 0)
         {
-
             // change menu item
             result = Read_encoder_simple(25);
             if (result != 0)
@@ -6544,7 +6219,7 @@ void loop()
 
                 case 0:                                     // New
                     LOOP_stop_and_reset_runnig_loop_data(); // LOOP_track_run[track] = false; LOOP_metronomo_run == false; LOOP_metronomo_flag_IN[1] = false;
-                    LOOP_id = -1;
+                    LOOP_id = NEW_LOOP;
                     LOOP_original = true;
                     LOOP_run_button_state = true;
                     Golive_with_MIDI_LOOP(true);
@@ -6583,7 +6258,7 @@ void loop()
 
                     // new
                     LOOP_stop_and_reset_runnig_loop_data(); // LOOP_track_run[track] = false; LOOP_metronomo_run == false; LOOP_metronomo_flag_IN[1] = false;
-                    LOOP_id = -1;
+                    LOOP_id = NEW_LOOP;
                     LOOP_original = true;
                     LOOP_run_button_state = true;
                     Golive_with_MIDI_LOOP(true);
@@ -6607,9 +6282,10 @@ void loop()
                 {
                     LOOP_stretch = LOOP_stretch_int / 100.0;
                 }
-
                 else
+                {
                     LOOP_stretch = 1.0 / (2.0f - LOOP_stretch_int / 100.0f);
+                }
 
                 // Ricalcolo LOOP_clock
                 LOOP_clock = LOOP_clock_memo * LOOP_stretch;
@@ -6660,11 +6336,11 @@ void loop()
 
                     AudioNoInterrupts();
 
-                    for (auto track = 0; track < TRACKS; ++track)
                     // memorizza lo stato dei track prima di fermarli
+                    for (auto local_track = 0; local_track < TRACKS; ++local_track)
                     {
-                        LOOP_track_run_memo[track] = LOOP_track_run[track];
-                        LOOP_track_run[track] = false;
+                        LOOP_track_run_memo[local_track] = LOOP_track_run[local_track];
+                        LOOP_track_run[local_track] = false;
                     }
 
                     // Interrompi i Player di loop
@@ -6699,11 +6375,11 @@ void loop()
                     // il led 0 e' gia' acceso, riavvia il metronomo
                     LOOP_metronomo.metro_time = 0 + LOOP_metronomo.Read_metro_delta_ms();
                     LOOP_metronomo_run = true;
-                    for (auto track = 0; track < TRACKS; ++track)
+                    for (auto local_track = 0; local_track < TRACKS; ++local_track)
                     {
-                        if (LOOP_track_run_memo[track])
+                        if (LOOP_track_run_memo[local_track])
                         {
-                            LOOP_restart_procedure(track);
+                            LOOP_restart_procedure(local_track);
                         }
                     }
                     AudioInterrupts();
@@ -6760,26 +6436,26 @@ void loop()
             }
         }
 
-        if (Read_pushbutton(PB_number + 26) && Session[session].Instrument[PB_number].used)
+        if (Read_pushbutton(PB_number + 26) && Patch[Patch_id].Instrument[PB_number].used)
         {
             Lilla_state_0 = MIDI_LOOP;
             Lilla_state = SOUND_EDIT;
-            instrument = PB_number;
+            Instrument_id = PB_number;
             Serial.print("Editing Sound: ");
-            Serial.println(instrument);
-            id_sound = Session[session].Instrument[instrument].id_sound;
-            P_Sound(id_sound);
+            Serial.println(Instrument_id);
+            Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
+            P_Sound(Sound_id);
 
-            samples_in_file = Get_samples_in_raw_file(Sound[id_sound].file);
-            Noclick_max = Calc_Noclick_max(Preset[instrument].use_Wavetable);
+            samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
+            Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
             trim_step = Calc_trim_step(trim_speed);
-            sound_original = Verify_is_Sound_original(id_sound);
+            sound_original = Verify_is_Sound_original(Sound_id);
             So_menu = 0;
 
-            Display.Show_sound(id_sound, instrument);
+            Display.Show_sound(Sound_id, Instrument_id);
             // to do: display LED
 
-            Display.Show_wave(instrument);
+            Display.Show_wave(Instrument_id);
 
             Display.SOUND_EDIT_menu(); // displays the menu and updates "SO_menu_max" used by encoder_menu
             Display.Frame_SOUND_EDIT_menu(So_menu);
@@ -6793,11 +6469,11 @@ void loop()
     // *************************************************************
     if (Lilla_state == SETUP)
     {
-        // Change Session VOLUME
-        if (Read_encoder(15, volume_session, 40, 0, 1))
+        // Change Patch VOLUME
+        if (Read_encoder(15, volume_patch, 40, 0, 1))
         {
             AudioNoInterrupts();
-            Players_Manager.Update_all_Preset_volume(session, Volume_float[volume_session]);
+            Players_Manager.Update_all_Preset_volume(Patch_id, Volume_float[volume_patch]);
             Players_Manager.Broadcast_volume();
             AudioInterrupts();
         }
@@ -6860,9 +6536,9 @@ void loop()
                 Lilla_state = CC_SETTINGS;
                 display_wait = false;
 
-                for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                for (auto local_instrument = 0; local_instrument < INSTRUMENTS_MAX; ++local_instrument)
                 {
-                    CC_Sound_gain_cache[instrument] = CC_Sound_gain[instrument];
+                    CC_Sound_gain_cache[local_instrument] = CC_Sound_gain[local_instrument];
                 }
 
                 CC_lowpass_filter_cache = CC_lowpass_filter;
@@ -6906,7 +6582,7 @@ void loop()
                 }
 
                 // check SD presence
-                if (!SD.begin(SDcardSelect))
+                if (!SD.begin(BUILTIN_SDCARD))
                 {
                     Display.SD_missing(ILI9341_BLACK);
                     delay(5000);
@@ -6926,9 +6602,9 @@ void loop()
                 {
                     Display.Config_import_REBOOT_popup();
 
-                    Lilla_File = SD.open("/LILLASET/lilla.txt"); // apertura file esistente
-                    Archive.Save_setup_file(Lilla_File);
-                    Lilla_File.close();
+                    File file = SD.open("/LILLASET/lilla.txt"); // apertura file esistente
+                    Archive.Save_setup_file(file);
+                    file.close();
                     Serial.println("Lilla setup has been copied from lilla.txt to EEPROM");
 
                     // eventually imported Recordings MUST be deleted
@@ -6949,7 +6625,7 @@ void loop()
                 }
 
                 // check SD presence
-                if (!SD.begin(SDcardSelect))
+                if (!SD.begin(BUILTIN_SDCARD))
                 {
                     Display.SD_missing(ILI9341_BLACK);
                     delay(5000);
@@ -6972,13 +6648,13 @@ void loop()
                         Serial.println(F("existing lillaold.txt has been deleted"));
                     }
 
-                    Lilla_File = SD.open("/LILLASET/lillaold.txt", FILE_WRITE); // creazione del file destinazione
+                    File file = SD.open("/LILLASET/lillaold.txt", FILE_WRITE); // creazione del file destinazione
                     Serial.println(F("new lillaold.txt has been created"));
-                    if (Lilla_File)
+                    if (file)
                     {
                         Serial.println("lillaold.txt exists");
-                        Archive.Copy_setup_from_Eeprom_to_SD(Lilla_File);
-                        Lilla_File.close();
+                        Archive.Copy_setup_from_Eeprom_to_SD(file);
+                        file.close();
                         Display.Config_export_save_popup();
                         delay(5000);
                     }
@@ -7026,7 +6702,7 @@ void loop()
                 switch (Lilla_state_0)
                 {
                 case PERFORMANCE:
-                    Golive_with_PERFORMANCE(session);
+                    Golive_with_PERFORMANCE(Patch_id);
                     break;
 
                 case DIRECT_SAMPLING:
@@ -7274,14 +6950,14 @@ void Compile_tables(void)
 {
     const float value_float = 16.0;
 
-    for (uint8_t i = 0; i < 10; ++i)
+    for (auto i = 0; i < 10; ++i)
     {
         m_exp_table[i] = exp_table[i + 1] - exp_table[i];
         m_sin_table[i] = sin_table[i + 1] - sin_table[i];
         m_decay_table[i] = decay_table[i + 1] - decay_table[i];
         m_release_table[i] = release_table[i + 1] - release_table[i];
     }
-    for (uint8_t i = 0; i <= 32; ++i)
+    for (auto i = 0; i <= 32; ++i)
     {
         pan_gain_L_table[i] = sin((value_float - (i - 16)) * 0.049087f); // Left channel , 0.049087 = M_PI/64.0
         pan_gain_R_table[i] = sin((value_float + (i - 16)) * 0.049087f); // Right channel , 0.049087 = M_PI/64.0
@@ -7326,28 +7002,28 @@ int x_pos(float col)
 
 void Reset_map_Instrument_for_notes(uint8_t instrument)
 {
-    for (uint8_t note = 0; note < 128; ++note)
+    for (auto note = 0; note < 128; ++note)
     {
-        bitWrite(map_instrument_for_note[Get_midi_channel(session, instrument)][note], instrument, 0);
+        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 0);
     }
 }
 
 void Delete_one_map_Instrument_for_notes(uint8_t instrument)
 {
-    for (uint8_t note = 0; note < 128; ++note)
+    for (auto note = 0; note < 128; ++note)
     {
-        bitWrite(map_instrument_for_note[Get_midi_channel(session, instrument)][note], instrument, 0);
+        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 0);
     }
 }
 
 void Update_all_maps_Instrument_for_notes()
 {
     Reset_all_maps_Instrument_for_notes();
-    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (Session[session].Instrument[instrument].used)
+        if (Patch[Patch_id].Instrument[instrument_local].used)
         {
-            Update_map_Instrument_for_notes(Session[session].Instrument[instrument].from_note, Session[session].Instrument[instrument].to_note, instrument);
+            Update_map_Instrument_for_notes(Patch[Patch_id].Instrument[instrument_local].from_note, Patch[Patch_id].Instrument[instrument_local].to_note, instrument_local);
         }
     }
 }
@@ -7355,17 +7031,17 @@ void Update_all_maps_Instrument_for_notes()
 void Map_one_Instrument_for_all_notes(uint8_t instrument)
 {
     Reset_all_maps_Instrument_for_notes();
-    for (uint8_t note = 0; note < 128; ++note)
+    for (auto note = 0; note < 128; ++note)
     {
-        bitWrite(map_instrument_for_note[Get_midi_channel(session, instrument)][note], instrument, 1);
+        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 1);
     }
 }
 
 void Reset_all_maps_Instrument_for_notes()
 {
-    for (uint8_t midi_ch = 0; midi_ch < 16; ++midi_ch)
+    for (auto midi_ch = 0; midi_ch < 16; ++midi_ch)
     {
-        for (uint8_t note = 0; note < 128; ++note)
+        for (auto note = 0; note < 128; ++note)
         {
             map_instrument_for_note[midi_ch][note] = 0;
         }
@@ -7377,117 +7053,117 @@ void Reset_all_maps_Instrument_for_notes()
 // ***************************************************************************************************************
 
 FLASHMEM
-void Delete_all_Sessions_and_Sounds(void)
+void Delete_all_Patches_and_Sounds(void)
 {
-    for (uint8_t S = 0; S < SESSIONS_MAX; ++S)
+    for (auto patch_local = 0; patch_local < PATCHES_MAX; ++patch_local)
     {
-        Session[S].used = false;
-        Session[S].instruments = 0; // number of instruments in the session
-        for (uint8_t I = 0; I < INSTRUMENTS_MAX; ++I)
+        Patch[patch_local].used = false;
+        Patch[patch_local].instruments = 0; // number of instruments in the patch_id
+        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
         {
-            Session[S].Instrument[I].used = false;
-            Session[S].Instrument[I].id_sound = 0;
-            Session[S].Instrument[I].from_note = 0;
-            Session[S].Instrument[I].to_note = 0;
-            Session[S].Instrument[I].root_key = 0;
-            Session[S].Instrument[I].precedence = 0;
-            Session[S].Instrument[I].lock = 0;
+            Patch[patch_local].Instrument[instrument_local].used = false;
+            Patch[patch_local].Instrument[instrument_local].sound_id = 0;
+            Patch[patch_local].Instrument[instrument_local].from_note = 0;
+            Patch[patch_local].Instrument[instrument_local].to_note = 0;
+            Patch[patch_local].Instrument[instrument_local].root_key = 0;
+            Patch[patch_local].Instrument[instrument_local].precedence = 0;
+            Patch[patch_local].Instrument[instrument_local].lock = 0;
 
-            Session[S].Instrument[I].Filter.use = 0;        // yes/no
-            Session[S].Instrument[I].Filter.type = 0;       // bit4,5:filter_type
-            Session[S].Instrument[I].Filter.pivot = 0;      // 0 --> 100 filter frequency/note frequency
-            Session[S].Instrument[I].Filter.resonance = 0;  // 0 --> 40
-            Session[S].Instrument[I].Filter.modulation = 0; // bit1,2,3:modulation
-            Session[S].Instrument[I].Filter.index = 0;      // 1 --> 20 modulation_index
-            Session[S].Instrument[I].Filter.frequency_time = 0;
+            Patch[patch_local].Instrument[instrument_local].Filter.use = 0;        // yes/no
+            Patch[patch_local].Instrument[instrument_local].Filter.type = 0;       // bit4,5:filter_type
+            Patch[patch_local].Instrument[instrument_local].Filter.pivot = 0;      // 0 --> 100 filter frequency/note frequency
+            Patch[patch_local].Instrument[instrument_local].Filter.resonance = 0;  // 0 --> 40
+            Patch[patch_local].Instrument[instrument_local].Filter.modulation = 0; // bit1,2,3:modulation
+            Patch[patch_local].Instrument[instrument_local].Filter.index = 0;      // 1 --> 20 modulation_index
+            Patch[patch_local].Instrument[instrument_local].Filter.frequency_time = 0;
         }
     }
 
-    for (uint8_t id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for (auto sound = 0; sound < SOUNDS_MAX; ++sound)
     {
-        Sound[id_sound].used = false;
-        Sound[id_sound].file = 0;
-        Sound[id_sound].mode = 0;
-        Sound[id_sound].pitch = 0;
-        Sound[id_sound].A = 0;
-        Sound[id_sound].B = 0;
-        Sound[id_sound].Noclick = 0;
-        Sound[id_sound].pan = 0;
-        Sound[id_sound].data = 2;
-        Sound[id_sound].attack = 0;
-        Sound[id_sound].decay = 0;
-        Sound[id_sound].sustain = 0;
-        Sound[id_sound].release = 0;
-        Sound[id_sound].gain = 0; // 20 means gain = 1.0
+        Sound[sound].used = false;
+        Sound[sound].file = 0;
+        Sound[sound].mode = 0;
+        Sound[sound].pitch = 0;
+        Sound[sound].A = 0;
+        Sound[sound].B = 0;
+        Sound[sound].Noclick = 0;
+        Sound[sound].pan = 0;
+        Sound[sound].data = 2;
+        Sound[sound].attack = 0;
+        Sound[sound].decay = 0;
+        Sound[sound].sustain = 0;
+        Sound[sound].release = 0;
+        Sound[sound].gain = 0; // 20 means gain = 1.0
     }
 }
 
 FLASHMEM
-void Read_all_Sessions(void)
+void Read_all_Patches(void)
 {
-    for (uint8_t session = 0; session < SESSIONS_MAX; ++session)
+    for (auto patch_local = 0; patch_local < PATCHES_MAX; ++patch_local)
     {
-        Archive.Read_Session(session);
+        Archive.Read_Patch(patch_local);
     }
 }
 
 FLASHMEM
-void Update_sessions(void)
+void Update_Patches_number(void)
 {
-    sessions = 0;
-    for (uint8_t S = 0; S < SESSIONS_MAX; ++S)
+    patches_number = 0;
+    for (auto patch_local = 0; patch_local < PATCHES_MAX; ++patch_local)
     {
-        if (Session[S].used)
+        if (Patch[patch_local].used)
         {
-            ++sessions;
+            ++patches_number;
         }
     }
 }
 
 FLASHMEM
-uint8_t Get_first_Session_existing(void)
+uint8_t Get_first_Patch_id_existing(void)
 {
-    for (uint8_t S = 0; S < SESSIONS_MAX; ++S)
+    for (auto patch_local = 0; patch_local < PATCHES_MAX; ++patch_local)
     {
-        if (Session[S].used)
+        if (Patch[patch_local].used)
         {
-            return S;
+            return patch_local;
         }
     }
     return 0;
 }
 
 FLASHMEM
-uint8_t Get_next_Session_existing(void)
+uint8_t Get_next_Patch_id_existing(void)
 {
-    uint8_t S = session;
+    uint8_t patch_local = Patch_id;
     do
     {
-        ++S;
-        if (S == SESSIONS_MAX)
+        ++patch_local;
+        if (patch_local == PATCHES_MAX)
         {
-            return session;
+            return Patch_id;
         }
-        else if (Session[S].used)
+        else if (Patch[patch_local].used)
         {
-            return S;
+            return patch_local;
         }
     } while (1);
 }
 
-uint8_t Get_previous_Session_existing(void)
+uint8_t Get_previous_Patch_id_existing(void)
 {
-    int8_t S = session;
+    int8_t patch_local = Patch_id;
     do
     {
-        --S;
-        if (S == -1)
+        --patch_local;
+        if (patch_local == -1)
         {
-            return session;
+            return Patch_id;
         }
-        if (Session[S].used)
+        if (Patch[patch_local].used)
         {
-            return S;
+            return patch_local;
         }
     } while (1);
 }
@@ -7495,27 +7171,27 @@ uint8_t Get_previous_Session_existing(void)
 void Update_Instruments_positions(void)
 {
     uint8_t position = 0;
-    for (uint8_t i = 0; i < INSTRUMENTS_MAX; ++i)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        position_of_Instrument[i] = -1;
-        instrument_on_position[i] = -1;
+        position_of_Instrument[instrument_local] = -1;
+        instrument_on_position[instrument_local] = -1;
     }
-    for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (Session[session].Instrument[instrument].used)
+        if (Patch[Patch_id].Instrument[instrument_local].used)
         {
-            position_of_Instrument[instrument] = position;
-            instrument_on_position[position] = instrument;
+            position_of_Instrument[instrument_local] = position;
+            instrument_on_position[position] = instrument_local;
             position++;
         }
     }
 }
 
-void Golive_with_PERFORMANCE(int session)
+void Golive_with_PERFORMANCE(int patch_id)
 {
     Lilla_state = PERFORMANCE;
 
-    session_original = Verify_is_Session_original(session);
+    patch_original = Verify_is_Patch_original(patch_id);
     P_menu = 0;
     Select_performance_menu_elements();
     Update_Instruments_positions();
@@ -7524,29 +7200,29 @@ void Golive_with_PERFORMANCE(int session)
     Display.Frame_performance_menu(P_menu, true);
 
     P_Lilla_state();
-    P_Session(session);
+    P_Patch(patch_id);
 }
 
-void Rebuild_session_old(void)
+void Rebuild_patch_old(void)
 {
-    Players_Manager.Release_softly_all_players(session);
+    Players_Manager.Release_softly_all_players(Patch_id);
     Players_statistics.Reset_total_Players_per_instrument();
 
-    session = session_old;
+    Patch_id = patch_old;
     Update_Instruments_positions();
     Update_all_maps_Instrument_for_notes();
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     Fill_all_Noclick();
     Fill_all_Wavetable();
 }
 
 FLASHMEM
-void Ask_if_change_Session(void)
+void Ask_if_change_Patch(void)
 {
     confirmation = false;
     action = 0;
-    Display.Confirm_session_change_popup();
-    Display.Confirm_session_change_popup_frame(0);
+    Display.Confirm_patch_change_popup();
+    Display.Confirm_patch_change_popup_frame(0);
     delay(200);
     while (!confirmation)
     {
@@ -7556,7 +7232,7 @@ void Ask_if_change_Session(void)
         if (Read_encoder(25, action, 2, 0, 1))
 #endif
         {
-            Display.Confirm_session_change_popup_frame(action);
+            Display.Confirm_patch_change_popup_frame(action);
         }
 
         if (Read_pushbutton(25))
@@ -7570,7 +7246,7 @@ void Ask_if_change_Session(void)
         if (Read_encoder(24, action, 2, 0, 1))
 #endif
         {
-            Display.Confirm_session_change_popup_frame(action);
+            Display.Confirm_patch_change_popup_frame(action);
         }
 
         if (Read_pushbutton(24))
@@ -7581,12 +7257,12 @@ void Ask_if_change_Session(void)
 }
 
 FLASHMEM
-void Ask_if_delete_this_SESSION(void)
+void Ask_if_delete_this_Patch(void)
 {
     confirmation = false;
     action = 0; // NO
-    Display.Confirm_session_delete_popup();
-    Display.Confirm_session_delete_popup_frame(0);
+    Display.Confirm_patch_delete_popup();
+    Display.Confirm_patch_delete_popup_frame(0);
     delay(200);
     while (!confirmation)
     {
@@ -7596,7 +7272,7 @@ void Ask_if_delete_this_SESSION(void)
         if (Read_encoder(25, action, 1, 0, 1))
 #endif
         {
-            Display.Confirm_session_delete_popup_frame(action);
+            Display.Confirm_patch_delete_popup_frame(action);
         }
 
         if (Read_pushbutton(25))
@@ -7606,55 +7282,55 @@ void Ask_if_delete_this_SESSION(void)
     }
 }
 
-void Jump_to_Session(uint8_t next_session)
+void Jump_to_Patch(uint8_t next_patch)
 {
     AudioNoInterrupts();
-    Players_Manager.Release_softly_all_players(session);
+    Players_Manager.Release_softly_all_players(Patch_id);
     Players_statistics.Reset_total_Players_per_instrument();
 
     // switch
-    session = next_session;
+    Patch_id = next_patch;
     Update_all_maps_Instrument_for_notes();
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     Fill_all_Noclick();
     Fill_all_Wavetable();
     AudioInterrupts();
 
-    Session_cache_P = Session[session];
+    Patch_cache_P = Patch[Patch_id];
     Copy_all_Sound_to_Sound_cache_P();
 
-    Golive_with_PERFORMANCE(session);
+    Golive_with_PERFORMANCE(Patch_id);
 }
 
 FLASHMEM
 void Macro_Instrument_editing(void)
 {
-    Display.Show_Instrument_description(session, instrument, true);
+    Display.Show_Instrument_description(Patch_id, Instrument_id, true);
 
     // restore all LED
     Performance_led_set.Restore_all_LED();
 
-    session_original_0 = session_original;
-    session_original = Verify_is_Session_original(session);
-    if (session_original != session_original_0)
+    patch_original_0 = patch_original;
+    patch_original = Verify_is_Patch_original(Patch_id);
+    if (patch_original != patch_original_0)
     {
         Select_performance_menu_elements();
         Display.Performance_menu(); // display the menu and update "P_menu_max"
-        P_menu = P_menu_max + 1 + instrument;
+        P_menu = P_menu_max + 1 + Instrument_id;
     }
 }
 
 FLASHMEM
-bool Verify_is_Session_original(const int session)
+bool Verify_is_Patch_original(const int patch_id)
 {
     bool result = true;
-    if (Session[session].instruments == Session_cache_P.instruments)
+    if (Patch[patch_id].instruments == Patch_cache_P.instruments)
     {
-        for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
         {
-            result = result && Verify_if_Instrument_original(instrument);
+            result = result && Verify_if_Instrument_original(instrument_local);
         }
-        Serial.print("VERIFY_is_Session_original: ");
+        Serial.print("VERIFY_is_Patch_original: ");
         Serial.println(result);
         return result;
     }
@@ -7670,40 +7346,40 @@ void Select_performance_menu_elements(void)
     Menu_P[1] = true; // Save
     Menu_P[2] = true; // Clone
     Menu_P[3] = true; // SaveAsNew
-    Menu_P[4] = true; // DropSession
+    Menu_P[4] = true; // DropPatch
 
     if (exibition)
     {
         Menu_P[1] = false; // Save
         Menu_P[2] = false; // Clone
         Menu_P[3] = false; // SaveAsNew
-        Menu_P[4] = false; // DropSession
+        Menu_P[4] = false; // DropPatch
     }
 
-    if (session_original)
+    if (patch_original)
     {
         Menu_P[0] = false; // Exit
         Menu_P[1] = false; // Save
         Menu_P[3] = false; // SaveAsNew
     }
 
-    if (!session_original)
+    if (!patch_original)
     {
         Menu_P[2] = false; // Clone
     }
 
-    if (sessions == SESSIONS_MAX)
+    if (patches_number == PATCHES_MAX)
     {
         Menu_P[2] = false; // Clone
         Menu_P[3] = false; // SaveAsNew
     }
 
-    if (sessions == 1)
+    if (patches_number == 1)
     {
         Menu_P[4] = false;
     }
 
-    if (Get_sounds_free() < Session[session].instruments)
+    if (Get_sounds_free() < Patch[Patch_id].instruments)
     {
         Menu_P[2] = false; // Clone
         Menu_P[3] = false; // SaveAsNew
@@ -7716,46 +7392,39 @@ void Select_performance_menu_elements(void)
 // **********************************           SOUND, INSTRUMENT              ***********************************
 // ***************************************************************************************************************
 
-void Set_midi_channel_for_Sound(uint8_t id_sound, uint8_t midi_channel)
+void Set_midi_channel_for_Sound(uint8_t sound_id, uint8_t midi_channel)
 {
     // .data contains midi channel in its bits: 7 6 5 M I D I 0
-    Sound[id_sound].data = (midi_channel << 1) + (Sound[id_sound].data & 0b11100000);
+    Sound[sound_id].data = (midi_channel << 1) + (Sound[sound_id].data & 0b11100000);
 }
 
 FLASHMEM
-uint8_t Get_midi_channel_from_Sound(uint8_t id_sound)
+uint8_t Get_midi_channel_from_Sound(uint8_t sound_id)
 {
     // .data contains midi channel in its bits: 7 6 5 M I D I 0
-    return ((Sound[id_sound].data & 30) >> 1);
+    return ((Sound[sound_id].data & 30) >> 1);
 }
 
-int8_t Get_Session_free(void)
+int8_t Get_Patch_id_free(void)
 {
-    for (int8_t session = 0; session < SESSIONS_MAX; ++session)
+    for (auto local_patch = 0; local_patch < PATCHES_MAX; ++local_patch)
     {
-        if (!Session[session].used)
+        if (!Patch[local_patch].used)
         {
-            return session;
+            return local_patch;
         }
     }
     return -1;
 }
 
-FLASHMEM
-uint8_t Get_midi_channel_P_Session(uint8_t instrument)
-{
-    // .data contains midi channel in its bits: 7 6 5 M I D I 0
-    return ((Sound[Session_cache_P.Instrument[instrument].id_sound].data & 30) >> 1);
-}
-
 int8_t Get_sound_free(void)
 {
-    for (uint8_t id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for (auto sound_id = 0; sound_id < SOUNDS_MAX; ++sound_id)
     {
-        if (!Sound[id_sound].used)
+        if (!Sound[sound_id].used)
         {
-            return id_sound;
-            Sound[id_sound].used = true;
+            return sound_id;
+            Sound[sound_id].used = true;
         }
     }
     return -1;
@@ -7794,7 +7463,7 @@ uint32_t Calc_trim_step(uint8_t value)
         return 10000;
         break;
     case 5:
-        return (Sound[id_sound].B - Sound[id_sound].A) / 16;
+        return (Sound[Sound_id].B - Sound[Sound_id].A) / 16;
         break;
 
     default:
@@ -7805,9 +7474,9 @@ uint32_t Calc_trim_step(uint8_t value)
 
 void Drop_Instrument(uint8_t instrument)
 {
-    Sound[Session[session].Instrument[instrument].id_sound].used = false;
-    Session[session].Instrument[instrument].used = false;
-    Session[session].instruments--;
+    Sound[Patch[Patch_id].Instrument[instrument].sound_id].used = false;
+    Patch[Patch_id].Instrument[instrument].used = false;
+    Patch[Patch_id].instruments--;
 }
 
 uint8_t Clone_Instrument(uint8_t instrument)
@@ -7815,20 +7484,20 @@ uint8_t Clone_Instrument(uint8_t instrument)
     int new_instrument;
     for (new_instrument = 0; new_instrument < INSTRUMENTS_MAX; ++new_instrument)
     {
-        if (!Session[session].Instrument[new_instrument].used)
+        if (!Patch[Patch_id].Instrument[new_instrument].used)
         {
             break;
         }
     }
 
-    Session[session].Instrument[new_instrument] = Session[session].Instrument[instrument];
+    Patch[Patch_id].Instrument[new_instrument] = Patch[Patch_id].Instrument[instrument];
     int S = Get_sound_free();
     if (S >= 0)
     {
-        Sound[S] = Sound[Session[session].Instrument[instrument].id_sound];
+        Sound[S] = Sound[Patch[Patch_id].Instrument[instrument].sound_id];
         Sound[S].gain = 0;
-        Session[session].Instrument[new_instrument].id_sound = S;
-        Session[session].instruments++;
+        Patch[Patch_id].Instrument[new_instrument].sound_id = S;
+        Patch[Patch_id].instruments++;
         // instruments ++;
         return new_instrument;
     }
@@ -7846,20 +7515,20 @@ void Update_instruments_leds()
     {
         for (auto track = 0; track < TRACKS; ++track)
         {
-            for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+            for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
             {
-                if (Session[session].Instrument[instrument].used) // check if i is used
+                if (Patch[Patch_id].Instrument[instrument_local].used) // check if i is used
                 {
                     // check led activity
-                    if (Loop_led_set.Read_LED_activity(track, instrument) == 2)
+                    if (Loop_led_set.Read_LED_activity(track, instrument_local) == 2)
                     {
-                        Display.Loop_led(track, instrument, true);
-                        Loop_led_set.Write_LED_activity(track, instrument, true);
+                        Display.Loop_led(track, instrument_local, true);
+                        Loop_led_set.Write_LED_activity(track, instrument_local, true);
                     }
-                    if (Loop_led_set.Read_LED_activity(track, instrument) == -2)
+                    if (Loop_led_set.Read_LED_activity(track, instrument_local) == -2)
                     {
-                        Display.Loop_led(track, instrument, false);
-                        Loop_led_set.Write_LED_activity(track, instrument, false);
+                        Display.Loop_led(track, instrument_local, false);
+                        Loop_led_set.Write_LED_activity(track, instrument_local, false);
                     }
                 }
             }
@@ -7868,20 +7537,20 @@ void Update_instruments_leds()
 
     else if (Lilla_state == PERFORMANCE)
     {
-        for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
         {
-            if (Session[session].Instrument[instrument].used) // check if i is used
+            if (Patch[Patch_id].Instrument[instrument_local].used) // check if i is used
             {
                 // // check led activity
-                if (Performance_led_set.Read_LED_activity(instrument) == 2)
+                if (Performance_led_set.Read_LED_activity(instrument_local) == 2)
                 {
-                    Display.Led_PERFORMANCE_instrument(instrument, true);
-                    Performance_led_set.Write_LED_activity(instrument, true);
+                    Display.Led_PERFORMANCE_instrument(instrument_local, true);
+                    Performance_led_set.Write_LED_activity(instrument_local, true);
                 }
-                if (Performance_led_set.Read_LED_activity(instrument) == -2)
+                if (Performance_led_set.Read_LED_activity(instrument_local) == -2)
                 {
-                    Display.Led_PERFORMANCE_instrument(instrument, false);
-                    Performance_led_set.Write_LED_activity(instrument, false);
+                    Display.Led_PERFORMANCE_instrument(instrument_local, false);
+                    Performance_led_set.Write_LED_activity(instrument_local, false);
                 }
             }
         }
@@ -7889,22 +7558,22 @@ void Update_instruments_leds()
         if (TT_led_flag) // TUNING_TONE
         {
             TT_led_flag = false;
-            Display.Led_tuning_tone(session);
+            Display.Led_tuning_tone(Patch_id);
         }
     }
 
     else if (Lilla_state == SOUND_EDIT)
     {
         // check led activity
-        if (Performance_led_set.Read_LED_activity(instrument) == 2)
+        if (Performance_led_set.Read_LED_activity(Instrument_id) == 2)
         {
-            Display.Led_SOUND_EDIT_instrument(instrument, true);
-            Performance_led_set.Write_LED_activity(instrument, true);
+            Display.Led_SOUND_EDIT_instrument(Instrument_id, true);
+            Performance_led_set.Write_LED_activity(Instrument_id, true);
         }
-        if (Performance_led_set.Read_LED_activity(instrument) == -2)
+        if (Performance_led_set.Read_LED_activity(Instrument_id) == -2)
         {
-            Display.Led_SOUND_EDIT_instrument(instrument, false);
-            Performance_led_set.Write_LED_activity(instrument, false);
+            Display.Led_SOUND_EDIT_instrument(Instrument_id, false);
+            Performance_led_set.Write_LED_activity(Instrument_id, false);
         }
 
         if (TT_led_flag) // TUNING_TONE
@@ -7916,15 +7585,15 @@ void Update_instruments_leds()
     else if (Lilla_state == INSTRUMENT_VCF)
     {
         // check led activity
-        if (Performance_led_set.Read_LED_activity(instrument) == 2)
+        if (Performance_led_set.Read_LED_activity(Instrument_id) == 2)
         {
-            Display.Led_INSTRUMENT_VCF_instrument(instrument, true);
-            Performance_led_set.Write_LED_activity(instrument, true);
+            Display.Led_INSTRUMENT_VCF_instrument(Instrument_id, true);
+            Performance_led_set.Write_LED_activity(Instrument_id, true);
         }
-        if (Performance_led_set.Read_LED_activity(instrument) == -2)
+        if (Performance_led_set.Read_LED_activity(Instrument_id) == -2)
         {
-            Display.Led_INSTRUMENT_VCF_instrument(instrument, false);
-            Performance_led_set.Write_LED_activity(instrument, false);
+            Display.Led_INSTRUMENT_VCF_instrument(Instrument_id, false);
+            Performance_led_set.Write_LED_activity(Instrument_id, false);
         }
 
         if (TT_led_flag) // TUNING_TONE
@@ -7971,7 +7640,6 @@ void Update_instruments_leds()
             Performance_led_set.Write_LED_activity(0, false);
         }
 
-
         if (TT_led_flag) // TUNING_TONE
         {
             TT_led_flag = false;
@@ -8014,10 +7682,10 @@ void Update_instruments_leds()
 // ******************************************       DIRECT_SAMPLING       ****************************************
 // ***************************************************************************************************************
 
-void DS_setup_DIRECT_SAMPLING_Session_and_Preset(void)
+void DS_setup_DIRECT_SAMPLING_Patch_and_Preset(void)
 {
-    DS_set_DS_Sampling_Session();
-    session = SESSIONS_MAX;
+    DS_set_DS_Sampling_Patch();
+    Patch_id = PATCHES_MAX;
     Update_all_maps_Instrument_for_notes();
     Turn_ON_Delay(false); // switch on/off Delay (using Instrument routing)
     recording = DS_get_last_Recording();
@@ -8040,7 +7708,7 @@ void DS_setup_DIRECT_SAMPLING_Session_and_Preset(void)
         Sound[SOUNDS_MAX + 1].file = 0;
         Sound[SOUNDS_MAX + 1].B = 100000;
     }
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
 }
 
 void Golive_DIRECT_SAMPLING(void)
@@ -8053,7 +7721,7 @@ void Golive_DIRECT_SAMPLING(void)
     PeakTracking_R.reset();
 
     DS_menu = 0;
-    Display.DS_page(instrument, recording);
+    Display.DS_page(Instrument_id, recording);
     Display.DS_line_out(false);
 
     DS_define_model();
@@ -8062,7 +7730,7 @@ void Golive_DIRECT_SAMPLING(void)
     Display.DS_bar(0, 0);
     Display.DS_bar(1, 0);
 
-    P_Session(session);
+    P_Patch(Patch_id);
     Serial.println(F("*** DIRECT_SAMPLING ***  Sounds are:"));
     P_Sound(SOUNDS_MAX);
     P_Sound(SOUNDS_MAX + 1);
@@ -8072,7 +7740,7 @@ FLASHMEM
 void DS_refresh_DS_page(void)
 {
     Lilla_state = DIRECT_SAMPLING;
-    Display.DS_page(instrument, recording);
+    Display.DS_page(Instrument_id, recording);
     Display.DS_line_out(false);
     DS_define_model();
     Display.DS_menu(); // display the menu and updates DS_menu_max
@@ -8087,7 +7755,7 @@ void DS_ask_if_EXIT_from_DS(void)
     confirmation = false;
     action = 0; // NO
     Display.DS_confirm_EXIT_from_DS();
-    Display.Confirm_session_delete_popup_frame(0);
+    Display.Confirm_patch_delete_popup_frame(0);
     delay(200);
     while (!confirmation)
     {
@@ -8097,7 +7765,7 @@ void DS_ask_if_EXIT_from_DS(void)
         if (Read_encoder(25, action, 1, 0, 1))
 #endif
         {
-            Display.Confirm_session_delete_popup_frame(action);
+            Display.Confirm_patch_delete_popup_frame(action);
         }
 
         if (Read_pushbutton(25))
@@ -8126,7 +7794,7 @@ void Jump_to_DIRECT_SAMPLING_recording(int &recording)
     }
 
     AudioNoInterrupts();
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     AudioInterrupts();
 
     P_Sound(SOUNDS_MAX);
@@ -8159,7 +7827,7 @@ void DS_back_to_first_DS_Recording(void)
     }
 
     AudioNoInterrupts();
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     AudioInterrupts();
 
     P_Sound(SOUNDS_MAX);
@@ -8573,38 +8241,38 @@ void DS_define_model(void) // {"Exit"}, {"Delete"}, {"Pause+Rec"}, {"Mono Rec"},
 }
 
 FLASHMEM
-void DS_set_DS_Sampling_Session(void)
+void DS_set_DS_Sampling_Patch(void)
 {
-    // set DS Session and Sounds
-    Session[SESSIONS_MAX].used = true;
-    Session[SESSIONS_MAX].instruments = 2;
+    // set DS Patch and Sounds
+    Patch[PATCHES_MAX].used = true;
+    Patch[PATCHES_MAX].instruments = 2;
 
     // Left channel recording/instrument
-    Session[SESSIONS_MAX].Instrument[0].used = true;
-    Session[SESSIONS_MAX].Instrument[0].id_sound = SOUNDS_MAX;
-    Session[SESSIONS_MAX].Instrument[0].root_key = 60;
-    Session[SESSIONS_MAX].Instrument[0].from_note = 0;
-    Session[SESSIONS_MAX].Instrument[0].to_note = 127;
-    Session[SESSIONS_MAX].Instrument[0].precedence = false;
-    Session[SESSIONS_MAX].Instrument[0].lock = false;
-    Session[SESSIONS_MAX].Instrument[0].Filter.use = false;
+    Patch[PATCHES_MAX].Instrument[0].used = true;
+    Patch[PATCHES_MAX].Instrument[0].sound_id = SOUNDS_MAX;
+    Patch[PATCHES_MAX].Instrument[0].root_key = 60;
+    Patch[PATCHES_MAX].Instrument[0].from_note = 0;
+    Patch[PATCHES_MAX].Instrument[0].to_note = 127;
+    Patch[PATCHES_MAX].Instrument[0].precedence = false;
+    Patch[PATCHES_MAX].Instrument[0].lock = false;
+    Patch[PATCHES_MAX].Instrument[0].Filter.use = false;
 
     // Right channel recording/instrument
-    Session[SESSIONS_MAX].Instrument[1].used = true;
-    Session[SESSIONS_MAX].Instrument[1].id_sound = SOUNDS_MAX + 1;
-    Session[SESSIONS_MAX].Instrument[1].root_key = 60;
-    Session[SESSIONS_MAX].Instrument[1].from_note = 0;
-    Session[SESSIONS_MAX].Instrument[1].to_note = 127;
-    Session[SESSIONS_MAX].Instrument[1].precedence = false;
-    Session[SESSIONS_MAX].Instrument[1].lock = false;
-    Session[SESSIONS_MAX].Instrument[1].Filter.use = false;
+    Patch[PATCHES_MAX].Instrument[1].used = true;
+    Patch[PATCHES_MAX].Instrument[1].sound_id = SOUNDS_MAX + 1;
+    Patch[PATCHES_MAX].Instrument[1].root_key = 60;
+    Patch[PATCHES_MAX].Instrument[1].from_note = 0;
+    Patch[PATCHES_MAX].Instrument[1].to_note = 127;
+    Patch[PATCHES_MAX].Instrument[1].precedence = false;
+    Patch[PATCHES_MAX].Instrument[1].lock = false;
+    Patch[PATCHES_MAX].Instrument[1].Filter.use = false;
 
-    Session[SESSIONS_MAX].Instrument[2].used = false;
-    Session[SESSIONS_MAX].Instrument[3].used = false;
-    Session[SESSIONS_MAX].Instrument[4].used = false;
-    Session[SESSIONS_MAX].Instrument[5].used = false;
-    Session[SESSIONS_MAX].Instrument[6].used = false;
-    Session[SESSIONS_MAX].Instrument[7].used = false;
+    Patch[PATCHES_MAX].Instrument[2].used = false;
+    Patch[PATCHES_MAX].Instrument[3].used = false;
+    Patch[PATCHES_MAX].Instrument[4].used = false;
+    Patch[PATCHES_MAX].Instrument[5].used = false;
+    Patch[PATCHES_MAX].Instrument[6].used = false;
+    Patch[PATCHES_MAX].Instrument[7].used = false;
 
     // LEFT Sound
     Sound[SOUNDS_MAX].used = true;
@@ -8675,7 +8343,7 @@ void Switch_to_DIRECT_SAMPLING(void)
 {
     AudioNoInterrupts();
     Players_Manager.Stop_all_players();
-    DS_setup_DIRECT_SAMPLING_Session_and_Preset();
+    DS_setup_DIRECT_SAMPLING_Patch_and_Preset();
     AudioInterrupts();
     Golive_DIRECT_SAMPLING();
 }
@@ -8684,7 +8352,7 @@ void Switch_from_MIDI_LOOP_to_DIRECT_SAMPLING(void)
 {
     AudioNoInterrupts();
     LOOP_stop_all_midi_tracks();
-    DS_setup_DIRECT_SAMPLING_Session_and_Preset();
+    DS_setup_DIRECT_SAMPLING_Patch_and_Preset();
     AudioInterrupts();
     Golive_DIRECT_SAMPLING();
 }
@@ -8706,7 +8374,7 @@ void Switch_from_LIVE_SAMPLING_to_DIRECT_SAMPLING(void)
             }
             else if (Lilla_state == INSTRUMENT_VCF)
             {
-                Display.Instrument_VCF_page(session, instrument);
+                Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                 // restore LEDs
                 Performance_led_set.Restore_all_LED();
@@ -8784,7 +8452,7 @@ void Switch_from_DIRECT_SAMPLING_to_MIDI_LOOP(void)
     {
     case 0: // no activity
         AudioNoInterrupts();
-        Rebuild_session_old();
+        Rebuild_patch_old();
         Turn_ON_Delay(true);
         AudioInterrupts();
         Switch_from_PERFORMANCE_to_MIDI_LOOP();
@@ -8797,7 +8465,7 @@ void Switch_from_DIRECT_SAMPLING_to_MIDI_LOOP(void)
         DS_blink_ON = false;
 
         AudioNoInterrupts();
-        Rebuild_session_old();
+        Rebuild_patch_old();
         Turn_ON_Delay(true);
         AudioInterrupts();
         Switch_from_PERFORMANCE_to_MIDI_LOOP();
@@ -8832,7 +8500,7 @@ void Switch_from_DIRECT_SAMPLING_to_MIDI_LOOP(void)
             DS_blink_ON = false;
 
             AudioNoInterrupts();
-            Rebuild_session_old();
+            Rebuild_patch_old();
             Turn_ON_Delay(true);
             AudioInterrupts();
             Switch_from_PERFORMANCE_to_MIDI_LOOP();
@@ -8840,7 +8508,7 @@ void Switch_from_DIRECT_SAMPLING_to_MIDI_LOOP(void)
         break;
     case 3: // convert REC --> RAW
         AudioNoInterrupts();
-        Rebuild_session_old();
+        Rebuild_patch_old();
         Turn_ON_Delay(true);
         AudioInterrupts();
         Switch_from_PERFORMANCE_to_MIDI_LOOP();
@@ -8864,7 +8532,7 @@ void Switch_from_LIVE_SAMPLING_to_MIDI_LOOP(void)
             }
             else if (Lilla_state == INSTRUMENT_VCF)
             {
-                Display.Instrument_VCF_page(session, instrument);
+                Display.Instrument_VCF_page(Patch_id, Instrument_id);
 
                 // restore LEDs
                 Performance_led_set.Restore_all_LED();
@@ -8876,7 +8544,7 @@ void Switch_from_LIVE_SAMPLING_to_MIDI_LOOP(void)
             LiveSampler.Stop();
 
             AudioNoInterrupts();
-            Rebuild_session_old();
+            Rebuild_patch_old();
             AudioInterrupts();
             Switch_from_PERFORMANCE_to_MIDI_LOOP();
         }
@@ -8884,7 +8552,7 @@ void Switch_from_LIVE_SAMPLING_to_MIDI_LOOP(void)
     else // true: stop and exit
     {
         AudioNoInterrupts();
-        Rebuild_session_old();
+        Rebuild_patch_old();
         AudioInterrupts();
         Switch_from_PERFORMANCE_to_MIDI_LOOP();
     }
@@ -8916,7 +8584,7 @@ void Golive_with_LIVE_SAMPLING(void)
     Display.Show_LS_ring_tape_wave(LS_id_sound);
 
     P_Lilla_state();
-    P_Session(session);
+    P_Patch(Patch_id);
 }
 
 void Switch_from_PERFORMANCE_to_LIVE_SAMPLING(void)
@@ -8928,11 +8596,11 @@ void Switch_from_PERFORMANCE_to_LIVE_SAMPLING(void)
     LS_gain = 28;
     LINE_IN_amplifier.Set_gain(Volume_float[LS_gain]);
 
-    session = SESSIONS_MAX; // Live Sampler uses SESSIONS_MAX
-    LS_setup_LS_Session(LS_stereo);
+    Patch_id = PATCHES_MAX; // Live Sampler uses PATCHES_MAX
+    LS_setup_LS_Patch(LS_stereo);
 
     Update_all_maps_Instrument_for_notes();
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     AudioInterrupts();
 
     Golive_with_LIVE_SAMPLING();
@@ -8947,11 +8615,11 @@ void Switch_from_MIDI_LOOP_to_LIVE_SAMPLING(void)
     LS_gain = 28;
     LINE_IN_amplifier.Set_gain(Volume_float[LS_gain]);
 
-    session = SESSIONS_MAX; // Live Sampler uses SESSIONS_MAX
-    LS_setup_LS_Session(LS_stereo);
+    Patch_id = PATCHES_MAX; // Live Sampler uses PATCHES_MAX
+    LS_setup_LS_Patch(LS_stereo);
 
     Update_all_maps_Instrument_for_notes();
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     AudioInterrupts();
 
     Golive_with_LIVE_SAMPLING();
@@ -9027,12 +8695,12 @@ void Switch_from_DIRECT_SAMPLING_to_LIVE_SAMPLING(void)
     }
 }
 
-void Switch_to_PERFORMANCE_session_old(void)
+void Switch_to_PERFORMANCE_patch_old(void)
 {
     AudioNoInterrupts();
-    Rebuild_session_old();
+    Rebuild_patch_old();
     AudioInterrupts();
-    Golive_with_PERFORMANCE(session);
+    Golive_with_PERFORMANCE(Patch_id);
 }
 
 void Switch_from_MIDI_LOOP_to_PERFORMANCE(void)
@@ -9047,7 +8715,7 @@ void Switch_from_MIDI_LOOP_to_PERFORMANCE(void)
         LOOP_track_run_memo[track] = LOOP_events[track] > 0;
         LOOP_track_run[track] = false;
     }
-    Golive_with_PERFORMANCE(session);
+    Golive_with_PERFORMANCE(Patch_id);
 }
 
 void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void)
@@ -9064,7 +8732,7 @@ void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void)
             {
                 // restore LEDs
                 Performance_led_set.Restore_all_LED();
-                Display.Instrument_VCF_page(session, instrument);
+                Display.Instrument_VCF_page(Patch_id, Instrument_id);
             }
             else if (Lilla_state == MIXER)
             {
@@ -9079,15 +8747,15 @@ void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void)
         {
             LS_state = 2;
             LiveSampler.Stop();
-            Switch_to_PERFORMANCE_session_old();
+            Switch_to_PERFORMANCE_patch_old();
 
-            // Session Delay: look for delay_<session> in SD
-            if (Archive.Copy_session_Delay_data_from_SD_to_Eeprom(session))
+            // Patch Delay: look for delay_<patch_id> in SD
+            if (Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id))
             {
                 Serial.println(F("Smooth changing of delay values COULD start..."));
 
                 Delay_data_struct delay_final;
-                Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(delay_final);
+                Archive.Copy_patch_Delay_data_from_Eeprom_to_Ram(delay_final);
 
                 AudioNoInterrupts();
                 Delay_manager.New_values(&delay_final); // call using AudioNoInterrupt()
@@ -9097,7 +8765,7 @@ void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void)
     }
     else
     {
-        Switch_to_PERFORMANCE_session_old();
+        Switch_to_PERFORMANCE_patch_old();
     }
 }
 
@@ -9107,7 +8775,7 @@ void Switch_from_DIRECT_SAMPLING_to_PERFORMANCE(void)
     {
     case 0:                  // no activity
         Turn_ON_Delay(true); // switch on/off Delay (using Instrument routing)
-        Switch_to_PERFORMANCE_session_old();
+        Switch_to_PERFORMANCE_patch_old();
         break;
     case 1: // pause + rec
         // switch OFF Line OUT monitor
@@ -9118,7 +8786,7 @@ void Switch_from_DIRECT_SAMPLING_to_PERFORMANCE(void)
         DS_blink_ON = false;
 
         Turn_ON_Delay(true); // switch on/off Delay (using Instrument routing)
-        Switch_to_PERFORMANCE_session_old();
+        Switch_to_PERFORMANCE_patch_old();
         break;
     case 2: // recording
         DS_ask_if_EXIT_from_DS();
@@ -9155,12 +8823,12 @@ void Switch_from_DIRECT_SAMPLING_to_PERFORMANCE(void)
             DS_blink_ON = false;
 
             Turn_ON_Delay(true); // switch on/off Delay (using Instrument routing)
-            Switch_to_PERFORMANCE_session_old();
+            Switch_to_PERFORMANCE_patch_old();
         }
         break;
     case 3:
         Turn_ON_Delay(true);
-        Switch_to_PERFORMANCE_session_old();
+        Switch_to_PERFORMANCE_patch_old();
         break;
 
     default:
@@ -9460,23 +9128,23 @@ bool Print_midi_loop_complete_data(int loop_id)
     Serial.print("uint16_t LOOP_time: ");
     Serial.println(LOOP_time);
 
-    // byte LOOP_events[6]
-    Serial.println("byte LOOP_events[6]");
-    for (auto i = 0; i < 6; ++i)
+    // byte LOOP_events[TRACKS]
+    Serial.println("byte LOOP_events[TRACKS]");
+    for (auto i = 0; i < TRACKS; ++i)
     {
         Serial.println(LOOP_events[i]);
     }
 
-    // int LOOP_slide[6]
+    // int LOOP_slide[TRACKS]
     Serial.println("int LOOP_slide[6]");
-    for (auto i = 0; i < 6; ++i)
+    for (auto i = 0; i < TRACKS; ++i)
     {
         Serial.println(LOOP_slide[i]);
     }
 
-    // int LOOP_pitch_int[6]
+    // int LOOP_pitch_int[TRACKS]
     Serial.println("int LOOP_pitch_int[6]");
-    for (auto i = 0; i < 6; ++i)
+    for (auto i = 0; i < TRACKS; ++i)
     {
         Serial.println(LOOP_pitch_int[i]);
     }
@@ -9551,7 +9219,7 @@ bool Copy_midi_loop_from_RAM_to_SD(int loop_id)
     }
     else
     {
-        Serial.println(F("Copy_session_Delay_data_from_SD_to_Eeprom - SD not present!"));
+        Serial.println(F("Copy_patch_Delay_data_from_SD_to_Eeprom - SD not present!"));
         return false;
     }
 }
@@ -9568,9 +9236,9 @@ void Compile_midi_loop_file(int loop_id, File &file) // private
         Serial.println(*(data + i));
     }
 
-    // byte LOOP_events[6]
+    // byte LOOP_events[TRACKS]
     data = &LOOP_events[0];
-    for (auto i = 0; i < 6; ++i)
+    for (auto i = 0; i < TRACKS; ++i)
     {
         file.println(*(data + i));
     }
@@ -9652,7 +9320,7 @@ void Copy_midi_loop_from_SD_to_RAM_local(File &file)
     uint8_t value_b[4];
 
     // uint16_t LOOP_time
-    for (uint8_t b = 0; b < 2; ++b)
+    for (auto b = 0; b < 2; ++b)
     {
         string_byte = file.readStringUntil('\n');
         value_b[b] = string_byte.toInt();
@@ -9660,15 +9328,15 @@ void Copy_midi_loop_from_SD_to_RAM_local(File &file)
     memcpy(&LOOP_time, value_b, 2);
     // LOOP_time = (value_b[1] << 8) | value_b[0];
 
-    // byte LOOP_events[6]
-    for (uint8_t i = 0; i < 6; ++i)
+    // byte LOOP_events[TRACKS]
+    for (auto i = 0; i < TRACKS; ++i)
     {
         string_byte = file.readStringUntil('\n'); // restituisce String - es: x_txt = "230" ossia i char "2" "3" "0" "\n"
         LOOP_events[i] = string_byte.toInt();
     }
 
-    // int LOOP_slide[6]
-    for (uint8_t i = 0; i < 6; ++i)
+    // int LOOP_slide[TRACKS]
+    for (auto i = 0; i < TRACKS; ++i)
     {
         for (auto b = 0; b < 4; ++b)
         {
@@ -9676,33 +9344,31 @@ void Copy_midi_loop_from_SD_to_RAM_local(File &file)
             value_b[b] = string_byte.toInt();
         }
         memcpy(&LOOP_slide[i], value_b, 4);
-        // LOOP_slide[i] = (value_b[3] << 24) | (value_b[2] << 16) | (value_b[1] << 8) | value_b[0];
     }
 
-    // int LOOP_pitch_int[6]
-    for (auto i = 0; i < 6; ++i)
+    // int LOOP_pitch_int[TRACKS]
+    for (auto i = 0; i < TRACKS; ++i)
     {
-        for (uint8_t b = 0; b < 4; ++b)
+        for (auto b = 0; b < 4; ++b)
         {
             string_byte = file.readStringUntil('\n');
             value_b[b] = string_byte.toInt();
         }
         memcpy(&LOOP_pitch_int[i], value_b, 4);
-        // LOOP_pitch_int[i] = (value_b[3] << 24) | (value_b[2] << 16) | (value_b[1] << 8) | value_b[0];
     }
 
     // int LOOP_stretch_int
-    for (uint8_t b = 0; b < 4; ++b)
+    for (auto b = 0; b < 4; ++b)
     {
         string_byte = file.readStringUntil('\n');
         value_b[b] = string_byte.toInt();
     }
     memcpy(&LOOP_stretch_int, value_b, 4);
-    // LOOP_stretch_int = (value_b[3] << 24) | (value_b[2] << 16) | (value_b[1] << 8) | value_b[0];
+
     LOOP_stretch = static_cast<float>(LOOP_stretch_int) / 100.0f;
 
     // LOOP_struct LOOP_element[TRACKS][LOOP_EVENTS] -> 8 bytes
-    for (uint8_t track = 0; track < TRACKS; ++track)
+    for (auto track = 0; track < TRACKS; ++track)
     {
         for (auto event = 0; event < LOOP_events[track]; ++event)
         {
@@ -9713,7 +9379,6 @@ void Copy_midi_loop_from_SD_to_RAM_local(File &file)
                 value_b[b] = string_byte.toInt();
             }
             memcpy(&LOOP_element[track][event].time, value_b, 4);
-            // LOOP_element[track][event].time = (value_b[3] << 24) | (value_b[2] << 16) | (value_b[1] << 8) | value_b[0];
 
             // uint8_t midi_channel
             string_byte = file.readStringUntil('\n');
@@ -10603,19 +10268,19 @@ uint16_t Calc_Noclick_max(bool use_Wavetable)
 
 void Get_all_Noclick_pointer(void) // initialization of *Noclick_pointer[] array
 {
-    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        Noclick_pointer[instrument] = Noclick[instrument].get_pointer();
+        Noclick_pointer[instrument_local] = Noclick[instrument_local].get_pointer();
     }
 }
 
 void Fill_all_Noclick(void)
 {
-    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (Session[session].Instrument[instrument].used) // Fill_Noclick(instrument)
+        if (Patch[Patch_id].Instrument[instrument_local].used) // Fill_Noclick(instrument)
         {
-            Noclick[instrument].Make(Preset[instrument].file, Preset[instrument].A, Preset[instrument].B, Preset[instrument].Noclick);
+            Noclick[instrument_local].Make(Preset[instrument_local].file, Preset[instrument_local].A, Preset[instrument_local].B, Preset[instrument_local].Noclick);
         }
     }
 }
@@ -10630,19 +10295,19 @@ void Fill_Noclick(uint8_t instrument)
 // ***************************************************************************************************************
 void Get_all_Wavetable_pointer(void) // initialization of *Wavetable_pointer[] array
 {
-    for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        Wavetable_pointer[instrument] = Wavetable[instrument].get_pointer();
+        Wavetable_pointer[instrument_local] = Wavetable[instrument_local].get_pointer();
     }
 }
 
 void Fill_all_Wavetable(void) // DELETE
 {
-    for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (Session[session].Instrument[instrument].used)
+        if (Patch[Patch_id].Instrument[instrument_local].used)
         {
-            Fill_Wavetable(instrument);
+            Fill_Wavetable(instrument_local);
         }
     }
 }
@@ -10666,31 +10331,31 @@ void Factory_setup_Eeprom(void)
     // cancella l'intero contenuto della EEPROM (EEPROM emulation memory all'interno della Flash 8M del T4.1)
     Archive.Reset_EEPROM();
 
-    // cancella gli array descrittivi di Session e Sound
-    Delete_all_Sessions_and_Sounds();
+    // cancella gli array descrittivi di Patch e Sound
+    Delete_all_Patches_and_Sounds();
 
-    // definisci una Session[0] al solo scopo di salvarla su EEPROM
-    Session[0].used = true;
-    Session[0].instruments = 1; // number of instruments in the session
-    Session[0].Instrument[0].used = 1;
-    Session[0].Instrument[0].id_sound = 0;
-    Session[0].Instrument[0].root_key = 60;
-    Session[0].Instrument[0].from_note = 0;
-    Session[0].Instrument[0].to_note = 127;
-    Session[0].Instrument[0].precedence = 0;
-    Session[0].Instrument[0].lock = 0;
+    // definisci una Patch[0] al solo scopo di salvarla su EEPROM
+    Patch[0].used = true;
+    Patch[0].instruments = 1; // number of instruments in the patch_id
+    Patch[0].Instrument[0].used = 1;
+    Patch[0].Instrument[0].sound_id = 0;
+    Patch[0].Instrument[0].root_key = 60;
+    Patch[0].Instrument[0].from_note = 0;
+    Patch[0].Instrument[0].to_note = 127;
+    Patch[0].Instrument[0].precedence = 0;
+    Patch[0].Instrument[0].lock = 0;
 
-    Session[0].Instrument[0].Filter.use = 0;            // yes/no
-    Session[0].Instrument[0].Filter.type = 1;           // lowpass, highpass, bandpass, notch
-    Session[0].Instrument[0].Filter.pivot = 20;         // 0 --> 100 filter frequency/note frequency
-    Session[0].Instrument[0].Filter.resonance = 7;      // 0 --> 40
-    Session[0].Instrument[0].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
-    Session[0].Instrument[0].Filter.index = 20;         // 1 --> 20 modulation_index
-    Session[0].Instrument[0].Filter.frequency_time = 5; // 0 --> 20
+    Patch[0].Instrument[0].Filter.use = 0;            // yes/no
+    Patch[0].Instrument[0].Filter.type = 1;           // lowpass, highpass, bandpass, notch
+    Patch[0].Instrument[0].Filter.pivot = 20;         // 0 --> 100 filter frequency/note frequency
+    Patch[0].Instrument[0].Filter.resonance = 7;      // 0 --> 40
+    Patch[0].Instrument[0].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
+    Patch[0].Instrument[0].Filter.index = 20;         // 1 --> 20 modulation_index
+    Patch[0].Instrument[0].Filter.frequency_time = 5; // 0 --> 20
 
-    session = 0;
-    Archive.Save_Session(session, Session[session]);
-    Serial.println(F("Session[0] Saved"));
+    Patch_id = 0;
+    Archive.Save_Patch(Patch_id, Patch[Patch_id]);
+    Serial.println(F("Patch[0] Saved"));
 
     // inizializza l'array descrittivo delle registrazioni (Direct Sampler) e salva su EEPROM
     DS_seed_all_Recordings();
@@ -10711,8 +10376,8 @@ void Factory_setup_Eeprom(void)
     Sound[0].release = 10;
     Sound[0].gain = 12; // 20 means gain = 1.0
     Serial.println(F("Saving Sound[0]"));
-    id_sound = 0;
-    Archive.Save_Sound(id_sound);
+    Sound_id = 0;
+    Archive.Save_Sound(Sound_id);
 
     // salva su EEPROM l'ottava del NoteNumber 0 (prima ottava)
     Archive.Save_first_octave(-2);
@@ -10736,83 +10401,81 @@ void Factory_setup_Eeprom(void)
 }
 
 FLASHMEM
-void P_Session(uint8_t S)
+void P_Patch(uint8_t patch_id)
 {
-    Serial.print("Session:");
-    Serial.print(S);
-
+    Serial.print("Patch:");
+    Serial.print(patch_id);
     if (false)
     {
         Serial.print(" used:");
-        Serial.print(Session[S].used);
+        Serial.print(Patch[patch_id].used);
         Serial.print(" instruments:");
-        Serial.println(Session[S].instruments);
-        for (uint8_t I = 0; I < INSTRUMENTS_MAX; ++I)
+        Serial.println(Patch[patch_id].instruments);
+        for (auto instrument_id_local = 0; instrument_id_local < INSTRUMENTS_MAX; ++instrument_id_local)
         {
-            if (!Session[S].Instrument[I].used)
+            if (!Patch[patch_id].Instrument[instrument_id_local].used)
             {
                 Serial.print("* ");
-                Serial.println(I);
+                Serial.println(instrument_id_local);
             }
             else
             {
                 Serial.print("* ");
-                Serial.print(I);
-                P_Instrument(S, I);
+                Serial.print(instrument_id_local);
+                P_Instrument(patch_id, instrument_id_local);
                 Serial.println();
             }
         }
     }
-
     Serial.println();
 }
 
 FLASHMEM
-void P_Instrument(uint8_t S, uint8_t I)
+void P_Instrument(uint8_t patch_id, uint8_t instrument_id)
 {
-    Serial.print(" id_sound:");
-    Serial.print(Session[S].Instrument[I].id_sound);
+    Serial.print(" sound_id:");
+    Serial.print(Patch[patch_id].Instrument[instrument_id].sound_id);
     Serial.print(" file:");
-    Serial.print(Sound[Session[S].Instrument[I].id_sound].file);
+    Serial.print(Sound[Patch[patch_id].Instrument[instrument_id].sound_id].file);
     Serial.print(".raw");
     Serial.print(" root_key:");
-    Serial.print(Session[S].Instrument[I].root_key);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].root_key);
     Serial.print(" from_note:");
-    Serial.print(Session[S].Instrument[I].from_note);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].from_note);
     Serial.print(" to_note:");
-    Serial.print(Session[S].Instrument[I].to_note);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].to_note);
     Serial.print(" precedence:");
-    Serial.print(Session[S].Instrument[I].precedence);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].precedence);
     Serial.print(" lock:");
-    Serial.println(Session[S].Instrument[I].lock);
+    Serial.println(Patch[patch_id].Instrument[instrument_id].lock);
 
     Serial.print("Filter  use:");
-    Serial.print(Session[S].Instrument[I].Filter.use);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].Filter.use);
     Serial.print(" type:");
-    Serial.print(Session[S].Instrument[I].Filter.type);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].Filter.type);
     Serial.print(" pivot:");
-    Serial.print(Session[S].Instrument[I].Filter.pivot);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].Filter.pivot);
     Serial.print(" resonance:");
-    Serial.print(Session[S].Instrument[I].Filter.resonance);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].Filter.resonance);
     Serial.print(" modulation:");
-    Serial.print(Session[S].Instrument[I].Filter.modulation);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].Filter.modulation);
     Serial.print(" index:");
-    Serial.print(Session[S].Instrument[I].Filter.index);
+    Serial.print(Patch[patch_id].Instrument[instrument_id].Filter.index);
     Serial.print(" frequency_time:");
-    Serial.println(Session[S].Instrument[I].Filter.frequency_time);
+    Serial.println(Patch[patch_id].Instrument[instrument_id].Filter.frequency_time);
 }
 
 FLASHMEM
-void P_Session_cache_P(void)
+void P_Patch_cache_P(void)
 {
-    Serial.print("Session: Session_cache_P");
+    Serial.print("Patch: Patch_cache_P");
     Serial.print(" used:");
-    Serial.print(Session_cache_P.used);
+    Serial.print(Patch_cache_P.used);
     Serial.print(" instruments:");
-    Serial.println(Session_cache_P.instruments);
+    Serial.println(Patch_cache_P.instruments);
     for (uint8_t I = 0; I < INSTRUMENTS_MAX; ++I)
     {
-        if (!Session_cache_P.Instrument[I].used)
+        if (!Patch_cache_P.Instrument[I].used)
         {
             Serial.print("* ");
             Serial.println(I);
@@ -10821,75 +10484,75 @@ void P_Session_cache_P(void)
         {
             Serial.print("* ");
             Serial.print(I);
-            Serial.print(" id_sound:");
-            Serial.print(Session_cache_P.Instrument[I].id_sound);
+            Serial.print(" sound_id:");
+            Serial.print(Patch_cache_P.Instrument[I].sound_id);
             Serial.print(" root_key:");
-            Serial.print(Session_cache_P.Instrument[I].root_key);
+            Serial.print(Patch_cache_P.Instrument[I].root_key);
             Serial.print(" file:");
-            Serial.print(Sound[Session_cache_P.Instrument[I].id_sound].file);
+            Serial.print(Sound[Patch_cache_P.Instrument[I].sound_id].file);
             Serial.print(".raw");
             Serial.print(" lock:");
-            Serial.print((Session_cache_P.Instrument[I].lock ? "yes" : "no"));
+            Serial.print((Patch_cache_P.Instrument[I].lock ? "yes" : "no"));
             Serial.print(" precedence:");
-            Serial.println((Session_cache_P.Instrument[I].precedence ? "yes" : "no"));
+            Serial.println((Patch_cache_P.Instrument[I].precedence ? "yes" : "no"));
         }
     }
     Serial.println();
 }
 
 FLASHMEM
-void P_Sound(uint8_t id_sound)
+void P_Sound(uint8_t sound_id)
 {
     Serial.println();
-    Serial.print("id_sound:");
-    Serial.print(id_sound);
+    Serial.print("sound_id:");
+    Serial.print(sound_id);
     Serial.print(" used:");
-    Serial.println(Sound[id_sound].used);
-    Serial.println((Sound[id_sound].used ? "yes" : "no"));
+    Serial.println(Sound[sound_id].used);
+    Serial.println((Sound[sound_id].used ? "yes" : "no"));
     Serial.print(" file_id:");
-    Serial.print(Sound[id_sound].file);
+    Serial.print(Sound[sound_id].file);
     Serial.print(" file name: ");
-    Serial.print(name_file[Sound[id_sound].file]);
+    Serial.print(name_file[Sound[sound_id].file]);
 
     Serial.print(" samples:");
 
     // xxx.raw file (standard files coming from micro SD)
-    if (id_sound < SOUNDS_MAX)
+    if (sound_id < SOUNDS_MAX)
     {
-        Serial.print(Get_samples_in_raw_file(Sound[id_sound].file));
+        Serial.print(Get_samples_in_raw_file(Sound[sound_id].file));
     }
 
     // Rxxx.raw file (Recording)
-    else if (id_sound >= SOUNDS_MAX)
+    else if (sound_id >= SOUNDS_MAX)
     {
-        int recording = ((Sound[id_sound].file - 260) / 2);
+        int recording = ((Sound[sound_id].file - 260) / 2);
         Serial.print(DS_get_samples_in_Recording(recording));
     }
 
     Serial.print(" mode:");
-    Serial.print(Sound[id_sound].mode);
+    Serial.print(Sound[sound_id].mode);
     Serial.print(" pitch:");
-    Serial.print(Sound[id_sound].pitch);
+    Serial.print(Sound[sound_id].pitch);
     Serial.print(" A:");
-    Serial.print(Sound[id_sound].A);
+    Serial.print(Sound[sound_id].A);
     Serial.print(" B:");
-    Serial.print(Sound[id_sound].B);
+    Serial.print(Sound[sound_id].B);
     Serial.print(" Noclick:");
-    Serial.print(Sound[id_sound].Noclick);
+    Serial.print(Sound[sound_id].Noclick);
     Serial.print(" Attack:");
-    Serial.print(Sound[id_sound].attack);
+    Serial.print(Sound[sound_id].attack);
     Serial.print(" attack_ramp:");
-    Serial.print((Sound[id_sound].data & 1) ? "fast" : "slow"); // bit4-3-2-1: midi_channel bit0: Attack ramp ("0" Slow, "1" Fast)
+    Serial.print((Sound[sound_id].data & 1) ? "fast" : "slow"); // bit4-3-2-1: midi_channel bit0: Attack ramp ("0" Slow, "1" Fast)
     Serial.print(" Decay:");
-    Serial.print(Sound[id_sound].decay);
+    Serial.print(Sound[sound_id].decay);
     Serial.print(" Sustain:");
-    Serial.print(Sound[id_sound].sustain);
+    Serial.print(Sound[sound_id].sustain);
     Serial.print(" Release:");
-    Serial.print(Sound[id_sound].release);
+    Serial.print(Sound[sound_id].release);
     Serial.print(" volume:");
-    Serial.print(Sound[id_sound].gain);
+    Serial.print(Sound[sound_id].gain);
     Serial.print(" MIDI channel:");
-    Serial.println(Get_midi_channel_from_Sound(id_sound) + 1);
+    Serial.println(Get_midi_channel_from_Sound(sound_id) + 1);
     Serial.println();
 }
 
@@ -10982,351 +10645,7 @@ void P_map_instrument_for_note(uint8_t midi_channel)
     Serial.println();
 }
 
-// ***************************************************************************************************************
-// **********************************               MULTIPLEXERS               ***********************************
-// ***************************************************************************************************************
 
-void Write_MUX_address(uint8_t address)
-{
-    digitalWriteFast(MUX_S0_pin, bitRead(address, 0));
-    digitalWriteFast(MUX_S1_pin, bitRead(address, 1));
-    digitalWriteFast(MUX_S2_pin, bitRead(address, 2));
-    digitalWriteFast(MUX_S3_pin, bitRead(address, 3));
-}
-
-uint8_t Encoder_state(uint8_t encoder, bool write_mux)
-{
-    if (write_mux)
-    {
-        Write_MUX_address(Encoder[encoder].address);
-        delayMicroseconds(PAUSE_MUX);
-    }
-    return 2 * digitalRead(Encoder[encoder].DT_MUX_pin) + digitalRead(Encoder[encoder].CLK_MUX_pin);
-}
-
-bool Read_pushbutton(uint8_t PB_id)
-{
-    if (PB[PB_id].state && ((millis() - PB[PB_id].timer) > PB_DOWN_PAUSE)) // era down (PB_DOWN_PAUSE e' l'isteresi dopo il push)
-    {
-        Write_MUX_address(PB[PB_id].address);
-        delayMicroseconds(PAUSE_MUX);
-        if (digitalRead(PB[PB_id].P_MUX_pin) == HIGH) // if(digitalRead(MUX_SIG[PB[PB_id].mux]) == HIGH) // ora e' up
-        {
-            PB[PB_id].state = false;
-            PB[PB_id].timer = millis();
-            return false;
-        }
-        else // e' ancora down
-            return false;
-    }
-
-    else if (!PB[PB_id].state && ((millis() - PB[PB_id].timer) > PB_UP_PAUSE)) // era up (PB_UP_PAUSE e' l'isteresi dopo il rilascio)
-    {
-        Write_MUX_address(PB[PB_id].address);
-        delayMicroseconds(PAUSE_MUX);
-        if (digitalRead(PB[PB_id].P_MUX_pin) == LOW) // if(digitalRead(MUX_SIG[PB[PB_id].mux]) == LOW) // ora e' down
-        {
-            PB[PB_id].state = true;
-            PB[PB_id].timer = millis();
-            return true;
-        }
-        else // e' ancora up
-            return false;
-    }
-    else // timer ancora non scaduti
-        return false;
-}
-
-bool Read_pushbutton_fast(uint8_t PB_id)
-{
-    Write_MUX_address(PB[PB_id].address);
-    delayMicroseconds(PAUSE_MUX);
-    if (digitalRead(PB[PB_id].P_MUX_pin) == LOW)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-int Read_pushbutton_UP(uint8_t PB_id)
-{
-    if (PB[PB_id].state && ((millis() - PB[PB_id].timer) > PB_DOWN_PAUSE)) // era down (PB_DOWN_PAUSE e' l'isteresi dopo il push)
-    {
-        Write_MUX_address(PB[PB_id].address);
-        delayMicroseconds(PAUSE_MUX);
-        if (digitalRead(PB[PB_id].P_MUX_pin) == HIGH) // if(digitalRead(MUX_SIG[PB[PB_id].mux]) == HIGH) // ora e' up
-        {
-            PB[PB_id].state = false;
-            PB[PB_id].timer = millis();
-            return PB_timer; // rilascio
-        }
-        else // e' ancora down
-            return 0;
-    }
-
-    else if (!PB[PB_id].state && ((millis() - PB[PB_id].timer) > PB_UP_PAUSE)) // era up (PB_UP_PAUSE e' l'isteresi dopo il rilascio)
-    {
-        Write_MUX_address(PB[PB_id].address);
-        delayMicroseconds(PAUSE_MUX);
-        if (digitalRead(PB[PB_id].P_MUX_pin) == LOW) // if(digitalRead(MUX_SIG[PB[PB_id].mux]) == LOW) // ora e' down
-        {
-            PB_timer = 0;
-            PB[PB_id].state = true;
-            PB[PB_id].timer = millis();
-            return 0; // premuto
-        }
-        else // e' ancora up
-            return 0;
-    }
-    else // timer ancora non scaduti
-        return 0;
-}
-
-bool Read_encoder_fast(int encoder)
-{
-    uint8_t state = 0;
-    if (ENC_timer < ENC_STOP)
-    {
-        return false;
-    }
-    else
-    {
-        state = Encoder_state(encoder, true);
-        if (Encoder[encoder].state != 3)
-        {
-            Encoder[encoder].state = state;
-            return false;
-        }
-
-        bool answer = false;
-        switch (state)
-        {
-        case 0:
-            break;
-
-        case 1:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 1)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 1)
-            {
-                ENC_timer = 0;
-                answer = true;
-            }
-            break;
-
-        case 2:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 2)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 2)
-            {
-                ENC_timer = 0;
-                answer = true;
-            }
-            break;
-
-        case 3:
-            break;
-
-        default:
-            Serial.println("Switch MISSING! 9286");
-            break;
-        }
-        Encoder[encoder].state = state;
-        return answer;
-    }
-}
-
-int Read_encoder_simple(int encoder)
-{
-    uint8_t state = 0;
-    if (ENC_timer < ENC_STOP)
-    {
-        return 0;
-    }
-    else
-    {
-        state = Encoder_state(encoder, true);
-        int8_t result = 0;
-        if (Encoder[encoder].state != 3)
-        {
-            Encoder[encoder].state = state;
-            return 0;
-        }
-
-        switch (state)
-        {
-        case 0:
-            break;
-
-        case 1:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 1)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 1)
-            {
-                ENC_timer = 0;
-                ENC_nip = 0;
-                result = 1;
-            }
-            break;
-
-        case 2:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 2)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 2)
-            {
-                ENC_timer = 0;
-                ENC_nip = 0;
-                result = -1;
-            }
-            break;
-
-        case 3:
-            break;
-
-        default:
-            Serial.println("Switch MISSING! 9342");
-            break;
-        }
-        Encoder[encoder].state = state;
-        return result;
-    }
-}
-
-template <class T>
-bool Read_encoder(int encoder, T &value, const int highest, const int lowest, int inc)
-{
-    uint8_t state = 0;
-    if (ENC_timer < ENC_STOP)
-    {
-        return 0;
-    }
-    else
-    {
-        state = Encoder_state(encoder, true);
-        if (Encoder[encoder].state != 3)
-        {
-            Encoder[encoder].state = state;
-            return 0;
-        }
-
-        bool answer = false;
-        switch (state)
-        {
-        case 0:
-            break;
-
-        case 1:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 1)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 1)
-            {
-                if (value < highest)
-                {
-                    ENC_timer = 0;
-                    value += inc;
-                    answer = true;
-                }
-            }
-            break;
-
-        case 2:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 2)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 2)
-            {
-                if (value > lowest)
-                {
-                    ENC_timer = 0;
-                    value -= inc;
-                    answer = true;
-                }
-            }
-            break;
-
-        case 3:
-            break;
-
-        default:
-            Serial.println("Switch MISSING! 9405");
-            break;
-        }
-        Encoder[encoder].state = state;
-        return answer;
-    }
-}
-
-template <class T>
-bool Read_encoder_inverse(int encoder, T &value, const int highest, const int lowest, int inc)
-{
-    uint8_t state = 0;
-    if (ENC_timer < ENC_STOP)
-    {
-        return false;
-    }
-    else
-    {
-        state = Encoder_state(encoder, true);
-        if (Encoder[encoder].state != 3)
-        {
-            Encoder[encoder].state = state;
-            return false;
-        }
-
-        bool answer = false;
-        switch (state)
-        {
-        case 0:
-            break;
-
-        case 1:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 1)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 1)
-            {
-                if (value > lowest)
-                {
-                    ENC_timer = 0;
-                    value -= inc;
-                    answer = true;
-                }
-            }
-            break;
-        case 2:
-            minitimer = 0;
-            while (minitimer < READ_TIME && state == 2)
-                state = Encoder_state(encoder, false);
-            if (state == 0 || state == 2)
-            {
-                if (value < highest)
-                {
-                    ENC_timer = 0;
-                    value += inc;
-                    answer = true;
-                }
-            }
-            break;
-
-        case 3:
-            break;
-
-        default:
-            Serial.println("Switch MISSING! 9467");
-            break;
-        }
-        Encoder[encoder].state = state;
-        return answer;
-    }
-}
 
 // ***************************************************************************************************************
 // **********************************                LIVE_SAMPLING              **********************************
@@ -11349,8 +10668,10 @@ void LS_refresh_LS_page(void)
     {
         LS_update_both_X_Y_samples();
     }
-    else                      // altrimenti e' gia' stato calcolato
+    else // altrimenti e' gia' stato calcolato
+    {
         LS_update_Q_sample(); // Usato da LS_wave_color
+    }
     Display.Show_LS_ring_tape_wave(LS_id_sound);
 }
 
@@ -11360,7 +10681,7 @@ bool LS_ask_if_exit_from_LS(void)
     confirmation = false;
     int action = 0;
     Display.Confirm_EXIT_from_LS();
-    Display.Confirm_session_delete_popup_frame(0);
+    Display.Confirm_patch_delete_popup_frame(0);
     delay(200);
     while (!confirmation)
     {
@@ -11370,7 +10691,7 @@ bool LS_ask_if_exit_from_LS(void)
         if (Read_encoder(25, action, 1, 0, 1))
 #endif
         {
-            Display.Confirm_session_delete_popup_frame(action);
+            Display.Confirm_patch_delete_popup_frame(action);
         }
 
         if (Read_pushbutton(25))
@@ -11554,56 +10875,56 @@ void LS_erase_FIFO_array(int16_t *Array, int stereo)
 }
 
 FLASHMEM
-void LS_setup_LS_Session(bool stereo)
+void LS_setup_LS_Patch(bool stereo)
 {
-    // set Sampler Session and Sounds
-    Session[SESSIONS_MAX].used = true;
+    // set Sampler Patch and Sounds
+    Patch[PATCHES_MAX].used = true;
     if (stereo)
     {
-        // Session
-        Session[SESSIONS_MAX].instruments = 2;
+        // Patch
+        Patch[PATCHES_MAX].instruments = 2;
 
         // Left channel recording
-        Session[SESSIONS_MAX].Instrument[0].used = true;
-        Session[SESSIONS_MAX].Instrument[0].id_sound = SOUNDS_MAX;
-        Session[SESSIONS_MAX].Instrument[0].root_key = 60;
-        Session[SESSIONS_MAX].Instrument[0].from_note = 0;
-        Session[SESSIONS_MAX].Instrument[0].to_note = 127;
-        Session[SESSIONS_MAX].Instrument[0].precedence = false;
-        Session[SESSIONS_MAX].Instrument[0].lock = false;
+        Patch[PATCHES_MAX].Instrument[0].used = true;
+        Patch[PATCHES_MAX].Instrument[0].sound_id = SOUNDS_MAX;
+        Patch[PATCHES_MAX].Instrument[0].root_key = 60;
+        Patch[PATCHES_MAX].Instrument[0].from_note = 0;
+        Patch[PATCHES_MAX].Instrument[0].to_note = 127;
+        Patch[PATCHES_MAX].Instrument[0].precedence = false;
+        Patch[PATCHES_MAX].Instrument[0].lock = false;
 
-        Session[SESSIONS_MAX].Instrument[0].Filter.use = false;        // yes/no
-        Session[SESSIONS_MAX].Instrument[0].Filter.type = 0;           // lowpass, highpass, bandpass, notch
-        Session[SESSIONS_MAX].Instrument[0].Filter.pivot = 10;         // 0 --> 30 filter frequency/note frequency
-        Session[SESSIONS_MAX].Instrument[0].Filter.resonance = 7;      // 0 --> 40
-        Session[SESSIONS_MAX].Instrument[0].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
-        Session[SESSIONS_MAX].Instrument[0].Filter.index = 10;         // 1 --> 20 modulation_index
-        Session[SESSIONS_MAX].Instrument[0].Filter.frequency_time = 5; // 0 --> 20
+        Patch[PATCHES_MAX].Instrument[0].Filter.use = false;        // yes/no
+        Patch[PATCHES_MAX].Instrument[0].Filter.type = 0;           // lowpass, highpass, bandpass, notch
+        Patch[PATCHES_MAX].Instrument[0].Filter.pivot = 10;         // 0 --> 30 filter frequency/note frequency
+        Patch[PATCHES_MAX].Instrument[0].Filter.resonance = 7;      // 0 --> 40
+        Patch[PATCHES_MAX].Instrument[0].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
+        Patch[PATCHES_MAX].Instrument[0].Filter.index = 10;         // 1 --> 20 modulation_index
+        Patch[PATCHES_MAX].Instrument[0].Filter.frequency_time = 5; // 0 --> 20
 
         // Right channel recording
-        Session[SESSIONS_MAX].Instrument[1].used = true;
-        Session[SESSIONS_MAX].Instrument[1].id_sound = SOUNDS_MAX + 1;
-        Session[SESSIONS_MAX].Instrument[1].root_key = 60;
-        Session[SESSIONS_MAX].Instrument[1].from_note = 0;
-        Session[SESSIONS_MAX].Instrument[1].to_note = 127;
-        Session[SESSIONS_MAX].Instrument[1].precedence = false;
-        Session[SESSIONS_MAX].Instrument[1].lock = false;
+        Patch[PATCHES_MAX].Instrument[1].used = true;
+        Patch[PATCHES_MAX].Instrument[1].sound_id = SOUNDS_MAX + 1;
+        Patch[PATCHES_MAX].Instrument[1].root_key = 60;
+        Patch[PATCHES_MAX].Instrument[1].from_note = 0;
+        Patch[PATCHES_MAX].Instrument[1].to_note = 127;
+        Patch[PATCHES_MAX].Instrument[1].precedence = false;
+        Patch[PATCHES_MAX].Instrument[1].lock = false;
 
-        Session[SESSIONS_MAX].Instrument[1].Filter.use = false;        // yes/no
-        Session[SESSIONS_MAX].Instrument[1].Filter.type = 0;           // lowpass, highpass, bandpass, notch
-        Session[SESSIONS_MAX].Instrument[1].Filter.pivot = 10;         // 0 --> 30 filter frequency/note frequency
-        Session[SESSIONS_MAX].Instrument[1].Filter.resonance = 7;      // 0 --> 40
-        Session[SESSIONS_MAX].Instrument[1].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
-        Session[SESSIONS_MAX].Instrument[1].Filter.index = 10;         // 1 --> 20 modulation_index
-        Session[SESSIONS_MAX].Instrument[1].Filter.frequency_time = 5; // 0 --> 20
+        Patch[PATCHES_MAX].Instrument[1].Filter.use = false;        // yes/no
+        Patch[PATCHES_MAX].Instrument[1].Filter.type = 0;           // lowpass, highpass, bandpass, notch
+        Patch[PATCHES_MAX].Instrument[1].Filter.pivot = 10;         // 0 --> 30 filter frequency/note frequency
+        Patch[PATCHES_MAX].Instrument[1].Filter.resonance = 7;      // 0 --> 40
+        Patch[PATCHES_MAX].Instrument[1].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
+        Patch[PATCHES_MAX].Instrument[1].Filter.index = 10;         // 1 --> 20 modulation_index
+        Patch[PATCHES_MAX].Instrument[1].Filter.frequency_time = 5; // 0 --> 20
 
         // Other instruments
-        Session[SESSIONS_MAX].Instrument[2].used = false;
-        Session[SESSIONS_MAX].Instrument[3].used = false;
-        Session[SESSIONS_MAX].Instrument[4].used = false;
-        Session[SESSIONS_MAX].Instrument[5].used = false;
-        Session[SESSIONS_MAX].Instrument[6].used = false;
-        Session[SESSIONS_MAX].Instrument[7].used = false;
+        Patch[PATCHES_MAX].Instrument[2].used = false;
+        Patch[PATCHES_MAX].Instrument[3].used = false;
+        Patch[PATCHES_MAX].Instrument[4].used = false;
+        Patch[PATCHES_MAX].Instrument[5].used = false;
+        Patch[PATCHES_MAX].Instrument[6].used = false;
+        Patch[PATCHES_MAX].Instrument[7].used = false;
 
         // Left Sound
         Sound[SOUNDS_MAX].used = true;
@@ -11640,31 +10961,31 @@ void LS_setup_LS_Session(bool stereo)
 
     else // mono
     {
-        // Session
-        Session[SESSIONS_MAX].instruments = 1;
-        Session[SESSIONS_MAX].Instrument[0].used = true;
-        Session[SESSIONS_MAX].Instrument[0].id_sound = SOUNDS_MAX;
-        Session[SESSIONS_MAX].Instrument[0].root_key = 60;
-        Session[SESSIONS_MAX].Instrument[0].from_note = 0;
-        Session[SESSIONS_MAX].Instrument[0].to_note = 127;
-        Session[SESSIONS_MAX].Instrument[0].precedence = false;
-        Session[SESSIONS_MAX].Instrument[0].lock = false;
+        // Patch
+        Patch[PATCHES_MAX].instruments = 1;
+        Patch[PATCHES_MAX].Instrument[0].used = true;
+        Patch[PATCHES_MAX].Instrument[0].sound_id = SOUNDS_MAX;
+        Patch[PATCHES_MAX].Instrument[0].root_key = 60;
+        Patch[PATCHES_MAX].Instrument[0].from_note = 0;
+        Patch[PATCHES_MAX].Instrument[0].to_note = 127;
+        Patch[PATCHES_MAX].Instrument[0].precedence = false;
+        Patch[PATCHES_MAX].Instrument[0].lock = false;
 
-        Session[SESSIONS_MAX].Instrument[0].Filter.use = false;        // yes/no
-        Session[SESSIONS_MAX].Instrument[0].Filter.type = 0;           // lowpass, highpass, bandpass, notch
-        Session[SESSIONS_MAX].Instrument[0].Filter.pivot = 10;         // 0 --> 30 filter frequency/note frequency
-        Session[SESSIONS_MAX].Instrument[0].Filter.resonance = 7;      // 0 --> 40
-        Session[SESSIONS_MAX].Instrument[0].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
-        Session[SESSIONS_MAX].Instrument[0].Filter.index = 20;         // 1 --> 20 modulation_index
-        Session[SESSIONS_MAX].Instrument[0].Filter.frequency_time = 5; // 0 --> 20
+        Patch[PATCHES_MAX].Instrument[0].Filter.use = false;        // yes/no
+        Patch[PATCHES_MAX].Instrument[0].Filter.type = 0;           // lowpass, highpass, bandpass, notch
+        Patch[PATCHES_MAX].Instrument[0].Filter.pivot = 10;         // 0 --> 30 filter frequency/note frequency
+        Patch[PATCHES_MAX].Instrument[0].Filter.resonance = 7;      // 0 --> 40
+        Patch[PATCHES_MAX].Instrument[0].Filter.modulation = 3;     // 0 --> 4 bit 1,2,3:modulation
+        Patch[PATCHES_MAX].Instrument[0].Filter.index = 20;         // 1 --> 20 modulation_index
+        Patch[PATCHES_MAX].Instrument[0].Filter.frequency_time = 5; // 0 --> 20
 
-        Session[SESSIONS_MAX].Instrument[1].used = false;
-        Session[SESSIONS_MAX].Instrument[2].used = false;
-        Session[SESSIONS_MAX].Instrument[3].used = false;
-        Session[SESSIONS_MAX].Instrument[4].used = false;
-        Session[SESSIONS_MAX].Instrument[5].used = false;
-        Session[SESSIONS_MAX].Instrument[6].used = false;
-        Session[SESSIONS_MAX].Instrument[7].used = false;
+        Patch[PATCHES_MAX].Instrument[1].used = false;
+        Patch[PATCHES_MAX].Instrument[2].used = false;
+        Patch[PATCHES_MAX].Instrument[3].used = false;
+        Patch[PATCHES_MAX].Instrument[4].used = false;
+        Patch[PATCHES_MAX].Instrument[5].used = false;
+        Patch[PATCHES_MAX].Instrument[6].used = false;
+        Patch[PATCHES_MAX].Instrument[7].used = false;
 
         // Mono Sound
         Sound[SOUNDS_MAX].used = true;
@@ -11696,24 +11017,24 @@ void Switch_to_MIXER()
     // Se non si sta editando, si parte dal primo Instrument esistente
     if (Lilla_state_0 != PERFORMANCE && Lilla_state_0 != SOUND_EDIT && Lilla_state_0 != INSTRUMENT_VCF && Lilla_state_0 != LIVE_SAMPLING)
     {
-        for (uint8_t I = 0; I < INSTRUMENTS_MAX; ++I)
+        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
         {
-            if (Session[session].Instrument[I].used)
+            if (Patch[Patch_id].Instrument[instrument_local].used)
             {
-                instrument = I;
+                Instrument_id = instrument_local;
                 break;
             }
         }
-        id_sound = Session[session].Instrument[instrument].id_sound;
+        Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
     }
 
     else if (Lilla_state == LIVE_SAMPLING)
     {
-        instrument = LS_instrument;
-        id_sound = Session[session].Instrument[instrument].id_sound;
+        Instrument_id = LS_instrument;
+        Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
     }
 
-    Golive_MIXER(instrument);
+    Golive_MIXER(Instrument_id);
 }
 
 FLASHMEM
@@ -11721,11 +11042,11 @@ void Golive_MIXER(int instrument)
 {
     if (instrument < 0)
     {
-        for (auto i = 0; i < INSTRUMENTS_MAX; ++i)
+        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
         {
-            if (Session[session].Instrument[i].used)
+            if (Patch[Patch_id].Instrument[instrument_local].used)
             {
-                instrument = i;
+                instrument = instrument_local;
             }
         }
 
@@ -11749,74 +11070,74 @@ void Golive_MIXER(int instrument)
 FLASHMEM
 bool Verify_if_Instrument_original(uint8_t I)
 {
-    if (!Session[session].Instrument[I].used && !Session_cache_P.Instrument[I].used)
+    if (!Patch[Patch_id].Instrument[I].used && !Patch_cache_P.Instrument[I].used)
     {
         return true;
     }
 
     bool result;
-    result = ((Session[session].Instrument[I].used == Session_cache_P.Instrument[I].used) &&
-              (Session[session].Instrument[I].id_sound == Session_cache_P.Instrument[I].id_sound) &&
-              (Session[session].Instrument[I].root_key == Session_cache_P.Instrument[I].root_key) &&
-              (Session[session].Instrument[I].from_note == Session_cache_P.Instrument[I].from_note) &&
-              (Session[session].Instrument[I].to_note == Session_cache_P.Instrument[I].to_note) &&
-              (Session[session].Instrument[I].precedence == Session_cache_P.Instrument[I].precedence) &&
-              (Session[session].Instrument[I].lock == Session_cache_P.Instrument[I].lock) &&
+    result = ((Patch[Patch_id].Instrument[I].used == Patch_cache_P.Instrument[I].used) &&
+              (Patch[Patch_id].Instrument[I].sound_id == Patch_cache_P.Instrument[I].sound_id) &&
+              (Patch[Patch_id].Instrument[I].root_key == Patch_cache_P.Instrument[I].root_key) &&
+              (Patch[Patch_id].Instrument[I].from_note == Patch_cache_P.Instrument[I].from_note) &&
+              (Patch[Patch_id].Instrument[I].to_note == Patch_cache_P.Instrument[I].to_note) &&
+              (Patch[Patch_id].Instrument[I].precedence == Patch_cache_P.Instrument[I].precedence) &&
+              (Patch[Patch_id].Instrument[I].lock == Patch_cache_P.Instrument[I].lock) &&
 
-              (Session[session].Instrument[I].Filter.use == Session_cache_P.Instrument[I].Filter.use) &&
-              (Session[session].Instrument[I].Filter.type == Session_cache_P.Instrument[I].Filter.type) &&
-              (Session[session].Instrument[I].Filter.pivot == Session_cache_P.Instrument[I].Filter.pivot) &&
-              (Session[session].Instrument[I].Filter.resonance == Session_cache_P.Instrument[I].Filter.resonance) &&
-              (Session[session].Instrument[I].Filter.modulation == Session_cache_P.Instrument[I].Filter.modulation) &&
-              (Session[session].Instrument[I].Filter.index == Session_cache_P.Instrument[I].Filter.index) &&
-              (Session[session].Instrument[I].Filter.frequency_time == Session_cache_P.Instrument[I].Filter.frequency_time) &&
-              Verify_is_Sound_original(Session[session].Instrument[I].id_sound));
+              (Patch[Patch_id].Instrument[I].Filter.use == Patch_cache_P.Instrument[I].Filter.use) &&
+              (Patch[Patch_id].Instrument[I].Filter.type == Patch_cache_P.Instrument[I].Filter.type) &&
+              (Patch[Patch_id].Instrument[I].Filter.pivot == Patch_cache_P.Instrument[I].Filter.pivot) &&
+              (Patch[Patch_id].Instrument[I].Filter.resonance == Patch_cache_P.Instrument[I].Filter.resonance) &&
+              (Patch[Patch_id].Instrument[I].Filter.modulation == Patch_cache_P.Instrument[I].Filter.modulation) &&
+              (Patch[Patch_id].Instrument[I].Filter.index == Patch_cache_P.Instrument[I].Filter.index) &&
+              (Patch[Patch_id].Instrument[I].Filter.frequency_time == Patch_cache_P.Instrument[I].Filter.frequency_time) &&
+              Verify_is_Sound_original(Patch[Patch_id].Instrument[I].sound_id));
 
     return result;
 }
 
 FLASHMEM
-bool Verify_is_Sound_original(uint8_t id_sound)
+bool Verify_is_Sound_original(uint8_t sound_id)
 {
     return (
-        (Sound[id_sound].file == Sound_cache_P[id_sound].file) &&
-        (Sound[id_sound].mode == Sound_cache_P[id_sound].mode) &&
-        (Sound[id_sound].pitch == Sound_cache_P[id_sound].pitch) &&
-        (Sound[id_sound].A == Sound_cache_P[id_sound].A) &&
-        (Sound[id_sound].B == Sound_cache_P[id_sound].B) &&
-        (Sound[id_sound].Noclick == Sound_cache_P[id_sound].Noclick) &&
-        (Sound[id_sound].pan == Sound_cache_P[id_sound].pan) &&
-        (Sound[id_sound].data == Sound_cache_P[id_sound].data) &&
-        (Sound[id_sound].attack == Sound_cache_P[id_sound].attack) &&
-        (Sound[id_sound].decay == Sound_cache_P[id_sound].decay) &&
-        (Sound[id_sound].sustain == Sound_cache_P[id_sound].sustain) &&
-        (Sound[id_sound].release == Sound_cache_P[id_sound].release) &&
-        (Sound[id_sound].gain == Sound_cache_P[id_sound].gain));
+        (Sound[sound_id].file == Sound_cache_P[sound_id].file) &&
+        (Sound[sound_id].mode == Sound_cache_P[sound_id].mode) &&
+        (Sound[sound_id].pitch == Sound_cache_P[sound_id].pitch) &&
+        (Sound[sound_id].A == Sound_cache_P[sound_id].A) &&
+        (Sound[sound_id].B == Sound_cache_P[sound_id].B) &&
+        (Sound[sound_id].Noclick == Sound_cache_P[sound_id].Noclick) &&
+        (Sound[sound_id].pan == Sound_cache_P[sound_id].pan) &&
+        (Sound[sound_id].data == Sound_cache_P[sound_id].data) &&
+        (Sound[sound_id].attack == Sound_cache_P[sound_id].attack) &&
+        (Sound[sound_id].decay == Sound_cache_P[sound_id].decay) &&
+        (Sound[sound_id].sustain == Sound_cache_P[sound_id].sustain) &&
+        (Sound[sound_id].release == Sound_cache_P[sound_id].release) &&
+        (Sound[sound_id].gain == Sound_cache_P[sound_id].gain));
 }
 
 void Copy_all_Sound_to_Sound_cache_P(void)
 {
-    for (uint8_t id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
     {
-        Sound_cache_P[id_sound] = Sound[id_sound];
+        Sound_cache_P[id_sound_local] = Sound[id_sound_local];
     }
 }
 
 void Pull_all_Sound_from_Sound_cache_P(void)
 {
-    for (uint8_t id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
     {
-        Sound[id_sound] = Sound_cache_P[id_sound];
+        Sound[id_sound_local] = Sound_cache_P[id_sound_local];
     }
 }
 
 uint8_t Get_sounds_free(void)
 {
-    uint8_t result = 0;
+    auto result = 0;
 
-    for (uint8_t id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
     {
-        if (!Sound[id_sound].used)
+        if (!Sound[id_sound_local].used)
         {
             result++;
         }
@@ -11826,31 +11147,31 @@ uint8_t Get_sounds_free(void)
 
 void Read_all_Sounds(void)
 {
-    for (uint8_t id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
     {
-        Archive.Read_Sound(id_sound, Sound[id_sound]);
-        // P_Sound(id_sound);
+        Archive.Read_Sound(id_sound_local, Sound[id_sound_local]);
+        // P_Sound(id_sound_local);
     }
 }
 
 void Save_all_Sounds_changed(void)
 {
-    for (auto id_sound = 0; id_sound < SOUNDS_MAX; ++id_sound)
+    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
     {
         // Sound which have been changed only for .used
-        if (Sound[id_sound].used != Sound_cache_P[id_sound].used)
+        if (Sound[id_sound_local].used != Sound_cache_P[id_sound_local].used)
         {
-            Archive.Save_Sound(id_sound);
-            Serial.println("Save_all_Sounds_changed: attenzione! Sound[id_sound].used e' variato per id_sound: ");
-            Serial.println(id_sound);
+            Archive.Save_Sound(id_sound_local);
+            Serial.println("Save_all_Sounds_changed: attenzione! Sound[sound_id].used e' variato per sound_id: ");
+            Serial.println(id_sound_local);
         }
 
         // Sound used which have been changed
-        else if ((Sound[id_sound].used == 1) && !Verify_is_Sound_original(id_sound)) // save Sound used and changed in phisical properties
+        else if ((Sound[id_sound_local].used == 1) && !Verify_is_Sound_original(id_sound_local)) // save Sound used and changed in phisical properties
         {
-            Archive.Save_Sound(id_sound);
-            Serial.println("Save_all_Sounds_changed: attenzione! Verify_is_Sound_original ha dato esito NEGATIVO che ha richiesto salvataggio su EEPROM per per id_sound: ");
-            Serial.println(id_sound);
+            Archive.Save_Sound(id_sound_local);
+            Serial.println("Save_all_Sounds_changed: attenzione! Verify_is_Sound_original ha dato esito NEGATIVO che ha richiesto salvataggio su EEPROM per per sound_id: ");
+            Serial.println(id_sound_local);
         }
     }
 }
@@ -11864,11 +11185,11 @@ void Save_CC_SETTINGS(void)
 {
     Midi_reader.Stop();
 
-    for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (CC_Sound_gain[instrument] != CC_Sound_gain_cache[instrument])
+        if (CC_Sound_gain[instrument_local] != CC_Sound_gain_cache[instrument_local])
         {
-            Archive.Save_CC_Sound_gain(instrument, CC_Sound_gain[instrument]);
+            Archive.Save_CC_Sound_gain(instrument_local, CC_Sound_gain[instrument_local]);
         }
     }
 
@@ -11934,9 +11255,9 @@ void Ask_if_FACTORY_RESET(void)
 FLASHMEM
 void Read_all_CC_Sound_gain()
 {
-    for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        Archive.Read_CC_Sound_gain(instrument, CC_Sound_gain[instrument]);
+        Archive.Read_CC_Sound_gain(instrument_local, CC_Sound_gain[instrument_local]);
     }
 }
 
@@ -11953,7 +11274,7 @@ bool Copy_raw_files_from_SD_to_Flash()
     Display.Copy_raw_files_SD_to_Flash_chip_titolo();
 
     // Wait for SD card
-    while (!SD.begin(SDcardSelect))
+    while (!SD.begin(BUILTIN_SDCARD))
     {
         Display.Copy_raw_files_SD_to_Flash_chip_attesa_SD();
         delay(10000);
@@ -12227,7 +11548,7 @@ bool Request_SOUND_EDIT_mode(void)
     const uint8_t SOUND_encoder[i_m] = {1, 2, 3, 9, 10, 11, 12, 17, 18, 19, 20, 21};
 #endif
 
-    for (uint8_t i = 0; i < i_m; ++i)
+    for (auto i = 0; i < i_m; ++i)
     {
         if (Read_encoder_fast(SOUND_encoder[i]))
         {
@@ -12241,11 +11562,11 @@ bool Request_SOUND_EDIT_mode(void)
     }
     if (Read_pushbutton(3))
     {
-        Sound[id_sound].pan = 0;
+        Sound[Sound_id].pan = 0;
 
         AudioNoInterrupts();
-        Players_Manager.Update_Preset_pan(session, instrument);
-        Players_Manager.Multicast_pan(instrument);
+        Players_Manager.Update_Preset_pan(Patch_id, Instrument_id);
+        Players_Manager.Multicast_pan(Instrument_id);
         AudioInterrupts();
 
         return true;
@@ -12255,7 +11576,7 @@ bool Request_SOUND_EDIT_mode(void)
         slicing_mode = !slicing_mode;
         if (!slicing_mode)
         {
-            slicing_window = Sound[id_sound].B - Sound[id_sound].A + 1;
+            slicing_window = Sound[Sound_id].B - Sound[Sound_id].A + 1;
         }
 
         return true;
@@ -12268,13 +11589,13 @@ bool Request_SOUND_EDIT_mode(void)
     }
     if (Read_pushbutton(17))
     {
-        if (Sound[id_sound].pitch != 0)
+        if (Sound[Sound_id].pitch != 0)
         {
-            Sound[id_sound].pitch = 0;
+            Sound[Sound_id].pitch = 0;
 
             AudioNoInterrupts();
-            Players_Manager.Update_Preset_pitch(session, instrument);
-            Players_Manager.Multicast_pitch_for_sound_edit(instrument);
+            Players_Manager.Update_Preset_pitch(Patch_id, Instrument_id);
+            Players_Manager.Multicast_pitch_for_sound_edit(Instrument_id);
             AudioInterrupts();
         }
         return true;
@@ -12282,8 +11603,8 @@ bool Request_SOUND_EDIT_mode(void)
     if (Read_pushbutton(18))
     {
         AudioNoInterrupts();
-        bitWrite(Sound[id_sound].data, 0, !bitRead(Sound[id_sound].data, 0));
-        Players_Manager.Update_Preset_attack_type(session, instrument);
+        bitWrite(Sound[Sound_id].data, 0, !bitRead(Sound[Sound_id].data, 0));
+        Players_Manager.Update_Preset_attack_type(Patch_id, Instrument_id);
         AudioInterrupts();
 
         So_menu = 0;
@@ -12292,8 +11613,8 @@ bool Request_SOUND_EDIT_mode(void)
     if (Read_pushbutton(21))
     {
         AudioNoInterrupts();
-        Players_Manager.Release_all_players_for_instrument_solo(instrument);
-        Map_one_Instrument_for_all_notes(instrument);
+        Players_Manager.Release_all_players_for_instrument_solo(Instrument_id);
+        Map_one_Instrument_for_all_notes(Instrument_id);
         AudioInterrupts();
 
         return true;
@@ -12309,7 +11630,7 @@ void Select_sound_edit_menu_elements(void)
     Menu_So[1] = true; // CLONE
     Menu_So[2] = true; // DELETE
 
-    if (Session[session].instruments == INSTRUMENTS_MAX)
+    if (Patch[Patch_id].instruments == INSTRUMENTS_MAX)
     {
         Menu_So[1] = false; // CLONE
     }
@@ -12319,7 +11640,7 @@ void Select_sound_edit_menu_elements(void)
         Menu_So[1] = false; // CLONE
     }
 
-    if (Session[session].instruments == 1)
+    if (Patch[Patch_id].instruments == 1)
     {
         Menu_So[2] = false; // DELETE
     }
@@ -12331,7 +11652,7 @@ FLASHMEM
 void Macro_Sound_menu(void)
 {
     int sound_original_0 = sound_original;
-    sound_original = Verify_is_Sound_original(id_sound);
+    sound_original = Verify_is_Sound_original(Sound_id);
     if (sound_original_0 != sound_original)
     {
         So_menu = 0;
@@ -12360,7 +11681,7 @@ bool Request_VCF_mode(void)
     const uint8_t i_m = 6;
     const uint8_t VCF_encoder[i_m] = {5, 6, 13, 14, 22, 23};
 #endif
-    for (uint8_t i = 0; i < 5; ++i)
+    for (auto i = 0; i < 5; ++i)
     {
         if (Read_encoder_fast(VCF_encoder[i]))
         {
@@ -12385,47 +11706,47 @@ bool Request_VCF_mode(void)
 
 void Macro_VCF_filter_on_none(void)
 {
-    if (!Session[session].Instrument[instrument].Filter.use)
+    if (!Patch[Patch_id].Instrument[Instrument_id].Filter.use)
     {
-        Session[session].Instrument[instrument].Filter.use = true;
+        Patch[Patch_id].Instrument[Instrument_id].Filter.use = true;
     }
     else
     {
-        Session[session].Instrument[instrument].Filter.use = false;
+        Patch[Patch_id].Instrument[Instrument_id].Filter.use = false;
     }
 
     AudioNoInterrupts();
-    Players_Manager.Update_Preset_IF(session, instrument);
-    Players_Manager.Multicast_IF_update_filter_type(instrument);
+    Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
+    Players_Manager.Multicast_IF_update_filter_type(Instrument_id);
 
     if (Lilla_state_0 == LIVE_SAMPLING)
     {
-        Session[session].Instrument[1].Filter.use = Session[session].Instrument[0].Filter.use;
-        instrument = 1;
+        Patch[Patch_id].Instrument[1].Filter.use = Patch[Patch_id].Instrument[0].Filter.use;
+        Instrument_id = 1;
 
-        Players_Manager.Update_Preset_IF(session, instrument);
-        Players_Manager.Multicast_IF_update_filter_type(instrument);
+        Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
+        Players_Manager.Multicast_IF_update_filter_type(Instrument_id);
 
-        instrument = 0;
+        Instrument_id = 0;
     }
     AudioInterrupts();
 }
 
 void Macro_VCF_modulation_none(void)
 {
-    Session[session].Instrument[instrument].Filter.modulation = 0;
+    Patch[Patch_id].Instrument[Instrument_id].Filter.modulation = 0;
 
     AudioNoInterrupts();
-    Players_Manager.Update_Preset_IF(session, instrument);
+    Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
 
     if (Lilla_state_0 == LIVE_SAMPLING)
     {
-        Session[session].Instrument[1].Filter.modulation = Session[session].Instrument[0].Filter.modulation;
-        instrument = 1;
+        Patch[Patch_id].Instrument[1].Filter.modulation = Patch[Patch_id].Instrument[0].Filter.modulation;
+        Instrument_id = 1;
 
-        Players_Manager.Update_Preset_IF(session, instrument);
+        Players_Manager.Update_Preset_IF(Patch_id, Instrument_id);
 
-        instrument = 0;
+        Instrument_id = 0;
     }
     AudioInterrupts();
 }
@@ -12499,19 +11820,19 @@ void Bootstrap_setup(void)
     LINE_IN_amplifier.Set_gain(Volume_float[DS_gain]);
 
     // *******************   CORE ARRAYS  ************************
-    Delete_all_Sessions_and_Sounds();
+    Delete_all_Patches_and_Sounds();
 
     Read_all_Sounds(); // compila tutti i Sound leggendo dalla EEPROM
     Copy_all_Sound_to_Sound_cache_P();
-    Read_all_Sessions(); // compila tutte le Session leggendo dalla EEPROM
+    Read_all_Patches(); // compila tutte le Patch leggendo dalla EEPROM
 
     Archive.Read_optimization(optimization);
     Archive.Read_first_octave(first_octave);
     Read_all_CC_Sound_gain();
     Archive.Read_CC_lowpass_filter(CC_lowpass_filter);
 
-    Update_sessions(); // aggiorna sessions (numero di sessioni disponibili)
-    session = Get_first_Session_existing();
+    Update_Patches_number(); // aggiorna patches_number (numero di patchi disponibili)
+    Patch_id = Get_first_Patch_id_existing();
 
     // *******************  DELAY+LFO  ************************
     // Creazione degli array FIFO
@@ -12531,8 +11852,8 @@ void Bootstrap_setup(void)
     Delay_L.DELAY_fifo = DELAY_fifo_L;
     Delay_R.DELAY_fifo = DELAY_fifo_R;
 
-    // Tenta l'import dei dati session delay da SD alla EEPROM
-    Archive.Copy_session_Delay_data_from_SD_to_Eeprom(session);
+    // Tenta l'import dei dati patch_id delay da SD alla EEPROM
+    Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id);
 
     // Imposta i parametri per il Delay
     if (Read_pushbutton(35))
@@ -12551,7 +11872,7 @@ void Bootstrap_setup(void)
     }
 
     // Leggi i parametri del Delay da EEPROM
-    Archive.Copy_session_Delay_data_from_Eeprom_to_Ram(Delay_data);
+    Archive.Copy_patch_Delay_data_from_Eeprom_to_Ram(Delay_data);
 
     // Calcola i valori del Delay
     Calc_Delay_values(Delay_data);
@@ -12602,8 +11923,8 @@ void Bootstrap_setup(void)
     Lilla_state = PERFORMANCE;
     Lilla_state_0 = Lilla_state;
 
-    Players_Manager.Update_all_Preset(session, Volume_float[volume_session]);
-    Fill_all_Noclick(); // fill Noclick for all Instrument in the Session
+    Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
+    Fill_all_Noclick(); // fill Noclick for all Instrument in the Patch
     Fill_all_Wavetable();
 
     // *******************    MIDI LOOP   ************************
@@ -12615,13 +11936,13 @@ void Bootstrap_setup(void)
     Display.Lilla_cover_slow();
 
     // ****************     PERFORMANCE PAGE   ********************
-    session_old = session;
-    P_Session(session);
-    Session_cache_P = Session[session];
+    patch_old = Patch_id;
+    P_Patch(Patch_id);
+    Patch_cache_P = Patch[Patch_id];
     Update_all_maps_Instrument_for_notes();
     P_map_instrument_for_note(0); // P_map_instrument_for_note(uint8_t midi_channel)
 
-    Golive_with_PERFORMANCE(session);
+    Golive_with_PERFORMANCE(Patch_id);
 
     // *******************    START MIDI   ************************
     Midi_reader.Begin();

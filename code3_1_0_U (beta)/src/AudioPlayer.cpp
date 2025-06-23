@@ -403,12 +403,12 @@ void AudioPlayer::Main_settings_editing(uint8_t mode_in, int A_value_in, int B_v
     main_settings_editing_flag = true;
 }
 
-void AudioPlayer::Get_ready_to_play(float pitch_note_in, float velocity_in, int session_in, uint8_t instrument_in, uint8_t id_sound_in, uint8_t note_in)
+void AudioPlayer::Get_ready_to_play(float pitch_note_in, float velocity_in, int patch_in, uint8_t instrument_in, uint8_t id_sound_in, uint8_t note_in)
 {
     pitch_note_wait = pitch_note_in;
     velocity_gain_wait = velocity_in;
-    session_wait = session_in;
-    instrument_wait = instrument_in;
+    patch_id_wait = patch_in;
+    instrument_id_wait = instrument_in;
     id_sound_wait = id_sound_in;
     note_wait = note_in;
     time_stamp = millis();
@@ -515,9 +515,23 @@ void AudioPlayer::Start_playing(void)
     B_Flash_sample_5 = B_Flash_sample_5_wait;
     initial_index_offset = 0;
     samples_counter = 0;
-    local_session = session_wait;
-    instrument = instrument_wait;
-    id_sound = id_sound_wait;
+    local_patch = patch_id_wait;
+
+    // Player is NOT idle, decrement statistics for OLD instrument
+    if (warmup_for_play_again_flag)
+    {
+        if (Lilla_state == MIDI_LOOP && track >= 0)
+        {
+            Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
+        }
+        else if (Lilla_state != MIDI_LOOP)
+        {
+            Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
+        }
+    }
+
+    instrument_id = instrument_id_wait;
+    sound_id = id_sound_wait;
     note = note_wait;
     pitch_tune = pitch_tune_wait;
     pitch_tune_flag = false;
@@ -528,26 +542,26 @@ void AudioPlayer::Start_playing(void)
     volume_flag = false;
     sliding = 0;
     track = track_wait;
-
     Start_VCF();
     idle = false;
-
     state = 1;
-
+    
+    // Increment statistics for NEW instrument_id 
     if (Lilla_state == MIDI_LOOP && track >= 0)
     {
-        Players_statistics_ptr->Inc_total_Players_per_track_instrument(track, instrument);
+        Players_statistics_ptr->Inc_total_Players_per_track_instrument(track, instrument_id);
     }
     else if (Lilla_state != MIDI_LOOP)
     {
-        Players_statistics_ptr->Inc_total_Players_per_instrument(instrument);
+        Players_statistics_ptr->Inc_total_Players_per_instrument(instrument_id);
     }
+
 }
 
 void AudioPlayer::Release_note(void) // release note, fires ADSR "release"
 {
     K_Release_delta = ADSR_gain; // [gain]
-    ADSR_phase = 3; // Release
+    ADSR_phase = 3;              // Release
     ADSR_point_0 = -K_Release_step;
     time_stamp = millis();
     power_on = false;
@@ -555,12 +569,12 @@ void AudioPlayer::Release_note(void) // release note, fires ADSR "release"
 
     if (Lilla_state == MIDI_LOOP && track >= 0)
     {
-        Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument);
+        Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
     }
 
     else if (Lilla_state != MIDI_LOOP)
     {
-        Players_statistics_ptr->Dec_total_Players_per_instrument(instrument);
+        Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
     }
 }
 
@@ -616,12 +630,12 @@ void AudioPlayer::update(void)
 
         if (Lilla_state == MIDI_LOOP && track >= 0)
         {
-            Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument);
+            Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
         }
 
         else if (Lilla_state != MIDI_LOOP)
         {
-            Players_statistics_ptr->Dec_total_Players_per_instrument(instrument);
+            Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
         }
     }
 
@@ -668,10 +682,12 @@ void AudioPlayer::update(void)
                 mix_flag = true;
                 shoot_flag = true;
             }
+
             else
             {
                 restart_flag = true;
             }
+
             main_settings_editing_flag = false;
             warmup_for_play_again_flag = false;
         }
@@ -2133,7 +2149,7 @@ int AudioPlayer::Read_loop_track(void)
 void AudioPlayer::Fast_stop(void)
 {
     K_Release_delta = ADSR_gain;
-    ADSR_phase = 3; // Release
+    ADSR_phase = 3;               // Release
     K_Release_step = 10 / 128.0f; // gain fall to 0 in 10 samples!
     ADSR_point_0 = -K_Release_step;
     power_on = false;
@@ -2141,13 +2157,12 @@ void AudioPlayer::Fast_stop(void)
 
     if (Lilla_state == MIDI_LOOP && track >= 0)
     {
-        Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument);
+        Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
     }
 
     else if (Lilla_state != MIDI_LOOP)
     {
-        Players_statistics_ptr->Dec_total_Players_per_instrument(instrument);
-
+        Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
     }
 }
 
@@ -2314,7 +2329,7 @@ void AudioPlayer::Send_LFO_to_VCF(void)
 
     if (LFO_index_steps <= 0 && VCF_pivot_steps <= 0)
     {
-        VCF_ptr->Set_filter(0, constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000));     // Set_filter(uint32_t stage, float frequency)
+        VCF_ptr->Set_filter(0, constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000));  // Set_filter(uint32_t stage, float frequency)
         VCF_frequency_array[0] = constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000); // ONLY FOR PRINT
         VCF_frequency_array[1] = constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[ABS_4] / 1000.0f) * LFO_index), 50, 15000);
         VCF_frequency_array[2] = constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[ABS_2] / 1000.0f) * LFO_index), 50, 15000);
@@ -2323,7 +2338,7 @@ void AudioPlayer::Send_LFO_to_VCF(void)
     else if (LFO_index_steps > 0)
     {
         LFO_index += LFO_index_grain;
-        VCF_ptr->Set_filter(0, constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000));     // Set_filter(uint32_t stage, float frequency)
+        VCF_ptr->Set_filter(0, constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000));  // Set_filter(uint32_t stage, float frequency)
         VCF_frequency_array[0] = constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000); // ONLY FOR PRINT
         LFO_index += LFO_index_grain;
         VCF_frequency_array[1] = constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[ABS_4] / 1000.0f) * LFO_index), 50, 15000);
@@ -2339,7 +2354,7 @@ void AudioPlayer::Send_LFO_to_VCF(void)
     {
         VCF_frequency_pivot += VCF_pivot_grain;
         VCF_central_frequency = (VCF_frequency_pivot * pitch);
-        VCF_ptr->Set_filter(0, constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000));     // Set_filter(uint32_t stage, float frequency, float q = 0.7071)
+        VCF_ptr->Set_filter(0, constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000));  // Set_filter(uint32_t stage, float frequency, float q = 0.7071)
         VCF_frequency_array[0] = constrain(VCF_central_frequency * pow(2.0f, (LFO_ptr->block[0] / 1000.0f) * LFO_index), 50, 15000); // ONLY FOR PRINT
         VCF_frequency_pivot += VCF_pivot_grain;
         VCF_central_frequency = (VCF_frequency_pivot * pitch);
@@ -2365,7 +2380,7 @@ void AudioPlayer::Append_transposed(int16_t *_target, uint16_t first_index, int1
 {
     _target += first_index;
     _source += N - 1;
-    for (uint16_t i = 0; i < N; ++i)
+    for (auto i = 0; i < N; ++i)
     {
         *_target = *_source;
         _target++;
@@ -2376,7 +2391,7 @@ void AudioPlayer::Append_transposed(int16_t *_target, uint16_t first_index, int1
 void AudioPlayer::Append(int16_t *_target, uint16_t first_index, int16_t *_source, uint16_t N)
 {
     _target += first_index;
-    for (uint16_t i = 0; i < N; ++i)
+    for (auto i = 0; i < N; ++i)
     {
         *_target = *_source;
         _target++;
@@ -2491,14 +2506,14 @@ void AudioPlayer::Read_flash(int16_t *destination, int first_sample, int total_s
     }
 }
 
-int AudioPlayer::Read_session_wait(void)
+int AudioPlayer::Read_patch_wait(void)
 {
-    return session_wait;
+    return patch_id_wait;
 }
 
-int AudioPlayer::Read_local_session(void)
+int AudioPlayer::Read_local_patch(void)
 {
-    return local_session;
+    return local_patch;
 }
 
 bool AudioPlayer::Read_precedence(void)
@@ -2513,12 +2528,12 @@ int AudioPlayer::Read_midi_channel(void)
 
 int AudioPlayer::Read_instrument(void)
 {
-    return instrument;
+    return instrument_id;
 }
 
 int AudioPlayer::Read_id_sound(void)
 {
-    return id_sound;
+    return sound_id;
 }
 int AudioPlayer::Read_note(void)
 {

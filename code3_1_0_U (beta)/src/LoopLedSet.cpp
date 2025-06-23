@@ -17,9 +17,9 @@ void LoopLedSet::Request_all_LED_switch_off(void)
 void LoopLedSet::Request_track_LED_switch_off(int track)
 {
     // also NOT existing instruments
-    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        led_activity[track][instrument] = -2;
+        led_activity[track][instrument_local] = -2;
     }
 }
 
@@ -27,7 +27,7 @@ void LoopLedSet::Request_LED_switch(int track, int instrument, bool on)
 {
     if (on)
     {
-        // Serial.print("Request_LED_switch(auto track, auto instrument, bool on) - true - led_activity:");
+        // Serial.print("Request_LED_switch(int track, int instrument, bool on) - true - led_activity:");
         // Serial.println(led_activity[track][instrument]);
 
         if (led_activity[track][instrument] < 0)
@@ -38,7 +38,7 @@ void LoopLedSet::Request_LED_switch(int track, int instrument, bool on)
     }
     else
     {
-        // Serial.print("Request_LED_switch(auto track, auto instrument, bool on) - false - led_activity:");
+        // Serial.print("Request_LED_switch(int track, int instrument, bool on) - false - led_activity:");
         // Serial.println(led_activity[track][instrument]);
         
         if (led_activity[track][instrument] > 0)

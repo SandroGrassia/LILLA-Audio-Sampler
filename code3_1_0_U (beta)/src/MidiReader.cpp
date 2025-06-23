@@ -153,20 +153,19 @@ void MidiReader::Update(void)
                 // players_to_restart, se risultera' >0, richiede il calcolo dei vari valori di samples (mix_samples_for_Player[p])
                 // che ciascun Player da riavviare (restart_Player[p] == true) dovra' utilizzare
                 Players_Manager_ptr->Reset_booked_and_restart_player();
-
                 Players_Manager_ptr->Reset_players_to_restart();
 
-                for (uint8_t I = 0; I < INSTRUMENTS_MAX; ++I)
+                for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
                 {
-                    if ((Session[session].Instrument[I].used) && bitRead(map_instrument_for_note[midi_channel][note_number], I))
+                    if ((Patch[Patch_id].Instrument[instrument].used) && bitRead(map_instrument_for_note[midi_channel][note_number], instrument))
                     {
-                        Players_Manager_ptr->Play_note(I, note_number, velocity_float, -1);
+                        Players_Manager_ptr->Play_note(instrument, note_number, velocity_float, NO_TRACK);
                     }
                 }
 
-                // Tramite PLAY_note e i Player individuati, sono stati determinati i valori:
+                // Tramite Play_note e i Player individuati, sono stati determinati i valori:
                 // - players_to_restart
-                // - restart_Player[p] = true/false, per ciascun Player da avviare o riavviare
+                // - restart_Player[] = true/false, per ciascun Player da avviare o riavviare
                 // - update_time della nuova esecuzione, per ciascun Player da avviare o riavviare
 
                 // Ora si calcola e si trasmette mix_samples (numero di samples del cross mix) a ciascun Player da riavviare.
@@ -271,10 +270,10 @@ void MidiReader::Update(void)
                 midi_value = MIDI.getData1();
                 after_touch_channel_value[midi_channel] = midi_value / 127.0f;
 
-                for(auto I = 0; I < INSTRUMENTS_MAX; ++I)
-                    if ((Preset[I].midi_channel == midi_channel) && (Preset[I].Filter.use == 1) && (Preset[I].Filter.modulation == 4))
+                for(auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
+                    if ((Preset[instrument_local].midi_channel == midi_channel) && (Preset[instrument_local].Filter.use == 1) && (Preset[instrument_local].Filter.modulation == 4))
                     {
-                        Players_Manager_ptr->Multicast_IF_index(I, Preset[I].Filter.index * after_touch_channel_value[midi_channel]);
+                        Players_Manager_ptr->Multicast_IF_index(instrument_local, Preset[instrument_local].Filter.index * after_touch_channel_value[midi_channel]);
                     }
                 if (Lilla_state == MIDI_MONITOR && !display_wait)
                 {
@@ -339,18 +338,18 @@ void MidiReader::Update(void)
 
                 else
                 {
-                    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+                    for(auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
                     {
-                        if ((controller == CC_Sound_gain[instrument]) && (controller > 0))
+                        if ((controller == CC_Sound_gain[instrument_local]) && (controller > 0))
                         {
-                            if (Session[session].Instrument[instrument].used && (Get_midi_channel(session, instrument) == midi_channel))
+                            if (Patch[Patch_id].Instrument[instrument_local].used && (Get_midi_channel(Patch_id, instrument_local) == midi_channel))
                             {
-                                Sound[Session[session].Instrument[instrument].id_sound].gain = (float)midi_value * 0.315; // 127 --> 40
-                                Players_Manager_ptr->Update_Preset_volume(session, instrument, Volume_float[volume_session]);
-                                Players_Manager_ptr->Multicast_volume_for_instrument_edit(instrument);
+                                Sound[Patch[Patch_id].Instrument[instrument_local].sound_id].gain = (float)midi_value * 0.315; // 127 --> 40
+                                Players_Manager_ptr->Update_Preset_volume(Patch_id, instrument_local, Volume_float[volume_patch]);
+                                Players_Manager_ptr->Multicast_volume_for_instrument_edit(instrument_local);
                                 if (Lilla_state == PERFORMANCE)
                                 {
-                                    instrument_volume_changed = instrument;
+                                    instrument_volume_changed = instrument_local;
                                     display_instrument_volume_flag = true;
                                 }
                             }
@@ -467,11 +466,11 @@ void MidiReader::Update(void)
                     Players_Manager_ptr->Reset_players_to_restart();
 
                     // Inoltra note_on
-                    for (uint8_t I = 0; I < INSTRUMENTS_MAX; ++I)
+                    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
                     {
-                        if ((Session[session].Instrument[I].used) && bitRead(map_instrument_for_note[midi_channel][note_number], I))
+                        if ((Patch[Patch_id].Instrument[instrument_local].used) && bitRead(map_instrument_for_note[midi_channel][note_number], instrument_local))
                         {
-                            Players_Manager_ptr->Play_note(I, note_number, velocity_float, track);
+                            Players_Manager_ptr->Play_note(instrument_local, note_number, velocity_float, track);
                         }
                     }
 

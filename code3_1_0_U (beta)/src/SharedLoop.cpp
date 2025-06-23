@@ -6,8 +6,6 @@
 
 #include "SharedLoop.h"
 
-
-
 // MIDI LOOP
 LOOP_struct LOOP_element[TRACKS][LOOP_EVENTS];
 byte LOOP_events[TRACKS] = {0};

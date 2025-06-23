@@ -3,25 +3,25 @@
 
 void PlayersManager::MX_multicast_change_routing(int instrument)
 {
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (uint8_t player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying())
 
         {
             // configure Router_L, Router_R input/output routing_table
             if (Delay_values.instrument_route[instrument])
             {
-                Router_L_ptr->routing_table[p] = 0;
-                Router_R_ptr->routing_table[p] = 0;
+                Router_L_ptr->routing_table[player] = 0;
+                Router_R_ptr->routing_table[player] = 0;
             }
             else
             {
-                Router_L_ptr->routing_table[p] = 1;
-                Router_R_ptr->routing_table[p] = 1;
+                Router_L_ptr->routing_table[player] = 1;
+                Router_R_ptr->routing_table[player] = 1;
             }
 
-            Router_L_ptr->routing_MX[p] = MX_routing_source[instrument];
-            Router_R_ptr->routing_MX[p] = MX_routing_source[instrument];
+            Router_L_ptr->routing_MX[player] = MX_routing_source[instrument];
+            Router_R_ptr->routing_MX[player] = MX_routing_source[instrument];
         }
     }
 }
@@ -31,17 +31,16 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
     // Se e' una nota appartenente ad un track: track >= -1
     // Altrimenti: track = NO_TRACK
 
-    uint8_t p;
     int8_t id_player = -1;
     bool finished = false;
     bool use_Wavetable = Preset[instrument].use_Wavetable; // NON valido se LIVE_SAMPLER
 
-    // Caso NoteOn da tastiera reale (track == NO_TRACK) if a Player is_playing with same session, instrument and note_number, and track, this Player must be taken
-    for (p = 0; p < PLAYERS; ++p)
+    // Caso NoteOn da tastiera reale (track == NO_TRACK) if a Player is_playing with same patch_id, instrument and note_number, and track, this Player must be taken
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_local_session() == session) && (Player_ptr[p].Read_note() == note_number) && (Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying() && Player_ptr[p].Read_loop_track() == track) // isPlaying() significa !idle
+        if ((Player_ptr[player].Read_local_patch() == Patch_id) && (Player_ptr[player].Read_note() == note_number) && (Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying() && Player_ptr[player].Read_loop_track() == track) // isPlaying() significa !idle
         {
-            id_player = p;
+            id_player = player;
             finished = true;
             // PRINT("Play the same note - ", "Stop the same Player:", id_player);
             break;
@@ -55,11 +54,11 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
         if (players_using_Flash < POLYPHONY_FLASH[optimization]) // a Player can be used
         {
             // 1) if there is a Player !isPlaying, it can be used
-            for (p = 0; p < PLAYERS; ++p)
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (!Player_ptr[p].isPlaying())
+                if (!Player_ptr[player].isPlaying())
                 {
-                    id_player = p;
+                    id_player = player;
                     finished = true;
                     // PRINT("Play from Flash - case 0", "Found available Player:", id_player);
                     break;
@@ -68,12 +67,12 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
 
             if (!finished)
             {
-                // 2) if there is a Player playing an Instrument of a different Session, this Player can be used
-                for (p = 0; p < PLAYERS; ++p)
+                // 2) if there is a Player playing an Instrument of a different Patch, this Player can be used
+                for (auto player = 0; player < PLAYERS; ++player)
                 {
-                    if (Player_ptr[p].Read_session_wait() != session)
+                    if (Player_ptr[player].Read_patch_wait() != Patch_id)
                     {
-                        id_player = p;
+                        id_player = player;
                         finished = true;
                         PRINT("Play from Flash - case 1", "Found available Player:", id_player);
                         break;
@@ -127,12 +126,12 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
         // only a Player flash_mode can be reused
         else
         {
-            // 5A) there is a Player flash_mode from a different Session and playing
-            for (p = 0; p < PLAYERS; ++p)
+            // 5A) there is a Player flash_mode from a different Patch and playing
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if ((Player_ptr[p].Read_session_wait() != session) && !Player_ptr[p].Read_use_Wavetable() && Player_ptr[p].State() > 0)
+                if ((Player_ptr[player].Read_patch_wait() != Patch_id) && !Player_ptr[player].Read_use_Wavetable() && Player_ptr[player].State() > 0)
                 {
-                    id_player = p;
+                    id_player = player;
                     finished = true;
                     PRINT("Play from Flash - case 6", "Found available Player:", id_player);
                     break;
@@ -181,11 +180,11 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
 
         if (players_playing < PLAYERS) // there is at least ONE player that can be taken
         {
-            for (p = 0; p < PLAYERS; ++p)
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (!Player_ptr[p].isPlaying()) // isPlaying() significa !idle
+                if (!Player_ptr[player].isPlaying()) // isPlaying() significa !idle
                 {
-                    id_player = p;
+                    id_player = player;
                     finished = true;
                     // PRINT("Play from RAM - case 1", "Found available Player:", id_player);
                     break;
@@ -195,12 +194,12 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
 
         else // all Player are playing
         {
-            // 2) look for a Player playing an Instrument of a different Session: this Player can be taken
-            for (p = 0; p < PLAYERS; ++p)
+            // 2) look for a Player playing an Instrument of a different Patch: this Player can be taken
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (Player_ptr[p].Read_session_wait() != session)
+                if (Player_ptr[player].Read_patch_wait() != Patch_id)
                 {
-                    id_player = p;
+                    id_player = player;
                     finished = true;
                     // PRINT("Play from RAM - case 2", "Found available Player:", id_player);
                 }
@@ -315,9 +314,9 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
         PLAY note; il Player setta:
         power_on = true
         idle = false
-        (se interrogato Player[p].is_playing == true);
+        (se interrogato Player[player].is_playing == true);
         */
-        Player_ptr[id_player].Get_ready_to_play(pitch_from_note[note_number + 60 - Session[session].Instrument[instrument].root_key], velocity_float, session, instrument, Preset[instrument].id_sound, note_number);
+        Player_ptr[id_player].Get_ready_to_play(pitch_from_note[note_number + 60 - Patch[Patch_id].Instrument[instrument].root_key], velocity_float, Patch_id, instrument, Preset[instrument].sound_id, note_number);
 
         // calcola update_time e trasmetti il valore al Player
         int update_time;
@@ -362,13 +361,13 @@ void PlayersManager::Play_note(uint8_t instrument, uint8_t note_number, float ve
         // display Players activity
         if (false)
         {
-            for (uint8_t p = 0; p < PLAYERS; ++p)
+            for (uint8_t player = 0; player < PLAYERS; ++player)
             {
-                if (Player_ptr[p].isPoweredOn())
+                if (Player_ptr[player].isPoweredOn())
                 {
-                    Serial.print(Player_ptr[p].Read_note());
+                    Serial.print(Player_ptr[player].Read_note());
                     Serial.print("/");
-                    Serial.print(Player_ptr[p].Read_instrument());
+                    Serial.print(Player_ptr[player].Read_instrument());
                 }
                 else
                     Serial.print("NN");
@@ -392,13 +391,13 @@ void PlayersManager::Release_Player_noteOff(uint8_t player, int track) // after 
     // display Players activity
     if (false)
     {
-        for (uint8_t p = 0; p < PLAYERS; ++p)
+        for (uint8_t player = 0; player < PLAYERS; ++player)
         {
-            if (Player_ptr[p].isPoweredOn())
+            if (Player_ptr[player].isPoweredOn())
             {
-                Serial.print(Player_ptr[p].Read_note());
+                Serial.print(Player_ptr[player].Read_note());
                 Serial.print("/");
-                Serial.print(Player_ptr[p].Read_instrument());
+                Serial.print(Player_ptr[player].Read_instrument());
             }
             else
                 Serial.print("NN");
@@ -411,12 +410,12 @@ void PlayersManager::Release_Player_noteOff(uint8_t player, int track) // after 
 void PlayersManager::Reset_booked_and_restart_player(void)
 {
     // Player_booked serve ad evitare che gli Instrument che sono attivati da NoteOn non competano sullo stesso Player
-    // players_to_restart, se risultera' >0, richiede il calcolo dei vari valori di samples (mix_samples_for_Player[p])
-    // che ciascun Player da riavviare (restart_Player[p] == true) dovra' utilizzare
-    for(auto p = 0; p < PLAYERS; ++p)
+    // players_to_restart, se risultera' >0, richiede il calcolo dei vari valori di samples (mix_samples_for_Player[player])
+    // che ciascun Player da riavviare (restart_Player[player] == true) dovra' utilizzare
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        Player_booked[p] = false;
-        restart_Player[p] = false;
+        Player_booked[player] = false;
+        restart_Player[player] = false;
     }
 }
 
@@ -433,20 +432,21 @@ void PlayersManager::Cancel_restart_player(int player)
 int PlayersManager::Smartfind_oldest_player(uint8_t instrument, bool power_on, bool playing)
 {
     unsigned long time_min = 0;
-    uint8_t p, q;
+    ;
     int8_t result = -1;
-    for (p = 0; p < PLAYERS; ++p)
+
+    for (auto player_ext = 0; player_ext < PLAYERS; ++player_ext)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && (Player_ptr[p].isPoweredOn() == power_on) && (Player_ptr[p].isPlaying() == playing) && !Player_booked[p])
+        if ((Player_ptr[player_ext].Read_instrument() == instrument) && (Player_ptr[player_ext].isPoweredOn() == power_on) && (Player_ptr[player_ext].isPlaying() == playing) && !Player_booked[player_ext])
         {
-            time_min = Player_ptr[p].Read_time_stamp();
-            result = p;
-            for (q = 0; q < PLAYERS; ++q) // look for the player playing/going to play for the longest time
+            time_min = Player_ptr[player_ext].Read_time_stamp();
+            result = player_ext;
+            for (auto player = 0; player < PLAYERS; ++player) // look for the player playing/going to play for the longest time
             {
-                if (((Player_ptr + q)->Read_instrument() == instrument) && ((Player_ptr + q)->isPoweredOn() == power_on) && ((Player_ptr + q)->isPlaying() == playing) && ((Player_ptr + q)->Read_time_stamp() < time_min) && !Player_booked[q])
+                if (((Player_ptr + player)->Read_instrument() == instrument) && ((Player_ptr + player)->isPoweredOn() == power_on) && ((Player_ptr + player)->isPlaying() == playing) && ((Player_ptr + player)->Read_time_stamp() < time_min) && !Player_booked[player])
                 {
-                    time_min = (Player_ptr + q)->Read_time_stamp();
-                    result = q;
+                    time_min = (Player_ptr + player)->Read_time_stamp();
+                    result = player;
                 }
             }
             break;
@@ -458,20 +458,20 @@ int PlayersManager::Smartfind_oldest_player(uint8_t instrument, bool power_on, b
 int PlayersManager::Simplefind_oldest_player(bool power_on) // "precedence" instruments are EXCLUDED
 {
     unsigned long time_min = 0;
-    uint8_t p, q;
     int8_t result = -1;
-    for (p = 0; p < PLAYERS; ++p)
+
+    for (auto player_ext = 0; player_ext < PLAYERS; ++player_ext)
     {
-        if (!Player_ptr[p].Read_precedence() && (Player_ptr[p].isPoweredOn() == power_on) && !Player_booked[p])
+        if (!Player_ptr[player_ext].Read_precedence() && (Player_ptr[player_ext].isPoweredOn() == power_on) && !Player_booked[player_ext])
         {
-            time_min = Player_ptr[p].Read_time_stamp();
-            result = p;
-            for (q = 0; q < PLAYERS; ++q) // look for the player playing for the longest time
+            time_min = Player_ptr[player_ext].Read_time_stamp();
+            result = player_ext;
+            for (auto player = 0; player < PLAYERS; ++player) // look for the player playing for the longest time
             {
-                if (!(Player_ptr + q)->Read_precedence() && ((Player_ptr + q)->isPoweredOn() == power_on) && ((Player_ptr + q)->Read_time_stamp() < time_min) && !Player_booked[q])
+                if (!(Player_ptr + player)->Read_precedence() && ((Player_ptr + player)->isPoweredOn() == power_on) && ((Player_ptr + player)->Read_time_stamp() < time_min) && !Player_booked[player])
                 {
-                    time_min = (Player_ptr + q)->Read_time_stamp();
-                    result = q;
+                    time_min = (Player_ptr + player)->Read_time_stamp();
+                    result = player;
                 }
             }
             break;
@@ -483,21 +483,20 @@ int PlayersManager::Simplefind_oldest_player(bool power_on) // "precedence" inst
 int PlayersManager::Simplefind_oldest_player_flash(bool power_on, bool playing) // "precedence" instruments are EXCLUDED
 {
     unsigned long time_min = 0;
-    uint8_t p, q;
     int8_t result = -1;
 
-    for (p = 0; p < PLAYERS; ++p)
+    for (auto player_ext = 0; player_ext < PLAYERS; ++player_ext)
     {
-        if (!Player_ptr[p].Read_use_Wavetable() && !Player_ptr[p].Read_precedence() && (Player_ptr[p].isPlaying() == playing) && (Player_ptr[p].isPoweredOn() == power_on) && !Player_booked[p])
+        if (!Player_ptr[player_ext].Read_use_Wavetable() && !Player_ptr[player_ext].Read_precedence() && (Player_ptr[player_ext].isPlaying() == playing) && (Player_ptr[player_ext].isPoweredOn() == power_on) && !Player_booked[player_ext])
         {
-            time_min = Player_ptr[p].Read_time_stamp();
-            result = p;
-            for (q = 0; q < PLAYERS; ++q) // look for the player playing for the longest time
+            time_min = Player_ptr[player_ext].Read_time_stamp();
+            result = player_ext;
+            for (auto player_int = 0; player_int < PLAYERS; ++player_int) // look for the player playing for the longest time
             {
-                if (!(Player_ptr + q)->Read_use_Wavetable() && !(Player_ptr + q)->Read_precedence() && ((Player_ptr + q)->isPlaying() == playing) && ((Player_ptr + q)->isPoweredOn() == power_on) && ((Player_ptr + q)->Read_time_stamp() < time_min) && !Player_booked[q])
+                if (!(Player_ptr + player_int)->Read_use_Wavetable() && !(Player_ptr + player_int)->Read_precedence() && ((Player_ptr + player_int)->isPlaying() == playing) && ((Player_ptr + player_int)->isPoweredOn() == power_on) && ((Player_ptr + player_int)->Read_time_stamp() < time_min) && !Player_booked[player_int])
                 {
-                    time_min = (Player_ptr + q)->Read_time_stamp();
-                    result = q;
+                    time_min = (Player_ptr + player_int)->Read_time_stamp();
+                    result = player_int;
                 }
             }
             break;
@@ -506,127 +505,127 @@ int PlayersManager::Simplefind_oldest_player_flash(bool power_on, bool playing) 
     return result;
 }
 
-void PlayersManager::Change_from_key(int session, int instrument, int from_key_new)
+void PlayersManager::Change_from_key(int patch_id, int instrument, int from_key_new)
 {
-    if (from_key_new > Session[session].Instrument[instrument].from_note)
+    if (from_key_new > Patch[patch_id].Instrument[instrument].from_note)
     {
-        for(auto p = 0; p < PLAYERS; ++p)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
-            if (Player_ptr[p].Read_note() < from_key_new && Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_instrument() == instrument)
+            if (Player_ptr[player].Read_note() < from_key_new && Player_ptr[player].isPoweredOn() && Player_ptr[player].Read_instrument() == instrument)
             {
-                Release_player(p);
+                Release_player(player);
             }
         }
     }
-    Session[session].Instrument[instrument].from_note = from_key_new;
-    Update_map_Instrument_for_notes(Session[session].Instrument[instrument].from_note, Session[session].Instrument[instrument].to_note, instrument);
+    Patch[patch_id].Instrument[instrument].from_note = from_key_new;
+    Update_map_Instrument_for_notes(Patch[patch_id].Instrument[instrument].from_note, Patch[patch_id].Instrument[instrument].to_note, instrument);
 }
 
-void PlayersManager::Change_to_key(int session, int instrument, int to_key_new)
+void PlayersManager::Change_to_key(int patch_id, int instrument, int to_key_new)
 {
-    if (to_key_new < Session[session].Instrument[instrument].to_note)
+    if (to_key_new < Patch[patch_id].Instrument[instrument].to_note)
     {
-        for(auto p = 0; p < PLAYERS; ++p)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
-            if (Player_ptr[p].Read_note() > to_key_new && Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_instrument() == instrument)
+            if (Player_ptr[player].Read_note() > to_key_new && Player_ptr[player].isPoweredOn() && Player_ptr[player].Read_instrument() == instrument)
             {
-                Release_player(p);
+                Release_player(player);
             }
         }
     }
-    Session[session].Instrument[instrument].to_note = to_key_new;
-    Update_map_Instrument_for_notes(Session[session].Instrument[instrument].from_note, Session[session].Instrument[instrument].to_note, instrument);
+    Patch[patch_id].Instrument[instrument].to_note = to_key_new;
+    Update_map_Instrument_for_notes(Patch[patch_id].Instrument[instrument].from_note, Patch[patch_id].Instrument[instrument].to_note, instrument);
 }
 
-void PlayersManager::Multicast_change_players_notes(int session, int instrument) // usato quando si cambia la root_key
+void PlayersManager::Multicast_change_players_notes(int patch_id, int instrument) // usato quando si cambia la root_key
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_instrument() == instrument)
+        if (Player_ptr[player].isPoweredOn() && Player_ptr[player].Read_instrument() == instrument)
         {
-            Player_ptr[p].Set_note(pitch_from_note[Player_ptr[p].Read_note() + 60 - Session[session].Instrument[instrument].root_key]);
+            Player_ptr[player].Set_note(pitch_from_note[Player_ptr[player].Read_note() + 60 - Patch[patch_id].Instrument[instrument].root_key]);
         }
     }
 }
 
-void PlayersManager::Multicast_release_players(int id_sound)
+void PlayersManager::Multicast_release_players(int sound_id)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].Read_id_sound() == id_sound)
+        if (Player_ptr[player].Read_id_sound() == sound_id)
         {
-            Release_player(p);
+            Release_player(player);
         }
     }
 }
 
 void PlayersManager::Broadcast_volume(void)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].isPlaying())
+        if (Player_ptr[player].isPlaying())
         {
-            Player_ptr[p].Update_volume(Preset[Player_ptr[p].Read_instrument()].volume);
+            Player_ptr[player].Update_volume(Preset[Player_ptr[player].Read_instrument()].volume);
         }
     }
 }
 
 void PlayersManager::Multicast_volume_for_instrument_edit(int instrument)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying())
         {
-            Player_ptr[p].Update_volume(Preset[instrument].volume);
+            Player_ptr[player].Update_volume(Preset[instrument].volume);
         }
     }
 }
 
 void PlayersManager::Multicast_pitch_for_sound_edit(int instrument)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying())
         {
-            Player_ptr[p].Set_pitch(Preset[instrument].pitch);
+            Player_ptr[player].Set_pitch(Preset[instrument].pitch);
         }
     }
 }
 
 void PlayersManager::Multicast_pan(int instrument)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying())
         {
-            Player_ptr[p].Update_pan(Preset[instrument].pan);
+            Player_ptr[player].Update_pan(Preset[instrument].pan);
         }
     }
 }
 
 void PlayersManager::Multicast_effects(float resolution, uint8_t downsampling)
 {
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].isPlaying() && !Preset[Player_ptr[p].Read_instrument()].lock)
+        if (Player_ptr[player].isPlaying() && !Preset[Player_ptr[player].Read_instrument()].lock)
         {
-            Player_ptr[p].Set_effects(resolution, downsampling);
+            Player_ptr[player].Set_effects(resolution, downsampling);
         }
     }
 }
 
 void PlayersManager::Broadcast_reset_effect(float resolution, uint8_t downsampling, int effect)
 {
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if (effect == 0) // reset resolution
         {
-            Player_ptr[p].Set_effects(16.0, downsampling);
+            Player_ptr[player].Set_effects(16.0, downsampling);
         }
 
         else if (effect == 1) // reset downsampling
         {
-            Player_ptr[p].Set_effects(Calc_resolution(resolution), 1);
+            Player_ptr[player].Set_effects(Calc_resolution(resolution), 1);
         }
 
         else
@@ -636,173 +635,172 @@ void PlayersManager::Broadcast_reset_effect(float resolution, uint8_t downsampli
     }
 }
 
-void PlayersManager::Update_all_Preset(int session, float volume_session)
+void PlayersManager::Update_all_Preset(int patch_id, float volume_patch)
 {
-    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (Session[session].Instrument[instrument].used)
+        if (Patch[patch_id].Instrument[instrument_local].used)
         {
-            // Serial.println(instrument);
-            Update_Preset(session, instrument, volume_session);
+            Update_Preset(patch_id, instrument_local, volume_patch);
         }
     }
 }
 
-void PlayersManager::Update_all_Preset_volume(int session, float volume_session)
+void PlayersManager::Update_all_Preset_volume(int patch_id, float volume_patch)
 {
-    for(auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (Session[session].Instrument[instrument].used)
+        if (Patch[patch_id].Instrument[instrument_local].used)
         {
-            Update_Preset_volume(session, instrument, volume_session);
+            Update_Preset_volume(patch_id, instrument_local, volume_patch);
         }
     }
 }
 
-void PlayersManager::Update_Preset(int session, int instrument, float volume_session)
+void PlayersManager::Update_Preset(int patch_id, int instrument, float volume_patch)
 {
-    Update_Preset_volume(session, instrument, volume_session);
-    Preset[instrument].pan = Sound[Id_sound(session, instrument)].pan;
-    Preset[instrument].id_sound = Id_sound(session, instrument);
-    Preset[instrument].file = Sound[Id_sound(session, instrument)].file;
-    Preset[instrument].midi_channel = Get_midi_channel(session, instrument);
-    Preset[instrument].pitch = Calc_pitch(Sound[Id_sound(session, instrument)].pitch);
-    Preset[instrument].mode = Sound[Id_sound(session, instrument)].mode;
-    Preset[instrument].A = Sound[Id_sound(session, instrument)].A;
-    Preset[instrument].B = Sound[Id_sound(session, instrument)].B;
+    Update_Preset_volume(patch_id, instrument, volume_patch);
+    Preset[instrument].pan = Sound[Id_sound(patch_id, instrument)].pan;
+    Preset[instrument].sound_id = Id_sound(patch_id, instrument);
+    Preset[instrument].file = Sound[Id_sound(patch_id, instrument)].file;
+    Preset[instrument].midi_channel = Get_midi_channel(patch_id, instrument);
+    Preset[instrument].pitch = Calc_pitch(Sound[Id_sound(patch_id, instrument)].pitch);
+    Preset[instrument].mode = Sound[Id_sound(patch_id, instrument)].mode;
+    Preset[instrument].A = Sound[Id_sound(patch_id, instrument)].A;
+    Preset[instrument].B = Sound[Id_sound(patch_id, instrument)].B;
     Preset[instrument].use_Wavetable = (Preset[instrument].B - Preset[instrument].A + 1) <= BLOCK_MIN;
-    Preset[instrument].Noclick = Sound[Id_sound(session, instrument)].Noclick;
-    Preset[instrument].attack_type = bitRead(Sound[Id_sound(session, instrument)].data, 0);
-    Preset[instrument].attack = Calc_attack(Sound[Id_sound(session, instrument)].attack);
-    Preset[instrument].decay = CALC_decay(Sound[Id_sound(session, instrument)].decay);
-    Preset[instrument].sustain = Calc_sustain(Sound[Id_sound(session, instrument)].sustain);
-    Preset[instrument].release = Calc_release(Sound[Id_sound(session, instrument)].release);
-    Preset[instrument].precedence = Session[session].Instrument[instrument].precedence; // Preset[I].precedence = bitRead(Session[session].Instrument[I].info, 0);
-    Preset[instrument].lock = Session[session].Instrument[instrument].lock;             // Preset[I].lock = bitRead(Session[session].Instrument[I].info, 1)
-    Update_Preset_IF(session, instrument);
+    Preset[instrument].Noclick = Sound[Id_sound(patch_id, instrument)].Noclick;
+    Preset[instrument].attack_type = bitRead(Sound[Id_sound(patch_id, instrument)].data, 0);
+    Preset[instrument].attack = Calc_attack(Sound[Id_sound(patch_id, instrument)].attack);
+    Preset[instrument].decay = CALC_decay(Sound[Id_sound(patch_id, instrument)].decay);
+    Preset[instrument].sustain = Calc_sustain(Sound[Id_sound(patch_id, instrument)].sustain);
+    Preset[instrument].release = Calc_release(Sound[Id_sound(patch_id, instrument)].release);
+    Preset[instrument].precedence = Patch[patch_id].Instrument[instrument].precedence; // Preset[I].precedence = bitRead(Patch[patch_id].Instrument[I].info, 0);
+    Preset[instrument].lock = Patch[patch_id].Instrument[instrument].lock;             // Preset[I].lock = bitRead(Patch[patch_id].Instrument[I].info, 1)
+    Update_Preset_IF(patch_id, instrument);
 }
 
-void PlayersManager::Update_Preset_volume(int session, int instrument, float volume_session)
+void PlayersManager::Update_Preset_volume(int patch_id, int instrument, float volume_patch)
 {
     if (MX_mute[instrument])
     {
         Preset[instrument].volume = 0.0;
     }
     else
-        Preset[instrument].volume = volume_session * Volume_float[Sound[Id_sound(session, instrument)].gain];
+        Preset[instrument].volume = volume_patch * Volume_float[Sound[Id_sound(patch_id, instrument)].gain];
 }
 
-void PlayersManager::Update_Preset_pan(int session, int instrument)
+void PlayersManager::Update_Preset_pan(int patch_id, int instrument)
 {
-    Preset[instrument].pan = Sound[Id_sound(session, instrument)].pan;
+    Preset[instrument].pan = Sound[Id_sound(patch_id, instrument)].pan;
 }
 
-void PlayersManager::Update_Preset_id_sound(int session, int instrument)
+void PlayersManager::Update_Preset_id_sound(int patch_id, int instrument)
 {
-    Preset[instrument].id_sound = Id_sound(session, instrument);
+    Preset[instrument].sound_id = Id_sound(patch_id, instrument);
 }
 
-void PlayersManager::Update_Preset_file(int session, int instrument)
+void PlayersManager::Update_Preset_file(int patch_id, int instrument)
 {
-    Preset[instrument].file = Sound[Id_sound(session, instrument)].file;
+    Preset[instrument].file = Sound[Id_sound(patch_id, instrument)].file;
 }
 
-void PlayersManager::Update_Preset_midi_channel(int session, int instrument)
+void PlayersManager::Update_Preset_midi_channel(int patch_id, int instrument)
 {
-    Preset[instrument].midi_channel = Get_midi_channel(session, instrument);
+    Preset[instrument].midi_channel = Get_midi_channel(patch_id, instrument);
 }
 
-void PlayersManager::Update_Preset_pitch(int session, int instrument)
+void PlayersManager::Update_Preset_pitch(int patch_id, int instrument)
 {
-    Preset[instrument].pitch = Calc_pitch(Sound[Id_sound(session, instrument)].pitch);
+    Preset[instrument].pitch = Calc_pitch(Sound[Id_sound(patch_id, instrument)].pitch);
 }
 
-void PlayersManager::Update_Preset_mode(int session, int instrument)
+void PlayersManager::Update_Preset_mode(int patch_id, int instrument)
 {
-    Preset[instrument].mode = Sound[Id_sound(session, instrument)].mode;
+    Preset[instrument].mode = Sound[Id_sound(patch_id, instrument)].mode;
 }
 
-void PlayersManager::Update_Preset_A_B_Wavetable(int session, int instrument)
+void PlayersManager::Update_Preset_A_B_Wavetable(int patch_id, int instrument)
 {
-    Preset[instrument].A = Sound[Id_sound(session, instrument)].A;
-    Preset[instrument].B = Sound[Id_sound(session, instrument)].B;
+    Preset[instrument].A = Sound[Id_sound(patch_id, instrument)].A;
+    Preset[instrument].B = Sound[Id_sound(patch_id, instrument)].B;
     Preset[instrument].use_Wavetable = (Preset[instrument].B - Preset[instrument].A + 1) <= BLOCK_MIN;
 }
 
-void PlayersManager::Update_Preset_Noclick(int session, int instrument)
+void PlayersManager::Update_Preset_Noclick(int patch_id, int instrument)
 {
-    Preset[instrument].Noclick = Sound[Id_sound(session, instrument)].Noclick;
+    Preset[instrument].Noclick = Sound[Id_sound(patch_id, instrument)].Noclick;
 }
 
-void PlayersManager::Update_Preset_attack_type(int session, int instrument)
+void PlayersManager::Update_Preset_attack_type(int patch_id, int instrument)
 {
-    Preset[instrument].attack_type = bitRead(Sound[Id_sound(session, instrument)].data, 0);
+    Preset[instrument].attack_type = bitRead(Sound[Id_sound(patch_id, instrument)].data, 0);
 }
 
-void PlayersManager::Update_Preset_attack(int session, int instrument)
+void PlayersManager::Update_Preset_attack(int patch_id, int instrument)
 {
-    Preset[instrument].attack = Calc_attack(Sound[Id_sound(session, instrument)].attack);
+    Preset[instrument].attack = Calc_attack(Sound[Id_sound(patch_id, instrument)].attack);
 }
 
-void PlayersManager::Update_Preset_decay(int session, int instrument)
+void PlayersManager::Update_Preset_decay(int patch_id, int instrument)
 {
-    Preset[instrument].decay = CALC_decay(Sound[Id_sound(session, instrument)].decay);
+    Preset[instrument].decay = CALC_decay(Sound[Id_sound(patch_id, instrument)].decay);
 }
 
-void PlayersManager::Update_Preset_sustain(int session, int instrument)
+void PlayersManager::Update_Preset_sustain(int patch_id, int instrument)
 {
-    Preset[instrument].sustain = Calc_sustain(Sound[Id_sound(session, instrument)].sustain);
+    Preset[instrument].sustain = Calc_sustain(Sound[Id_sound(patch_id, instrument)].sustain);
 }
 
-void PlayersManager::Update_Preset_release(int session, int instrument)
+void PlayersManager::Update_Preset_release(int patch_id, int instrument)
 {
-    Preset[instrument].release = Calc_release(Sound[Id_sound(session, instrument)].release);
+    Preset[instrument].release = Calc_release(Sound[Id_sound(patch_id, instrument)].release);
 }
 
-void PlayersManager::Update_Preset_precedence(int session, int instrument)
+void PlayersManager::Update_Preset_precedence(int patch_id, int instrument)
 {
-    Preset[instrument].precedence = Session[session].Instrument[instrument].precedence;
+    Preset[instrument].precedence = Patch[patch_id].Instrument[instrument].precedence;
 }
 
-void PlayersManager::Update_Preset_lock(int session, int instrument)
+void PlayersManager::Update_Preset_lock(int patch_id, int instrument)
 {
-    Preset[instrument].lock = Session[session].Instrument[instrument].lock;
+    Preset[instrument].lock = Patch[patch_id].Instrument[instrument].lock;
 }
 
 void PlayersManager::Multicast_IF_update_filter_type(int instrument)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying())
         {
             if (Preset[instrument].Filter.use == 1)
             {
                 if (Preset[instrument].Filter.modulation == 4) // LFO wave "sine" modulates VCF and MIDI After touch modulates index
                 {
-                    Player_ptr[p].Connect_VCF(true, Preset[instrument].Filter.type, Preset[instrument].Filter.pivot, Preset[instrument].Filter.resonance, true);                                                                                                        // void Connect_VCF(bool use, int type, float pivot, float resonance, bool modulated)
-                    Player_ptr[p].Connect_LFO_TO_VCF(Preset[instrument].Filter.modulation, Preset[instrument].Filter.index * after_touch_channel_value[Preset[instrument].midi_channel], Preset[instrument].Filter.periodic, Preset[instrument].Filter.frequency_time); // Connect_LFO_TO_VCF(uint8_t modulation, float index, uint8_t periodic, float frequency_time)
+                    Player_ptr[player].Connect_VCF(true, Preset[instrument].Filter.type, Preset[instrument].Filter.pivot, Preset[instrument].Filter.resonance, true);                                                                                                        // void Connect_VCF(bool use, int type, float pivot, float resonance, bool modulated)
+                    Player_ptr[player].Connect_LFO_TO_VCF(Preset[instrument].Filter.modulation, Preset[instrument].Filter.index * after_touch_channel_value[Preset[instrument].midi_channel], Preset[instrument].Filter.periodic, Preset[instrument].Filter.frequency_time); // Connect_LFO_TO_VCF(uint8_t modulation, float index, uint8_t periodic, float frequency_time)
                 }
                 else if (Preset[instrument].Filter.modulation > 0) // LFO modulates VCF
                 {
-                    Player_ptr[p].Connect_VCF(true, Preset[instrument].Filter.type, Preset[instrument].Filter.pivot, Preset[instrument].Filter.resonance, true);                                           // void Connect_VCF(bool use, int type, float pivot, float resonance, bool modulated)
-                    Player_ptr[p].Connect_LFO_TO_VCF(Preset[instrument].Filter.modulation, Preset[instrument].Filter.index, Preset[instrument].Filter.periodic, Preset[instrument].Filter.frequency_time); // Connect_LFO_TO_VCF(uint8_t modulation, float index, uint8_t periodic, float frequency_time)
+                    Player_ptr[player].Connect_VCF(true, Preset[instrument].Filter.type, Preset[instrument].Filter.pivot, Preset[instrument].Filter.resonance, true);                                           // void Connect_VCF(bool use, int type, float pivot, float resonance, bool modulated)
+                    Player_ptr[player].Connect_LFO_TO_VCF(Preset[instrument].Filter.modulation, Preset[instrument].Filter.index, Preset[instrument].Filter.periodic, Preset[instrument].Filter.frequency_time); // Connect_LFO_TO_VCF(uint8_t modulation, float index, uint8_t periodic, float frequency_time)
                 }
                 else // VCF is not modulated
                 {
-                    Player_ptr[p].Connect_VCF(true, Preset[instrument].Filter.type, Preset[instrument].Filter.pivot, Preset[instrument].Filter.resonance, false); // void Connect_VCF(bool use, int type, float pivot, float resonance, bool modulated)
+                    Player_ptr[player].Connect_VCF(true, Preset[instrument].Filter.type, Preset[instrument].Filter.pivot, Preset[instrument].Filter.resonance, false); // void Connect_VCF(bool use, int type, float pivot, float resonance, bool modulated)
                 }
             }
             else
-                Player_ptr[p].Connect_VCF(false, 0, 20000, 1, false);
+                Player_ptr[player].Connect_VCF(false, 0, 20000, 1, false);
 
-            Player_ptr[p].Start_VCF();
+            Player_ptr[player].Start_VCF();
         }
     }
 }
 
-void PlayersManager::Update_IF_resonance(int session, int instrument)
+void PlayersManager::Update_IF_resonance(int patch_id, int instrument)
 {
-    Update_Preset_IF_resonance(session, instrument);
+    Update_Preset_IF_resonance(patch_id, instrument);
     if (Preset[instrument].Filter.use == 1)
     {
         Multicast_IF_resonance(instrument);
@@ -811,7 +809,7 @@ void PlayersManager::Update_IF_resonance(int session, int instrument)
 
 void PlayersManager::Multicast_IF_pivot(int instrument)
 {
-    for (uint8_t player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if (((Player_ptr + player)->Read_instrument() == instrument) && (Player_ptr + player)->isPlaying())
         {
@@ -822,7 +820,7 @@ void PlayersManager::Multicast_IF_pivot(int instrument)
 
 void PlayersManager::Multicast_IF_frequency_filter(int instrument)
 {
-    for (uint8_t player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if (((Player_ptr + player)->Read_instrument() == instrument) && (Player_ptr + player)->isPlaying())
         {
@@ -841,7 +839,7 @@ void PlayersManager::Multicast_IF_frequency_filter(int instrument)
 
 void PlayersManager::Multicast_IF_resonance(int instrument)
 {
-    for (uint8_t player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if (((Player_ptr + player)->Read_instrument() == instrument) && (Player_ptr + player)->isPlaying())
         {
@@ -850,46 +848,46 @@ void PlayersManager::Multicast_IF_resonance(int instrument)
     }
 }
 
-void PlayersManager::Update_Preset_IF(int session, int instrument)
+void PlayersManager::Update_Preset_IF(int patch_id, int instrument)
 {
-    Preset[instrument].Filter.use = Session[session].Instrument[instrument].Filter.use;
-    Preset[instrument].Filter.type = Session[session].Instrument[instrument].Filter.type; // 0 -> 3
+    Preset[instrument].Filter.use = Patch[patch_id].Instrument[instrument].Filter.use;
+    Preset[instrument].Filter.type = Patch[patch_id].Instrument[instrument].Filter.type; // 0 -> 3
 
-    float value = Session[session].Instrument[instrument].Filter.pivot / 10.0f;                                     // 0 --> 100  0 --> 10
+    float value = Patch[patch_id].Instrument[instrument].Filter.pivot / 10.0f;                                     // 0 --> 100  0 --> 10
     Preset[instrument].Filter.pivot = 20.0f * pow(2.0f, value);                                                     //  20 --> 20048
-    Preset[instrument].Filter.resonance = (5.0f + Session[session].Instrument[instrument].Filter.resonance) / 5.0f; // 0 --> 40
-    Preset[instrument].Filter.index = Session[session].Instrument[instrument].Filter.index / 20.0f;                 // 0 --> 20 : 0 --> 1.0
-    Update_Preset_IF_modulation(session, instrument);
+    Preset[instrument].Filter.resonance = (5.0f + Patch[patch_id].Instrument[instrument].Filter.resonance) / 5.0f; // 0 --> 40
+    Preset[instrument].Filter.index = Patch[patch_id].Instrument[instrument].Filter.index / 20.0f;                 // 0 --> 20 : 0 --> 1.0
+    Update_Preset_IF_modulation(patch_id, instrument);
 }
 
-void PlayersManager::Update_Preset_IF_resonance(int session, int instrument)
+void PlayersManager::Update_Preset_IF_resonance(int patch_id, int instrument)
 {
-    Preset[instrument].Filter.resonance = (5.0f + Session[session].Instrument[instrument].Filter.resonance) / 5.0f; // 0 --> 40
+    Preset[instrument].Filter.resonance = (5.0f + Patch[patch_id].Instrument[instrument].Filter.resonance) / 5.0f; // 0 --> 40
 }
 
-void PlayersManager::Update_Preset_IF_filter_type(int session, int instrument)
+void PlayersManager::Update_Preset_IF_filter_type(int patch_id, int instrument)
 {
-    Preset[instrument].Filter.type = Session[session].Instrument[instrument].Filter.type; // 0 -> 3
+    Preset[instrument].Filter.type = Patch[patch_id].Instrument[instrument].Filter.type; // 0 -> 3
 }
 
-void PlayersManager::Update_Preset_IF_modulation(int session, int instrument)
+void PlayersManager::Update_Preset_IF_modulation(int patch_id, int instrument)
 {
-    Preset[instrument].Filter.modulation = Session[session].Instrument[instrument].Filter.modulation; // 0 -> 4
+    Preset[instrument].Filter.modulation = Patch[patch_id].Instrument[instrument].Filter.modulation; // 0 -> 4
     if (Preset[instrument].Filter.modulation == 3 || Preset[instrument].Filter.modulation == 4)
     {
         Preset[instrument].Filter.periodic = 1;
-        Preset[instrument].Filter.frequency_time = Session[session].Instrument[instrument].Filter.frequency_time * Session[session].Instrument[instrument].Filter.frequency_time / 40.0f; // 0 --> 40
+        Preset[instrument].Filter.frequency_time = Patch[patch_id].Instrument[instrument].Filter.frequency_time * Patch[patch_id].Instrument[instrument].Filter.frequency_time / 40.0f; // 0 --> 40
     }
     else
     {
         Preset[instrument].Filter.periodic = 0;
-        Preset[instrument].Filter.frequency_time = Session[session].Instrument[instrument].Filter.frequency_time / 8.0f; // 0 --> 40
+        Preset[instrument].Filter.frequency_time = Patch[patch_id].Instrument[instrument].Filter.frequency_time / 8.0f; // 0 --> 40
     }
 }
 
-void PlayersManager::Update_Preset_IF_index(int session, int instrument)
+void PlayersManager::Update_Preset_IF_index(int patch_id, int instrument)
 {
-    Update_Preset_IF(session, instrument);
+    Update_Preset_IF(patch_id, instrument);
     if (Preset[instrument].Filter.use == 1)
     {
         if (Preset[instrument].Filter.modulation == 4)
@@ -905,33 +903,34 @@ void PlayersManager::Update_Preset_IF_index(int session, int instrument)
 
 void PlayersManager::Multicast_IF_index(int instrument, float value)
 {
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying())
         {
-            Player_ptr[p].Update_LFO_index(value);
+            Player_ptr[player].Update_LFO_index(value);
         }
     }
 }
 
-void PlayersManager::Multicast_main_settings_editing(int session, int instrument)
+void PlayersManager::Multicast_main_settings_editing(int patch_id, int instrument)
 {
     uint8_t players_to_cross_mix = 0;
     uint8_t mix_samples_for_Player[PLAYERS] = {0};
     bool cross_mix_Player[PLAYERS] = {0};
-    for(auto p = 0; p < PLAYERS; ++p)
+
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        mix_samples_for_Player[p] = 0;
-        cross_mix_Player[p] = false;
+        mix_samples_for_Player[player] = 0;
+        cross_mix_Player[player] = false;
     }
 
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_local_session() == session) && (Player_ptr[p].Read_instrument() == instrument) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_local_patch() == patch_id) && (Player_ptr[player].Read_instrument() == instrument) && Player_ptr[player].isPlaying())
         {
-            Player_ptr[p].Main_settings_editing(Preset[instrument].mode, Preset[instrument].A, Preset[instrument].B, Preset[instrument].Noclick, Preset[instrument].use_Wavetable, Noclick_pointer[instrument], Wavetable_pointer[instrument]);
+            Player_ptr[player].Main_settings_editing(Preset[instrument].mode, Preset[instrument].A, Preset[instrument].B, Preset[instrument].Noclick, Preset[instrument].use_Wavetable, Noclick_pointer[instrument], Wavetable_pointer[instrument]);
             players_to_cross_mix++;
-            cross_mix_Player[p] = true;
+            cross_mix_Player[player] = true;
         }
     }
 
@@ -948,25 +947,25 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
         float standard_pitch_of_Player[PLAYERS];
 
         // calculate the standardized "flash-play" pitch: pitch of RAM-playing Players will be normalized so they can be traated as Flash-playing Players
-        for (uint8_t p = 0; p < PLAYERS; ++p)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
-            if (cross_mix_Player[p])
+            if (cross_mix_Player[player])
             {
-                old_use_wavetable[p] = Player_ptr[p].Read_use_Wavetable();
-                old_pitch_of_Player[p] = Player_ptr[p].Read_pitch();
+                old_use_wavetable[player] = Player_ptr[player].Read_use_Wavetable();
+                old_pitch_of_Player[player] = Player_ptr[player].Read_pitch();
 
-                if (old_use_wavetable[p])
+                if (old_use_wavetable[player])
                 {
-                    standard_pitch_of_Player[p] = old_pitch_of_Player[p] * 0.07113;
+                    standard_pitch_of_Player[player] = old_pitch_of_Player[player] * 0.07113;
                 }
                 else
                 {
-                    standard_pitch_of_Player[p] = old_pitch_of_Player[p];
+                    standard_pitch_of_Player[player] = old_pitch_of_Player[player];
                 }
                 // Serial.print("Player:");
-                // Serial.print(p);
+                // Serial.print(player);
                 // Serial.print(" has standard_pitch:");
-                // Serial.println(standard_pitch_of_Player[p]);
+                // Serial.println(standard_pitch_of_Player[player]);
             }
         }
         // Serial.println();
@@ -975,14 +974,14 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
         int max_cross_mix_time;
         uint8_t worst_Player = 0;
         float max_pitch = 0;
-        for (uint8_t p = 0; p < PLAYERS; ++p)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
-            if (cross_mix_Player[p])
+            if (cross_mix_Player[player])
             {
-                if (standard_pitch_of_Player[p] > max_pitch)
+                if (standard_pitch_of_Player[player] > max_pitch)
                 {
-                    max_pitch = standard_pitch_of_Player[p];
-                    worst_Player = p;
+                    max_pitch = standard_pitch_of_Player[player];
+                    worst_Player = player;
                 }
             }
         }
@@ -1001,20 +1000,20 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
         if (mix_micros_span > (max_cross_mix_time * players_to_cross_mix))
         {
             // Serial.println("Case 1 is verified --> transmit mix_samples = 64 to Players to cross_mix.");
-            for (uint8_t p = 0; p < PLAYERS; ++p)
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (cross_mix_Player[p])
+                if (cross_mix_Player[player])
                 {
-                    cross_mix_Player[p] = false;
+                    cross_mix_Player[player] = false;
                     players_to_cross_mix--;
-                    mix_samples_for_Player[p] = 32;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                    mix_samples_for_Player[player] = 32;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
 
-                    mix_micros_span -= Get_cross_mix_time(p, 32); // Get_cross_mix_time(uint8_t p, uint16_t mix_samples)
+                    mix_micros_span -= Get_cross_mix_time(player, 32); // Get_cross_mix_time(uint8_t player, uint16_t mix_samples)
                     // Serial.print("mix_sample 64 is given to Player ");
-                    // Serial.print(p);
+                    // Serial.print(player);
                     // Serial.print("; theorical update time is:");
-                    // Serial.println(Get_cross_mix_time(p, 32) + Player_ptr[p].update_time);
+                    // Serial.println(Get_cross_mix_time(player, 32) + Player_ptr[player].update_time);
                 }
             }
             finished = true;
@@ -1031,23 +1030,23 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
             if (mix_micros_span > (max_cross_mix_time * players_to_cross_mix))
             {
                 // Serial.println("Case 2 is verified --> transmit mix_samples = 48 to Players to cross_mix.");
-                for (uint8_t p = 0; p < PLAYERS; ++p)
+                for (auto player = 0; player < PLAYERS; ++player)
                 {
-                    if (cross_mix_Player[p])
+                    if (cross_mix_Player[player])
                     {
-                        cross_mix_Player[p] = false;
+                        cross_mix_Player[player] = false;
                         players_to_cross_mix--;
-                        mix_samples_for_Player[p] = 48;
-                        Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                        mix_samples_for_Player[player] = 48;
+                        Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
 
-                        mix_micros_span -= Get_cross_mix_time(p, 48); // Get_cross_mix_time(uint8_t p, uint16_t mix_samples)
+                        mix_micros_span -= Get_cross_mix_time(player, 48); // Get_cross_mix_time(uint8_t player, uint16_t mix_samples)
 
                         if (false)
                         {
                             Serial.print("mix_sample 48 is given to Player ");
-                            Serial.print(p);
+                            Serial.print(player);
                             Serial.print("; theorical update time is:");
-                            Serial.println(Get_cross_mix_time(p, 48) + Player_ptr[p].Read_update_time());
+                            Serial.println(Get_cross_mix_time(player, 48) + Player_ptr[player].Read_update_time());
                         }
                     }
                 }
@@ -1066,23 +1065,23 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
             if (mix_micros_span > (max_cross_mix_time * players_to_cross_mix))
             {
                 // Serial.println("Case 3 is verified --> transmit mix_samples = 32 to Players to cross_mix.");
-                for (uint8_t p = 0; p < PLAYERS; ++p)
+                for (auto player = 0; player < PLAYERS; ++player)
                 {
-                    if (cross_mix_Player[p])
+                    if (cross_mix_Player[player])
                     {
-                        cross_mix_Player[p] = false;
+                        cross_mix_Player[player] = false;
                         players_to_cross_mix--;
-                        mix_samples_for_Player[p] = 32;
-                        Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                        mix_samples_for_Player[player] = 32;
+                        Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
 
-                        mix_micros_span -= Get_cross_mix_time(p, 32); // Get_cross_mix_time(uint8_t p, uint16_t mix_samples)
+                        mix_micros_span -= Get_cross_mix_time(player, 32); // Get_cross_mix_time(uint8_t player, uint16_t mix_samples)
 
                         if (false)
                         {
                             Serial.print("mix_sample 32 is given to Player ");
-                            Serial.print(p);
+                            Serial.print(player);
                             Serial.print("; theorical update time is:");
-                            Serial.println(Get_cross_mix_time(p, 32) + Player_ptr[p].Read_update_time());
+                            Serial.println(Get_cross_mix_time(player, 32) + Player_ptr[player].Read_update_time());
                         }
                     }
                 }
@@ -1093,88 +1092,88 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
         if (!finished)
         {
             // 4: Try to assign minimum  mix_samples to Players
-            for (uint8_t p = 0; p < PLAYERS; ++p)
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (cross_mix_Player[p])
+                if (cross_mix_Player[player])
                 {
-                    if (standard_pitch_of_Player[p] <= 0.7)
+                    if (standard_pitch_of_Player[player] <= 0.7)
                     {
-                        cross_mix_Player[p] = false;
+                        cross_mix_Player[player] = false;
                         players_to_cross_mix--;
-                        mix_samples_for_Player[p] = 64;
-                        Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                        mix_micros_span -= Get_cross_mix_time(p, 64);
+                        mix_samples_for_Player[player] = 64;
+                        Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                        mix_micros_span -= Get_cross_mix_time(player, 64);
 
                         if (false)
                         {
                             Serial.print("mix_sample 64 is given to Player ");
-                            Serial.print(p);
+                            Serial.print(player);
                             Serial.print("; theorical update time is:");
-                            Serial.println(Get_cross_mix_time(p, 64) + Player_ptr[p].Read_update_time());
+                            Serial.println(Get_cross_mix_time(player, 64) + Player_ptr[player].Read_update_time());
                         }
                     }
-                    else if (standard_pitch_of_Player[p] <= 0.8)
+                    else if (standard_pitch_of_Player[player] <= 0.8)
                     {
-                        cross_mix_Player[p] = false;
+                        cross_mix_Player[player] = false;
                         players_to_cross_mix--;
-                        mix_samples_for_Player[p] = 48;
-                        Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                        mix_micros_span -= Get_cross_mix_time(p, 48);
+                        mix_samples_for_Player[player] = 48;
+                        Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                        mix_micros_span -= Get_cross_mix_time(player, 48);
 
                         if (false)
                         {
                             Serial.print("mix_sample 48 is given to Player ");
-                            Serial.print(p);
+                            Serial.print(player);
                             Serial.print("; theorical update time is:");
-                            Serial.println(Get_cross_mix_time(p, 48) + Player_ptr[p].Read_update_time());
+                            Serial.println(Get_cross_mix_time(player, 48) + Player_ptr[player].Read_update_time());
                         }
                     }
-                    else if (standard_pitch_of_Player[p] <= 1.0)
+                    else if (standard_pitch_of_Player[player] <= 1.0)
                     {
-                        cross_mix_Player[p] = false;
+                        cross_mix_Player[player] = false;
                         players_to_cross_mix--;
-                        mix_samples_for_Player[p] = 32;
-                        Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                        mix_micros_span -= Get_cross_mix_time(p, 32);
+                        mix_samples_for_Player[player] = 32;
+                        Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                        mix_micros_span -= Get_cross_mix_time(player, 32);
 
                         if (false)
                         {
                             Serial.print("mix_sample 32 is given to Player ");
-                            Serial.print(p);
+                            Serial.print(player);
                             Serial.print("; theorical update time is:");
-                            Serial.println(Get_cross_mix_time(p, 32) + Player_ptr[p].Read_update_time());
+                            Serial.println(Get_cross_mix_time(player, 32) + Player_ptr[player].Read_update_time());
                         }
                     }
-                    else if (standard_pitch_of_Player[p] <= 1.2)
+                    else if (standard_pitch_of_Player[player] <= 1.2)
                     {
-                        cross_mix_Player[p] = false;
+                        cross_mix_Player[player] = false;
                         players_to_cross_mix--;
-                        mix_samples_for_Player[p] = 24;
-                        Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                        mix_micros_span -= Get_cross_mix_time(p, 24);
+                        mix_samples_for_Player[player] = 24;
+                        Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                        mix_micros_span -= Get_cross_mix_time(player, 24);
 
                         if (false)
                         {
                             Serial.print("mix_sample 24 is given to Player ");
-                            Serial.print(p);
+                            Serial.print(player);
                             Serial.print("; theorical update time is:");
-                            Serial.println(Get_cross_mix_time(p, 24) + Player_ptr[p].Read_update_time());
+                            Serial.println(Get_cross_mix_time(player, 24) + Player_ptr[player].Read_update_time());
                         }
                     }
-                    else if (standard_pitch_of_Player[p] <= 1.4)
+                    else if (standard_pitch_of_Player[player] <= 1.4)
                     {
-                        cross_mix_Player[p] = false;
+                        cross_mix_Player[player] = false;
                         players_to_cross_mix--;
-                        mix_samples_for_Player[p] = 16;
-                        Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                        mix_micros_span -= Get_cross_mix_time(p, 16);
+                        mix_samples_for_Player[player] = 16;
+                        Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                        mix_micros_span -= Get_cross_mix_time(player, 16);
 
                         if (false)
                         {
                             Serial.print("mix_sample 16 is given to Player ");
-                            Serial.print(p);
+                            Serial.print(player);
                             Serial.print("; theorical update time is:");
-                            Serial.println(Get_cross_mix_time(p, 16) + Player_ptr[p].Read_update_time());
+                            Serial.println(Get_cross_mix_time(player, 16) + Player_ptr[player].Read_update_time());
                         }
                     }
                     if (players_to_cross_mix == 0)
@@ -1194,16 +1193,16 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
 
         if (!finished)
         {
-            for (uint8_t p = 0; p < PLAYERS; ++p)
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (cross_mix_Player[p])
+                if (cross_mix_Player[player])
                 {
-                    cross_mix_Player[p] = false;
+                    cross_mix_Player[player] = false;
                     players_to_cross_mix--;
-                    mix_samples_for_Player[p] = 5;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                    mix_samples_for_Player[player] = 5;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
                     // Serial.print("Mix_sample 5 is given to Player ");
-                    // Serial.println(p);
+                    // Serial.println(player);
                 }
             }
         }
@@ -1214,28 +1213,27 @@ void PlayersManager::Multicast_main_settings_editing(int session, int instrument
     }
 }
 
-bool PlayersManager::Get_use_Wavetable(int id_sound)
+bool PlayersManager::Get_use_Wavetable(int sound_id)
 {
-    return ((Sound[id_sound].B - Sound[id_sound].A + 1) <= BLOCK_MIN); // BLOCK_MIN is defined in Lilla_player.h
+    return ((Sound[sound_id].B - Sound[sound_id].A + 1) <= BLOCK_MIN); // BLOCK_MIN is defined in Lilla_player.h
 }
 
 int8_t PlayersManager::Find_oldest_player(int instrument, bool power_on, bool playing)
 {
     unsigned long time_min = 0;
-    uint8_t p, q;
     int8_t result = 0;
-    for (p = 0; p < PLAYERS; ++p)
+    for (auto player_ext = 0; player_ext < PLAYERS; ++player_ext)
     {
-        if ((Player_ptr[p].Read_instrument() == instrument) && (Player_ptr[p].isPoweredOn() == power_on) && (Player_ptr[p].isPlaying() == playing))
+        if ((Player_ptr[player_ext].Read_instrument() == instrument) && (Player_ptr[player_ext].isPoweredOn() == power_on) && (Player_ptr[player_ext].isPlaying() == playing))
         {
-            time_min = Player_ptr[p].Read_time_stamp();
-            result = p;
-            for (q = 0; q < PLAYERS; ++q) // look for the player playing for the longest time
+            time_min = Player_ptr[player_ext].Read_time_stamp();
+            result = player_ext;
+            for (auto player_int = 0; player_int < PLAYERS; ++player_int) // look for the player playing for the longest time
             {
-                if (((Player_ptr + q)->Read_instrument() == instrument) && ((Player_ptr + q)->isPoweredOn() == power_on) && ((Player_ptr + q)->isPlaying() == playing) && ((Player_ptr + q)->Read_time_stamp() < time_min))
+                if (((Player_ptr + player_int)->Read_instrument() == instrument) && ((Player_ptr + player_int)->isPoweredOn() == power_on) && ((Player_ptr + player_int)->isPlaying() == playing) && ((Player_ptr + player_int)->Read_time_stamp() < time_min))
                 {
-                    time_min = (Player_ptr + q)->Read_time_stamp();
-                    result = q;
+                    time_min = (Player_ptr + player_int)->Read_time_stamp();
+                    result = player_int;
                 }
             }
             return result;
@@ -1250,16 +1248,16 @@ void PlayersManager::Release_player(int player, int track) // after receiving a 
     (Player_ptr + player)->Write_time_stamp(millis());
 }
 
-bool PlayersManager::Verify_if_stop_players(int session, int instrument) // when EDITING a SOUND, each time B or A change it's MANDATORY to test if SOME Players MUST be stopped
+bool PlayersManager::Verify_if_stop_players(int patch_id, int instrument) // when EDITING a SOUND, each time B or A change it's MANDATORY to test if SOME Players MUST be stopped
 {
     uint8_t players_critical = 0;
     uint8_t players_to_stop = 0;
     int8_t index = 0;
 
-    if ((POLYPHONY_FLASH[optimization] < PLAYERS) && Preset[instrument].use_Wavetable && !Get_use_Wavetable(Id_sound(session, instrument))) // Sound passes from use_Wavetable to !use_Wavetable
+    if ((POLYPHONY_FLASH[optimization] < PLAYERS) && Preset[instrument].use_Wavetable && !Get_use_Wavetable(Id_sound(patch_id, instrument))) // Sound passes from use_Wavetable to !use_Wavetable
     {
         // players_critical  = how many Player ARE GOING to !use_Wavetable (those playing "instrument") + how many Player are ALREDY !use_Wavetable
-        for(auto player = 0; player < PLAYERS; ++player)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
             if ((Player_ptr + player)->isPlaying() && ((Player_ptr + player)->Read_instrument() == instrument || !(Player_ptr + player)->Read_use_Wavetable())) // if player is playing instrument or is playing in Flash mode -> counter increase
             {
@@ -1314,7 +1312,7 @@ void PlayersManager::Release_player(int player) // after receiving a NoteOff com
 
 void PlayersManager::Release_all_players_for_instrument(int instrument) // after receiving a NoteOff command
 {
-    for(auto player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPoweredOn() && (Player_ptr + player)->Read_instrument() == instrument)
         {
@@ -1325,7 +1323,7 @@ void PlayersManager::Release_all_players_for_instrument(int instrument) // after
 
 void PlayersManager::Release_all_players_for_instrument_solo(int instrument)
 {
-    for(auto player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPlaying() && ((Player_ptr + player)->Read_instrument() != instrument))
         {
@@ -1341,17 +1339,17 @@ void PlayersManager::Release_all_players_for_instrument_solo(int instrument)
 
 void PlayersManager::Release_all_players(void)
 {
-    for(auto player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         Release_player(player);
     }
 }
 
-void PlayersManager::Release_softly_all_players(int session)
+void PlayersManager::Release_softly_all_players(int patch_id)
 {
-    for(auto player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr + player)->isPoweredOn() && (Player_ptr + player)->Read_local_session() == session)
+        if ((Player_ptr + player)->isPoweredOn() && (Player_ptr + player)->Read_local_patch() == patch_id)
         {
             Release_player(player); // avvio del Release stabilito per il Sound
         }
@@ -1360,7 +1358,7 @@ void PlayersManager::Release_softly_all_players(int session)
 
 void PlayersManager::Stop_all_players(void) // meglio Fast_stop...
 {
-    for(auto player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         (Player_ptr + player)->Fast_stop(); // Attiva il Release (ADSR) con tempo di caduta pari a 10 samples
         (Player_ptr + player)->Write_time_stamp(millis());
@@ -1369,7 +1367,7 @@ void PlayersManager::Stop_all_players(void) // meglio Fast_stop...
 
 void PlayersManager::Release_all_players_loop(void)
 {
-    for(auto player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPoweredOn() && ((Player_ptr + player)->Read_loop_track() >= 0))
         {
@@ -1380,7 +1378,7 @@ void PlayersManager::Release_all_players_loop(void)
 
 void PlayersManager::Release_all_players_loop(int track)
 {
-    for(auto player = 0; player < PLAYERS; ++player)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
         if ((Player_ptr + player)->isPoweredOn() && ((Player_ptr + player)->Read_loop_track() == track))
         {
@@ -1405,55 +1403,57 @@ int PlayersManager::Get_span_for_all_cross_mix(void) // ALERT: can be used if Pl
 {
     const int audio_time_reserved = 200; // microsecondi riservati per tutti gli altri oggetti in un ciclo update()
     int value = 0;
-    for(auto p = 0; p < PLAYERS; ++p)
+
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        value += Player_ptr[p].Read_update_time();
+        value += Player_ptr[player].Read_update_time();
     }
+
     return (2900 - audio_time_reserved - value); // save 200 microseconds for other processes!
 }
 
 void PlayersManager::Multicast_reset_pitch_bend_effects(int instrument)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].Read_instrument() == instrument)
+        if (Player_ptr[player].Read_instrument() == instrument)
         {
-            Player_ptr[p].Set_pitch_bend(1.0);
-            Player_ptr[p].Set_effects(16.0, 0);
+            Player_ptr[player].Set_pitch_bend(1.0);
+            Player_ptr[player].Set_effects(16.0, 0);
         }
     }
 }
 
 void PlayersManager::Broadcast_pitch_bend(int midi_channel, float value)
 {
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (!Preset[Player_ptr[p].Read_instrument()].lock && Preset[Player_ptr[p].Read_instrument()].midi_channel == midi_channel) // if(!bitRead(Session[session].Instrument[Player_ptr[p].instrument].info, 1) && (Get_midi_channel(session, Player_ptr[p].instrument) == midi_channel))
+        if (!Preset[Player_ptr[player].Read_instrument()].lock && Preset[Player_ptr[player].Read_instrument()].midi_channel == midi_channel) // if(!bitRead(Patch[patch_id].Instrument[Player_ptr[player].instrument].info, 1) && (Get_midi_channel(patch_id, Player_ptr[player].instrument) == midi_channel))
         {
-            Player_ptr[p].Set_pitch_bend(value);
+            Player_ptr[player].Set_pitch_bend(value);
         }
     }
 }
 
 void PlayersManager::Broadcast_restore_pitch_bend_and_effects(int midi_channel, float value)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (!Preset[Player_ptr[p].Read_instrument()].lock && Preset[Player_ptr[p].Read_instrument()].midi_channel == midi_channel) // if(!bitRead(Session[session].Instrument[Player_ptr[p].instrument].info, 1))
+        if (!Preset[Player_ptr[player].Read_instrument()].lock && Preset[Player_ptr[player].Read_instrument()].midi_channel == midi_channel) // if(!bitRead(Patch[patch_id].Instrument[Player_ptr[player].instrument].info, 1))
         {
-            Player_ptr[p].Set_pitch_bend(value);
-            Player_ptr[p].Set_effects(Calc_resolution(resolution), downsampling);
+            Player_ptr[player].Set_pitch_bend(value);
+            Player_ptr[player].Set_effects(Calc_resolution(resolution), downsampling);
         }
     }
 }
 
 void PlayersManager::Multicast_volume_for_MIDI_LOOP_running(int track, float value)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if ((Player_ptr[p].Read_loop_track() == track) && Player_ptr[p].isPlaying())
+        if ((Player_ptr[player].Read_loop_track() == track) && Player_ptr[player].isPlaying())
         {
-            Player_ptr[p].Update_volume(value * Preset[Player_ptr[p].Read_instrument()].volume);
+            Player_ptr[player].Update_volume(value * Preset[Player_ptr[player].Read_instrument()].volume);
         }
     }
 }
@@ -1462,11 +1462,12 @@ void PlayersManager::Update_players_stistics(void)
 {
     players_using_Wavetable = 0;
     players_using_Flash = 0;
-    for(auto p = 0; p < PLAYERS; ++p)
+
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].isPlaying())
+        if (Player_ptr[player].isPlaying())
         {
-            if (Player_ptr[p].Read_use_Wavetable())
+            if (Player_ptr[player].Read_use_Wavetable())
             {
                 ++players_using_Wavetable;
             }
@@ -1498,9 +1499,9 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
 {
     uint8_t mix_samples_for_Player[PLAYERS] = {0};
 
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        mix_samples_for_Player[p] = 0;
+        mix_samples_for_Player[player] = 0;
     }
 
     bool finished = false;
@@ -1515,28 +1516,28 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
     float standard_pitch_of_Player[PLAYERS];
 
     // Calculate the standardized "flash-play" pitch: pitch of RAM-playing Players will be normalized so they can be traated as Flash-playing Players
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Get_restart_player(p))
+        if (Get_restart_player(player))
         {
-            old_use_wavetable[p] = Player_ptr[p].Read_use_Wavetable();
-            old_pitch_of_Player[p] = Player_ptr[p].Read_pitch();
+            old_use_wavetable[player] = Player_ptr[player].Read_use_Wavetable();
+            old_pitch_of_Player[player] = Player_ptr[player].Read_pitch();
 
-            if (old_use_wavetable[p])
+            if (old_use_wavetable[player])
             {
-                standard_pitch_of_Player[p] = old_pitch_of_Player[p] * 0.07113;
+                standard_pitch_of_Player[player] = old_pitch_of_Player[player] * 0.07113;
             }
             else
             {
-                standard_pitch_of_Player[p] = old_pitch_of_Player[p];
+                standard_pitch_of_Player[player] = old_pitch_of_Player[player];
             }
 
             if (false)
             {
                 Serial.print("Player:");
-                Serial.print(p);
+                Serial.print(player);
                 Serial.print(" has standard_pitch:");
-                Serial.println(standard_pitch_of_Player[p]);
+                Serial.println(standard_pitch_of_Player[player]);
             }
         }
     }
@@ -1544,17 +1545,17 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
 
     // find highest-pitch / highest-time Player
     int max_cross_mix_time;
-
     uint8_t worst_Player = 0;
     float max_pitch = 0;
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Get_restart_player(p))
+        if (Get_restart_player(player))
         {
-            if (standard_pitch_of_Player[p] > max_pitch)
+            if (standard_pitch_of_Player[player] > max_pitch)
             {
-                max_pitch = standard_pitch_of_Player[p];
-                worst_Player = p;
+                max_pitch = standard_pitch_of_Player[player];
+                worst_Player = player;
             }
         }
     }
@@ -1577,23 +1578,23 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
     if (mix_micros_span > (max_cross_mix_time * players_to_restart))
     {
         // Serial.println("Case 1 is verified --> transmit mix_samples = 64 to Players to restart.");
-        for (uint8_t p = 0; p < PLAYERS; ++p)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
-            if (Get_restart_player(p))
+            if (Get_restart_player(player))
             {
-                Cancel_restart_player(p);
+                Cancel_restart_player(player);
                 players_to_restart--;
-                mix_samples_for_Player[p] = 32;
-                Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                mix_samples_for_Player[player] = 32;
+                Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
 
-                mix_micros_span -= Get_cross_mix_time(p, 32);
+                mix_micros_span -= Get_cross_mix_time(player, 32);
 
                 if (false)
                 {
                     Serial.print("mix_sample 64 is given to Player ");
-                    Serial.print(p);
+                    Serial.print(player);
                     Serial.print("; theorical update time is:");
-                    Serial.println(Get_cross_mix_time(p, 64) + Player_ptr[p].Read_update_time());
+                    Serial.println(Get_cross_mix_time(player, 64) + Player_ptr[player].Read_update_time());
                 }
             }
         }
@@ -1611,22 +1612,22 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
         if (mix_micros_span > (max_cross_mix_time * players_to_restart))
         {
             // Serial.println("Case 2 is verified --> transmit mix_samples = 48 to Players to restart.");
-            for (uint8_t p = 0; p < PLAYERS; ++p)
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (Get_restart_player(p))
+                if (Get_restart_player(player))
                 {
-                    Cancel_restart_player(p);
+                    Cancel_restart_player(player);
                     players_to_restart--;
-                    mix_samples_for_Player[p] = 48;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                    mix_samples_for_Player[player] = 48;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
 
-                    mix_micros_span -= Get_cross_mix_time(p, 48);
+                    mix_micros_span -= Get_cross_mix_time(player, 48);
                     if (false)
                     {
                         Serial.print("mix_sample 48 is given to Player ");
-                        Serial.print(p);
+                        Serial.print(player);
                         Serial.print("; theorical update time is:");
-                        Serial.println(Get_cross_mix_time(p, 48) + Player_ptr[p].Read_update_time());
+                        Serial.println(Get_cross_mix_time(player, 48) + Player_ptr[player].Read_update_time());
                     }
                 }
             }
@@ -1645,23 +1646,23 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
         if (mix_micros_span > (max_cross_mix_time * players_to_restart))
         {
             // Serial.println("Case 3 is verified --> transmit mix_samples = 32 to Players to restart.");
-            for (uint8_t p = 0; p < PLAYERS; ++p)
+            for (auto player = 0; player < PLAYERS; ++player)
             {
-                if (Get_restart_player(p))
+                if (Get_restart_player(player))
                 {
-                    Cancel_restart_player(p);
+                    Cancel_restart_player(player);
                     players_to_restart--;
-                    mix_samples_for_Player[p] = 32;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                    mix_samples_for_Player[player] = 32;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
 
-                    mix_micros_span -= Get_cross_mix_time(p, 32);
+                    mix_micros_span -= Get_cross_mix_time(player, 32);
 
                     if (false)
                     {
                         Serial.print("mix_sample 32 is given to Player ");
-                        Serial.print(p);
+                        Serial.print(player);
                         Serial.print("; theorical update time is:");
-                        Serial.println(Get_cross_mix_time(p, 32) + Player_ptr[p].Read_update_time());
+                        Serial.println(Get_cross_mix_time(player, 32) + Player_ptr[player].Read_update_time());
                     }
                 }
             }
@@ -1672,88 +1673,88 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
     if (!finished)
     {
         // 4: Try to assign minimum  mix_samples to Players
-        for (uint8_t p = 0; p < PLAYERS; ++p)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
-            if (Get_restart_player(p))
+            if (Get_restart_player(player))
             {
-                if (standard_pitch_of_Player[p] <= 0.7)
+                if (standard_pitch_of_Player[player] <= 0.7)
                 {
-                    Cancel_restart_player(p);
+                    Cancel_restart_player(player);
                     players_to_restart--;
-                    mix_samples_for_Player[p] = 64;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                    mix_micros_span -= Get_cross_mix_time(p, 64);
+                    mix_samples_for_Player[player] = 64;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                    mix_micros_span -= Get_cross_mix_time(player, 64);
 
                     if (false)
                     {
                         Serial.print("mix_sample 64 is given to Player ");
-                        Serial.print(p);
+                        Serial.print(player);
                         Serial.print("; theorical update time is:");
-                        Serial.println(Get_cross_mix_time(p, 64) + Player_ptr[p].Read_update_time());
+                        Serial.println(Get_cross_mix_time(player, 64) + Player_ptr[player].Read_update_time());
                     }
                 }
-                else if (standard_pitch_of_Player[p] <= 0.8)
+                else if (standard_pitch_of_Player[player] <= 0.8)
                 {
-                    Cancel_restart_player(p);
+                    Cancel_restart_player(player);
                     players_to_restart--;
-                    mix_samples_for_Player[p] = 48;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                    mix_micros_span -= Get_cross_mix_time(p, 48);
+                    mix_samples_for_Player[player] = 48;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                    mix_micros_span -= Get_cross_mix_time(player, 48);
 
                     if (false)
                     {
                         Serial.print("mix_sample 48 is given to Player ");
-                        Serial.print(p);
+                        Serial.print(player);
                         Serial.print("; theorical update time is:");
-                        Serial.println(Get_cross_mix_time(p, 48) + Player_ptr[p].Read_update_time());
+                        Serial.println(Get_cross_mix_time(player, 48) + Player_ptr[player].Read_update_time());
                     }
                 }
-                else if (standard_pitch_of_Player[p] <= 1.0)
+                else if (standard_pitch_of_Player[player] <= 1.0)
                 {
-                    Cancel_restart_player(p);
+                    Cancel_restart_player(player);
                     players_to_restart--;
-                    mix_samples_for_Player[p] = 32;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                    mix_micros_span -= Get_cross_mix_time(p, 32);
+                    mix_samples_for_Player[player] = 32;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                    mix_micros_span -= Get_cross_mix_time(player, 32);
 
                     if (false)
                     {
                         Serial.print("mix_sample 32 is given to Player ");
-                        Serial.print(p);
+                        Serial.print(player);
                         Serial.print("; theorical update time is:");
-                        Serial.println(Get_cross_mix_time(p, 32) + Player_ptr[p].Read_update_time());
+                        Serial.println(Get_cross_mix_time(player, 32) + Player_ptr[player].Read_update_time());
                     }
                 }
-                else if (standard_pitch_of_Player[p] <= 1.2)
+                else if (standard_pitch_of_Player[player] <= 1.2)
                 {
-                    Cancel_restart_player(p);
+                    Cancel_restart_player(player);
                     players_to_restart--;
-                    mix_samples_for_Player[p] = 24;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                    mix_micros_span -= Get_cross_mix_time(p, 24);
+                    mix_samples_for_Player[player] = 24;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                    mix_micros_span -= Get_cross_mix_time(player, 24);
 
                     if (false)
                     {
                         Serial.print("mix_sample 24 is given to Player ");
-                        Serial.print(p);
+                        Serial.print(player);
                         Serial.print("; theorical update time is:");
-                        Serial.println(Get_cross_mix_time(p, 24) + Player_ptr[p].Read_update_time());
+                        Serial.println(Get_cross_mix_time(player, 24) + Player_ptr[player].Read_update_time());
                     }
                 }
-                else if (standard_pitch_of_Player[p] <= 1.4)
+                else if (standard_pitch_of_Player[player] <= 1.4)
                 {
-                    Cancel_restart_player(p);
+                    Cancel_restart_player(player);
                     players_to_restart--;
-                    mix_samples_for_Player[p] = 16;
-                    Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
-                    mix_micros_span -= Get_cross_mix_time(p, 16);
+                    mix_samples_for_Player[player] = 16;
+                    Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
+                    mix_micros_span -= Get_cross_mix_time(player, 16);
 
                     if (false)
                     {
                         Serial.print("mix_sample 16 is given to Player ");
-                        Serial.print(p);
+                        Serial.print(player);
                         Serial.print("; theorical update time is:");
-                        Serial.println(Get_cross_mix_time(p, 16) + Player_ptr[p].Read_update_time());
+                        Serial.println(Get_cross_mix_time(player, 16) + Player_ptr[player].Read_update_time());
                     }
                 }
                 if (players_to_restart == 0)
@@ -1773,16 +1774,16 @@ void PlayersManager::Calculate_and_set_mix_samples(void)
 
     if (!finished)
     {
-        for (uint8_t p = 0; p < PLAYERS; ++p)
+        for (auto player = 0; player < PLAYERS; ++player)
         {
-            if (Get_restart_player(p))
+            if (Get_restart_player(player))
             {
-                Cancel_restart_player(p);
+                Cancel_restart_player(player);
                 players_to_restart--;
-                mix_samples_for_Player[p] = 0;
-                Player_ptr[p].Set_mix_samples(mix_samples_for_Player[p]);
+                mix_samples_for_Player[player] = 0;
+                Player_ptr[player].Set_mix_samples(mix_samples_for_Player[player]);
                 // Serial.print("Mix_sample ZERO is given to Player ");
-                // Serial.println(p);
+                // Serial.println(player);
             }
         }
     }
@@ -1800,66 +1801,66 @@ int PlayersManager::Get_players_to_restart(void)
 
 void PlayersManager::Multicast_update_vibrato(int midi_channel, bool vibrato_active)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].Read_midi_channel() == midi_channel)
+        if (Player_ptr[player].Read_midi_channel() == midi_channel)
         {
-            Player_ptr[p].Set_vibrato_flag(vibrato_active);
+            Player_ptr[player].Set_vibrato_flag(vibrato_active);
         }
     }
 }
 
 void PlayersManager::Multicast_all_notes_off(int midi_channel)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_midi_channel() == midi_channel)
+        if (Player_ptr[player].isPoweredOn() && Player_ptr[player].Read_midi_channel() == midi_channel)
         {
-            Release_Player_noteOff(p);
+            Release_Player_noteOff(player);
         }
     }
 }
 
 void PlayersManager::Multicast_stop_players_for_loop_track(int track)
 {
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_loop_track() == track)
+        if (Player_ptr[player].isPoweredOn() && Player_ptr[player].Read_loop_track() == track)
         {
-            Release_Player_noteOff(p, track);
+            Release_Player_noteOff(player, track);
         }
     }
 }
 
 void PlayersManager::Multicast_stop_players_for_NoteOff(int midi_channel, int note_number, int track)
 {
-    for (uint8_t p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[p].isPoweredOn() && Player_ptr[p].Read_note() == note_number && Player_ptr[p].Read_midi_channel() == midi_channel && Player_ptr[p].Read_loop_track() == track)
+        if (Player_ptr[player].isPoweredOn() && Player_ptr[player].Read_note() == note_number && Player_ptr[player].Read_midi_channel() == midi_channel && Player_ptr[player].Read_loop_track() == track)
         {
-            Release_Player_noteOff(p, track);
+            Release_Player_noteOff(player, track);
         }
     }
 }
 
 void PlayersManager::Broadcast_FIFO_stereo(int16_t *LS_buffer_L_ptr, int16_t *LS_buffer_R_ptr)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        Player_ptr[p].LS_buffer_L_ptr = LS_buffer_L_ptr;
-        Player_ptr[p].LS_buffer_R_ptr = LS_buffer_R_ptr;
+        Player_ptr[player].LS_buffer_L_ptr = LS_buffer_L_ptr;
+        Player_ptr[player].LS_buffer_R_ptr = LS_buffer_R_ptr;
     }
 }
 
 void PlayersManager::Broadcast_FIFO_mono(int16_t *LS_buffer_mono_ptr)
 {
-    for(auto p = 0; p < PLAYERS; ++p)
+    for (auto player = 0; player < PLAYERS; ++player)
     {
-        Player_ptr[p].LS_buffer_mono_ptr = LS_buffer_mono_ptr;
+        Player_ptr[player].LS_buffer_mono_ptr = LS_buffer_mono_ptr;
     }
 }
 
-uint8_t PlayersManager::Id_sound(uint8_t s, uint8_t i)
+uint8_t PlayersManager::Id_sound(uint8_t patch_id, uint8_t instrument)
 {
-    return Session[s].Instrument[i].id_sound;
+    return Patch[patch_id].Instrument[instrument].sound_id;
 }

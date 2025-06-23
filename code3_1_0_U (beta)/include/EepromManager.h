@@ -18,7 +18,7 @@ class EepromManager
 private:
     // Locations of settings data in emulated EEPROM memory (dimension T4.1: 4284 bytes)
     static constexpr int EEPROM_BYTES = 4284;          // Teensy 4.1 EEPROM total bytes
-    static constexpr int LOCATION_SESSION = 0;         // location in EEPROM of Session[0]   --> 24 sessions x 90 bytes = 2160 bytes
+    static constexpr int LOCATION_PATCH = 0;         // location in EEPROM of Patch[0]   --> 24 patches_number x 90 bytes = 2160 bytes
     static constexpr int LOCATION_RECORDING = 2160;    // location in EEPROM of Recording[0] --> 30 recordings x 4 bytes = 120 bytes
     static constexpr int LOCATION_SOUND = 2280;        // location in EEPROM of Sound[0]     --> 85 sounds x 22 bytes = 2200 bytes
     static constexpr int LOCATION_OPTIMIZATION = 4235; // extension and voices in Flash mode: 0 --> x3, 8 voices   1 --> x1.5, 12 voices
@@ -30,8 +30,8 @@ private:
     int Eeprom_writeAnything(int ee, const T &value);
     template <class T>
     int Eeprom_readAnything(int ee, T &value); // il valore di ritorno è value (che viene modificato)
-    uint16_t Get_location_of_Sound(const uint8_t &id_sound);
-    uint16_t GET_location_of_Session(const uint8_t &session);
+    uint16_t Get_location_of_Sound(const uint8_t &sound_id);
+    uint16_t GET_location_of_Patch(const uint8_t &patch_id);
     void Copy_Delay_data_from_RAM_to_SD(File &file);
     void Copy_Delay_data_from_Eeprom_to_SD(File &file);
     void Copy_Delay_data_from_SD_to_Eeprom(File &file);
@@ -46,14 +46,14 @@ public:
     void Read_optimization(uint8_t &optimization);
     void Save_CC_Sound_gain(uint8_t instrument, uint8_t CC_Sg_instrument);
     void Read_CC_Sound_gain(uint8_t instrument, uint8_t &CC_Sg_instrument);
-    void Copy_session_Delay_data_from_Eeprom_to_Ram(Delay_data_struct &Delay_data);
+    void Copy_patch_Delay_data_from_Eeprom_to_Ram(Delay_data_struct &Delay_data);
     void Save_Delay_to_Eeprom(Delay_data_struct Delay_data);
     void Read_first_octave(int8_t &first_octave);
     void Save_first_octave(int8_t first_octave);
-    void Save_Sound(uint8_t id_sound);
-    void Read_Sound(uint8_t id_sound, Sound_struct &Sound_id_sound);
-    void Save_Session(uint8_t session, Session_struct Session_session);
-    void Read_Session(uint8_t session);
+    void Save_Sound(uint8_t sound_id);
+    void Read_Sound(uint8_t sound_id, Sound_struct &Sound_id_sound);
+    void Save_Patch(uint8_t patch_id, Patch_struct Patch_patch);
+    void Read_Patch(uint8_t patch_id);
     void Save_DS_Recording(int recording);
     void Save_DS_Recording(const int &recording, const EEPROM_VFS_Recording &EEPROM_Rec_recording);
     void Read_DS_Recording(const int &recording, EEPROM_VFS_Recording &EEPROM_Rec_recording);
@@ -61,12 +61,12 @@ public:
     void Copy_setup_from_Eeprom_to_SD(File &file); // File e' l'oggetto file incluso in FS.h
     void Reset_EEPROM(void);
     void Print_EEPROM_content(void);
-    String Filename_session_delay(int session); // private
-    void Copy_session_Delay_data_from_Eeprom_to_SD(int session);
-    void Copy_session_Delay_data_from_RAM_to_SD(int session);
-    bool Copy_session_Delay_data_from_SD_to_Eeprom(int session);
-    void Print_Delay_file_SD(int session);
-    void Delete_Delay_data_in_SD(int session);
+    String Filename_patch_delay(int patch_id); // private
+    void Copy_patch_Delay_data_from_Eeprom_to_SD(int patch_id);
+    void Copy_patch_Delay_data_from_RAM_to_SD(int patch_id);
+    bool Copy_patch_Delay_data_from_SD_to_Eeprom(int patch_id);
+    void Print_Delay_file_SD(int patch_id);
+    void Delete_Delay_data_in_SD(int patch_id);
 
     struct EEPROM_Instrument_filter_data_struct // 5 bytes
     {
@@ -80,7 +80,7 @@ public:
     struct EEPROM_Instrument_struct // 11 bytes
     {
         bool used;
-        uint8_t id_sound;
+        uint8_t sound_id;
         uint8_t root_key;
         uint8_t from_note;
         uint8_t to_note;
@@ -88,13 +88,13 @@ public:
         EEPROM_Instrument_filter_data_struct Filter; // 5 bytes
     };
 
-    struct EEPROM_Session_struct // 90 bytes
+    struct EEPROM_Patch_struct // 90 bytes
     {
         bool used; // 0:deleted  1:active
         uint8_t instruments;
         EEPROM_Instrument_struct Instrument[8]; // 8X11= 88 bytes
     } __attribute__((__packed__));              // https://cs50.stackexchange.com/questions/22297/i-am-getting-an-unexpected-sizeof-error
-    EEPROM_Session_struct EEPROM_Session;
-    const uint8_t size_of_EEPROM_Session = sizeof(EEPROM_Session);
+    EEPROM_Patch_struct EEPROM_Patch;
+    const uint8_t size_of_EEPROM_Patch = sizeof(EEPROM_Patch);
     int GET_location_of_DS_Recording(const int &recording);
 };

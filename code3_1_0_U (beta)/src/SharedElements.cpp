@@ -48,13 +48,13 @@ int flash_dimension_MB;
 uint8_t Lilla_state;
 uint8_t Lilla_state_0;
 
-// SESSION
-Session_struct Session[SESSIONS_MAX + 1]; // local copy of sessions
+// PATCH
+Patch_struct Patch[PATCHES_MAX + 1]; // local copy of patches_number
 Sound_struct Sound[SOUNDS_MAX + 2];
 
 // PERFORMANCE
-uint8_t session = 0;
-int volume_session = 29;
+uint8_t Patch_id = 0;
+int volume_patch = 29;
 uint8_t map_instrument_for_note[16][128] = {0};
 bool key_state[16][128] = {0}; // usato solo a fini statistici; key premuti su ciascun canale midi; rilevato attaverso il conteggio dei NoteOn
 bool file_midi_ch_flag = true;
@@ -148,10 +148,10 @@ float pan_gain_L_table[33];
 float pan_gain_R_table[33];
 
 // funzioni
-uint8_t Get_midi_channel(uint8_t session, uint8_t instrument)
+uint8_t Get_midi_channel(uint8_t patch_id, uint8_t instrument)
 {
     // .data contains midi channel in its bits: 7 6 5 M I D I 0
-    return ((Sound[Session[session].Instrument[instrument].id_sound].data & 30) >> 1);
+    return ((Sound[Patch[patch_id].Instrument[instrument].sound_id].data & 30) >> 1);
 }
 float Calc_pitch(float value)
 {
@@ -190,11 +190,11 @@ void Update_map_Instrument_for_notes(uint8_t from_note, uint8_t to_note, uint8_t
     {
         if (note >= from_note && note <= to_note)
         {
-            bitWrite(map_instrument_for_note[Get_midi_channel(session, instrument)][note], instrument, 1);
+            bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 1);
         }
         else
         {
-            bitWrite(map_instrument_for_note[Get_midi_channel(session, instrument)][note], instrument, 0);
+            bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 0);
         }
     }
 }

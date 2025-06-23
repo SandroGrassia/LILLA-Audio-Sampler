@@ -8,9 +8,9 @@
 #include <Arduino.h>
 
 
-// MIDI LOOP
-
+static constexpr int NEW_LOOP = -1;
 static constexpr int NO_TRACK = -1; // track virtuale per note suonate da tastiera nello stato MIDI_LOOP
+static constexpr int MASTER_TRACK = 0;
 static constexpr int TRACKS = 6;        // numero di track
 static constexpr int LOOP_EVENTS = 40; // numero massimo di eventi in un track
 static constexpr int LOOP_UI_A = 1;    // primo encoder prima fila

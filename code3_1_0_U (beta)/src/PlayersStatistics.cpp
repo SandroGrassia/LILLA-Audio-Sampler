@@ -10,10 +10,10 @@ void PlayersStatistics::Reset_total_Players_per_track_instrument(void)
 {
     for (auto track = 0; track < TRACKS; ++track)
     {
-        for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
         {
-            total_Players_per_track_instrument[track][instrument] = 0;
-            total_Players_per_track_instrument_old[track][instrument] = 0;
+            total_Players_per_track_instrument[track][instrument_local] = 0;
+            total_Players_per_track_instrument_old[track][instrument_local] = 0;
         }
     }
 }

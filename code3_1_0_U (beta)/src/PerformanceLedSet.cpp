@@ -8,9 +8,9 @@
 
 void PerformanceLedSet::Request_all_LED_switch_off(void)
 {
-    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        led_activity[instrument] = -2; // request switch OFF
+        led_activity[instrument_local] = -2; // request switch OFF
     }
 }
 
@@ -21,7 +21,7 @@ void PerformanceLedSet::Request_LED_switch(int instrument, bool on)
         if (led_activity[instrument] < 0)
         {
             led_activity[instrument] = 2; // request switch ON
-            Serial.print("Request_LED_switch(auto track, auto instrument, bool on): on, instrument: ");
+            Serial.print("Request_LED_switch(int track, int instrument, bool on): on, instrument: ");
             Serial.println(instrument);
         }
     }
@@ -30,7 +30,7 @@ void PerformanceLedSet::Request_LED_switch(int instrument, bool on)
         if (led_activity[instrument] > 0)
         {
             led_activity[instrument] = -2; // request switch OFF
-            Serial.print("Request_LED_switch(auto track, auto instrument, bool on): off, instrument: ");
+            Serial.print("Request_LED_switch(int track, int instrument, bool on): off, instrument: ");
             Serial.println(instrument);
         }
     }
@@ -48,11 +48,11 @@ void PerformanceLedSet::Write_LED_activity(int instrument, bool on)
 
 void PerformanceLedSet::Restore_all_LED(void)
 {
-    for (auto instrument = 0; instrument < INSTRUMENTS_MAX; ++instrument)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
     {
-        if (abs(led_activity[instrument]) == 1)
+        if (abs(led_activity[instrument_local]) == 1)
         {
-           led_activity[instrument] = 2 * led_activity[instrument];
+           led_activity[instrument_local] = 2 * led_activity[instrument_local];
         }
     }
 }

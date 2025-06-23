@@ -51,31 +51,31 @@ void DisplayManager::Lilla_cover_slow(void)
 }
 
 FLASHMEM
-void DisplayManager::Show_Session_number(bool change_session)
+void DisplayManager::Show_Patch_number(bool change_patch)
 {
     tft.setCursor(x_pos(12 + 18), y_pos(0));
     tft.setTextColor(TEXT_COLOR);
     tft.print("PATCH");
     tft.setCursor(x_pos(17.5 + 18), y_pos(0));
-    tft.setTextColor(change_session ? ILI9341_YELLOW : ILI9341_WHITE);
-    tft.print(session);
+    tft.setTextColor(change_patch ? ILI9341_YELLOW : ILI9341_WHITE);
+    tft.print(Patch_id);
 }
 
 FLASHMEM
-void DisplayManager::Session_volume(bool change_vol)
+void DisplayManager::Patch_volume(bool change_vol)
 {
     tft.setCursor(x_pos(41), y_pos(0));
     tft.setTextColor(TEXT_COLOR);
     tft.print("VOLUME");
-    Session_volume_value(change_vol);
+    Patch_volume_value(change_vol);
 }
 
 FLASHMEM
-void DisplayManager::Session_volume_value(bool change_vol)
+void DisplayManager::Patch_volume_value(bool change_vol)
 {
     Cancel_text_reset_cursor(x_pos(47.5), y_pos(0), 4);
     tft.setTextColor(ILI9341_YELLOW); // tft.setTextColor(change_vol ? ILI9341_YELLOW : ILI9341_WHITE);
-    tft.print(volume_session / 20.0f, 2);
+    tft.print(volume_patch / 20.0f, 2);
 }
 
 FLASHMEM
@@ -176,7 +176,7 @@ void DisplayManager::Led_INSTRUMENT_VCF_instrument(int instrument, bool on)
 
 void DisplayManager::Led_DIRECT_SAMPLING(bool on)
 {
-    // SESSIONS_MAX ha 2 instrument
+    // PATCHES_MAX ha 2 instrument
     if (on)
     {
         tft.drawBitmap(x_pos(0), y_pos(8), led_pic, 6, 8, ((MX_mute[0] && MX_mute[1]) ? RED_ON : GREEN_ON));
@@ -201,22 +201,22 @@ void DisplayManager::Led_LIVE_SAMPLING(bool on)
     return;
 }
 
-void DisplayManager::Led_tuning_tone(int session)
+void DisplayManager::Led_tuning_tone(int patch_id)
 {
     if (Lilla_state == PERFORMANCE)
     {
-        tft.drawBitmap(X_LED, Instrument_Y_POSITION(Session[session].instruments), led_pic, 8, 8, (TT_playing ? ILI9341_RED : RED_OFF));
+        tft.drawBitmap(X_LED, Instrument_Y_POSITION(Patch[patch_id].instruments), led_pic, 8, 8, (TT_playing ? ILI9341_RED : RED_OFF));
     }
 }
 
 FLASHMEM
-void DisplayManager::Performance_page(bool change_session, bool change_vol)
+void DisplayManager::Performance_page(bool change_patch, bool change_vol)
 {
     instrument_editing_flag = false;
-    Session_header(change_session, change_vol);
+    Patch_header(change_patch, change_vol);
     Performance_menu(); // displays the menu and updates P_menu_max
     Instruments_header();
-    All_Instrument(session);
+    All_Instrument(Patch_id);
 }
 
 FLASHMEM
@@ -363,7 +363,7 @@ void DisplayManager::Lowpass_filter(void)
 }
 
 FLASHMEM
-void DisplayManager::Show_sound(uint8_t session, uint8_t instrument)
+void DisplayManager::Show_sound(uint8_t patch_id, uint8_t instrument)
 {
     tft.fillScreen(ILI9341_BLACK);
     if (Lilla_state_0 == MIDI_LOOP)
@@ -374,7 +374,7 @@ void DisplayManager::Show_sound(uint8_t session, uint8_t instrument)
     {
         Show_Performance();
     }
-    Show_Session_number(false);
+    Show_Patch_number(false);
 
     tft.setCursor(x_pos(23), y_pos(0));
     tft.setTextColor(TEXT_COLOR);
@@ -403,7 +403,7 @@ void DisplayManager::Show_sound(uint8_t session, uint8_t instrument)
     tft.setCursor(x_pos(31), y_pos(4.9));
     tft.setTextColor(TEXT_COLOR);
     tft.print("GAIN");
-    Gain_sound(session, instrument);
+    Gain_sound(patch_id, instrument);
 
     tft.setCursor(x_pos(42), y_pos(4.9));
     tft.setTextColor(TEXT_COLOR);
@@ -477,11 +477,11 @@ void DisplayManager::Pitch(uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Gain_sound(uint8_t session, uint8_t instrument)
+void DisplayManager::Gain_sound(uint8_t patch_id, uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(35.5), y_pos(4.9), 4);
     tft.setTextColor(ILI9341_YELLOW);
-    tft.print(Sound[Id_sound(session, instrument)].gain / 20.0);
+    tft.print(Sound[Id_sound(patch_id, instrument)].gain / 20.0);
 }
 
 FLASHMEM
@@ -637,8 +637,8 @@ void DisplayManager::LOOP_page(void)
     tft.fillScreen(ILI9341_BLACK);
     Loop_midi_loop_title(); // title
     Loop_menu();
-    Show_Session_number(session);
-    Session_volume(true);
+    Show_Patch_number(Patch_id);
+    Patch_volume(true);
     Show_effects();
 
     tft.setTextColor(TEXT_COLOR);
@@ -662,7 +662,7 @@ void DisplayManager::LOOP_page(void)
     tft.setTextColor(ILI9341_WHITE);
     for (auto i = 0; i < INSTRUMENTS_MAX; ++i)
     {
-        if (Session[session].Instrument[i].used)
+        if (Patch[Patch_id].Instrument[i].used)
         {
             tft.setCursor(x_pos(Loop_HEAD_C + 3), 151 + i * 11);
             tft.print(i + 1);
@@ -699,7 +699,7 @@ void DisplayManager::Loop_menu(void)
 
     Cancel_text(x_pos(0), y_pos(1), 27); // Cancel_text(int X, int Y, int N)
     tft.setTextColor(MENU_COLOR);
-    for (uint8_t element = 0; element < 4; ++element) // menu element
+    for (auto element = 0; element < 4; ++element) // menu element
     {
         if (Menu_Loop[element])
         {
@@ -751,7 +751,7 @@ void DisplayManager::Frame_loop_menu(uint8_t position, bool fresh) // after Loop
 void DisplayManager::Delete_all_frame_loop_menu(void)
 {
     uint8_t position;
-    for (uint8_t element = 0; element < 4; ++element)
+    for (auto element = 0; element < 4; ++element)
     {
         if (Menu_Loop[element])
         {
@@ -929,7 +929,7 @@ void DisplayManager::Delay_page()
     tft.setCursor(x_pos(41), y_pos(0));
     tft.setTextColor(TEXT_COLOR);
     tft.print("VOLUME");
-    Session_volume_value(true);
+    Patch_volume_value(true);
 
     Show_effects();
 
@@ -994,20 +994,20 @@ void DisplayManager::D_sounds(void)
         return;
     }
 
-    for (uint8_t i = 0; i < 8; ++i)
+    for (auto instrument_id_local = 0; instrument_id_local < INSTRUMENTS_MAX; ++instrument_id_local)
     {
-        if (Delay_values.instrument_route[i])
+        if (Delay_values.instrument_route[instrument_id_local])
         {
             tft.setTextColor(ILI9341_YELLOW);
             tft.print("S");
-            tft.print(i + 1);
+            tft.print(instrument_id_local + 1);
             tft.print("  ");
         }
         else
         {
             tft.setTextColor(0x6300);
             tft.print("S");
-            tft.print(i + 1);
+            tft.print(instrument_id_local + 1);
             tft.print("  ");
         }
     }
@@ -1115,9 +1115,9 @@ void DisplayManager::D_modulation_phase_LR(void)
     tft.setTextColor(ILI9341_ORANGE);
     tft.print("deg");
 }
-inline uint8_t DisplayManager::Id_sound(uint8_t session, uint8_t instrument)
+inline uint8_t DisplayManager::Id_sound(uint8_t patch_id, uint8_t instrument)
 {
-    return Session[session].Instrument[instrument].id_sound;
+    return Patch[patch_id].Instrument[instrument].sound_id;
 }
 FLASHMEM
 void DisplayManager::Delay_disabled(void)
@@ -1548,14 +1548,14 @@ void DisplayManager::DS_volume(void)
     tft.print("VOLUME ");
 
     tft.setTextColor(ILI9341_YELLOW);
-    tft.print(volume_session / 20.0f, 2);
+    tft.print(volume_patch / 20.0f, 2);
 }
 FLASHMEM
 void DisplayManager::DS_update_volume(bool adj)
 {
     Cancel_text_reset_cursor(x_pos(48), y_pos(0), 4);
     tft.setTextColor(adj ? ILI9341_YELLOW : ILI9341_WHITE);
-    tft.print(volume_session / 20.0f, 2);
+    tft.print(volume_patch / 20.0f, 2);
 }
 FLASHMEM
 void DisplayManager::DS_show_gain(void)
@@ -1567,14 +1567,14 @@ void DisplayManager::DS_show_gain(void)
 FLASHMEM
 void DisplayManager::DS_menu(void)
 {
-    uint8_t position = 0; // position on display
+    auto position = 0; // position on display
 
     // DS_define_model(); DISTRIBUITO
     Delete_row(1);
     Delete_row(2);
     tft.setTextColor(MENU_COLOR);
 
-    for (uint8_t element = 0; element < DS_MV; ++element) // menu element
+    for (auto element = 0; element < DS_MV; ++element) // menu element
     {
         if (Menu_DS[element])
         {
@@ -1738,7 +1738,7 @@ void DisplayManager::LS_volume(void)
 {
     Cancel_text_reset_cursor(x_pos(8.5), y_pos(3), 4);
     tft.setTextColor(ILI9341_YELLOW);
-    tft.print(volume_session / 20.0f);
+    tft.print(volume_patch / 20.0f);
 }
 
 FLASHMEM
@@ -1826,10 +1826,10 @@ void DisplayManager::LS_X_sample_delta(void)
 FLASHMEM
 void DisplayManager::Show_LS_menu(void)
 {
-    uint8_t position = 0; // position on display
+    auto position = 0; // position on display
     Delete_row(1);
     tft.setTextColor(MENU_COLOR);
-    for (uint8_t element = 0; element < LS_MV; ++element) // menu element
+    for (auto element = 0; element < LS_MV; ++element) // menu element
     {
         if (Menu_LS[element])
         {
@@ -1864,8 +1864,8 @@ void DisplayManager::Frame_LS_menu(uint8_t position)
 FLASHMEM
 void DisplayManager::Delete_all_frame_LS_menu(void)
 {
-    uint8_t position;
-    for (uint8_t element = 0; element < LS_MV; ++element)
+    int position;
+    for (auto element = 0; element < LS_MV; ++element)
     {
         if (Menu_LS[element])
         {
@@ -2017,7 +2017,7 @@ void DisplayManager::MX_source_values(uint8_t source)
     {
         MX_source_values_write(source);
     }
-    else if (Session[session].Instrument[source].used)
+    else if (Patch[Patch_id].Instrument[source].used)
     {
         MX_source_values_write(source);
     }
@@ -2054,7 +2054,7 @@ void DisplayManager::MX_source_values_write(uint8_t source)
 
     else
     {
-        local_id_sound = Session[session].Instrument[source].id_sound;
+        local_id_sound = Patch[Patch_id].Instrument[source].sound_id;
 
         tft.setTextColor((source == MX_source ? TEXT_COLOR : 0x6300));
         tft.setCursor(x_pos(MX_X0 + source * 5), y_pos(MX_Y0));
@@ -2129,21 +2129,21 @@ void DisplayManager::MX_source_values_edit(uint8_t source)
 }
 
 FLASHMEM
-void DisplayManager::Session_header(bool change_session, bool change_vol)
+void DisplayManager::Patch_header(bool change_patch, bool change_vol)
 {
     tft.fillScreen(ILI9341_BLACK);
     Show_Performance();
-    Show_Session_number(change_session);
-    Session_volume(change_vol);
+    Show_Patch_number(change_patch);
+    Patch_volume(change_vol);
     Show_effects();
 }
 
 FLASHMEM
-void DisplayManager::Session_volume_color(bool change_session, bool change_vol)
+void DisplayManager::Patch_volume_color(bool change_patch, bool change_vol)
 {
-    Show_Session_number(change_session);
-    Session_volume(change_vol);
-    Session_volume_value(change_vol);
+    Show_Patch_number(change_patch);
+    Patch_volume(change_vol);
+    Patch_volume_value(change_vol);
 }
 
 FLASHMEM
@@ -2182,7 +2182,7 @@ void DisplayManager::Instruments_header(void)
 }
 
 FLASHMEM
-void DisplayManager::Show_Instrument_description(uint8_t session, uint8_t instrument, bool editing)
+void DisplayManager::Show_Instrument_description(uint8_t patch_id, uint8_t instrument, bool editing)
 {
     uint8_t position = position_of_Instrument[instrument];
 
@@ -2193,70 +2193,70 @@ void DisplayManager::Show_Instrument_description(uint8_t session, uint8_t instru
     tft.print(instrument + 1);
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 2 * Instrument_SPACE_X + 5), Instrument_Y_POSITION(position));
-    if (Session[session].Instrument[instrument].lock)
+    if (Patch[patch_id].Instrument[instrument].lock)
     {
         tft.print("X");
     }
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 2 * Instrument_SPACE_X + 9), Instrument_Y_POSITION(position));
-    if (Session[session].Instrument[instrument].precedence)
+    if (Patch[patch_id].Instrument[instrument].precedence)
     {
         tft.print("X");
     }
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 1 + 3 * Instrument_SPACE_X + 10), Instrument_Y_POSITION(position));
-    tft.print(Get_midi_channel(session, instrument) + 1);
+    tft.print(Get_midi_channel(patch_id, instrument) + 1);
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 4 * Instrument_SPACE_X + 15), Instrument_Y_POSITION(position));
-    Note(Session[session].Instrument[instrument].root_key);
+    Note(Patch[patch_id].Instrument[instrument].root_key);
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 2 + 5 * Instrument_SPACE_X + 18.5), Instrument_Y_POSITION(position));
-    Note(Session[session].Instrument[instrument].from_note);
+    Note(Patch[patch_id].Instrument[instrument].from_note);
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 2 + 6 * Instrument_SPACE_X + 25), Instrument_Y_POSITION(position));
-    Note(Session[session].Instrument[instrument].to_note);
+    Note(Patch[patch_id].Instrument[instrument].to_note);
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 7 * Instrument_SPACE_X + 32), Instrument_Y_POSITION(position));
-    if (Sound[Session[session].Instrument[instrument].id_sound].pan < 0)
+    if (Sound[Patch[patch_id].Instrument[instrument].sound_id].pan < 0)
     {
         tft.print("L");
     }
-    else if (Sound[Session[session].Instrument[instrument].id_sound].pan > 0)
+    else if (Sound[Patch[patch_id].Instrument[instrument].sound_id].pan > 0)
     {
         tft.print("R");
     }
 
-    tft.print(abs(Sound[Session[session].Instrument[instrument].id_sound].pan));
+    tft.print(abs(Sound[Patch[patch_id].Instrument[instrument].sound_id].pan));
 
     tft.setCursor(x_pos(Instrument_INDENT_X0 + 8 * Instrument_SPACE_X + 35), Instrument_Y_POSITION(position));
-    tft.print(Sound[Session[session].Instrument[instrument].id_sound].gain / 20.0f, 2);
+    tft.print(Sound[Patch[patch_id].Instrument[instrument].sound_id].gain / 20.0f, 2);
 }
 
 FLASHMEM
-void DisplayManager::All_Instrument(uint8_t session)
+void DisplayManager::All_Instrument(uint8_t patch_id)
 {
     tft.fillRect(0, Instrument_Y_POSITION(0) - 4, 320, 240, ILI9341_BLACK);
-    for (uint8_t instrument = 0; instrument < INSTRUMENTS_MAX; instrument++)
+    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; instrument_local++)
     {
-        if (Session[session].Instrument[instrument].used)
+        if (Patch[patch_id].Instrument[instrument_local].used)
         {
-            Show_Instrument_description(session, instrument, false);
+            Show_Instrument_description(patch_id, instrument_local, false);
         }
     }
 
     if (tuning_tone_flag)
     {
-        Instrument_TT(session);
+        Instrument_TT(patch_id);
     }
 }
 
 FLASHMEM
-void DisplayManager::Instrument_TT(uint8_t session)
+void DisplayManager::Instrument_TT(uint8_t patch_id)
 {
-    uint8_t position = Session[session].instruments;
+    uint8_t position = Patch[patch_id].instruments;
     if (tuning_tone_flag)
     {
-        uint8_t position = Session[session].instruments;
+        uint8_t position = Patch[patch_id].instruments;
 
         tft.setTextColor(ILI9341_WHITE);
 
@@ -2282,16 +2282,16 @@ void DisplayManager::Instrument_TT(uint8_t session)
         tft.setTextColor(ILI9341_YELLOW);
         tft.print(tuning_tone_volume / 20.0f, 2);
 
-        Led_tuning_tone(session);
+        Led_tuning_tone(patch_id);
     }
     else
         tft.fillRect(0, Instrument_Y_POSITION(position) - 4, 320, 15, ILI9341_BLACK);
 }
 
 FLASHMEM
-void DisplayManager::Volume_TT(uint8_t session)
+void DisplayManager::Volume_TT(uint8_t patch_id)
 {
-    uint8_t position = Session[session].instruments;
+    uint8_t position = Patch[patch_id].instruments;
 
     Cancel_text_reset_cursor(x_pos(Instrument_INDENT_X0 + 8 * Instrument_SPACE_X + 35), Instrument_Y_POSITION(position), 4);
     tft.setTextColor(ILI9341_YELLOW);
@@ -2314,11 +2314,11 @@ void DisplayManager::Note(uint8_t note_number)
 FLASHMEM
 void DisplayManager::Performance_menu(void)
 {
-    uint8_t position = 0; // position on display
+    auto position = 0; // position on display
 
     Delete_row(1);
     tft.setTextColor(MENU_COLOR);
-    for (uint8_t element = 0; element < 5; ++element) // menu element
+    for (auto element = 0; element < 5; ++element) // menu element
     {
         if (Menu_P[element])
         {
@@ -2370,7 +2370,7 @@ void DisplayManager::Delete_all_frame_performance_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::Confirm_session_change_popup(void)
+void DisplayManager::Confirm_patch_change_popup(void)
 {
     L_POPUP = 106;
     H_POPUP = 47;
@@ -2393,7 +2393,7 @@ void DisplayManager::Confirm_session_change_popup(void)
 }
 
 FLASHMEM
-void DisplayManager::Confirm_session_change_popup_frame(uint8_t value)
+void DisplayManager::Confirm_patch_change_popup_frame(uint8_t value)
 {
     Confirm_frame(X_POPUP + x_pos(2), Y_POPUP + Y_POPUP_OPT, 4, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, bool   print)
     Confirm_frame(X_POPUP + x_pos(8), Y_POPUP + Y_POPUP_OPT, 2, false);
@@ -2434,7 +2434,7 @@ void DisplayManager::Confirm_save_changes_page(void)
 }
 
 FLASHMEM
-void DisplayManager::Confirm_session_delete_popup(void)
+void DisplayManager::Confirm_patch_delete_popup(void)
 {
     L_POPUP = 106;
     H_POPUP = 47;
@@ -2455,7 +2455,7 @@ void DisplayManager::Confirm_session_delete_popup(void)
 }
 
 FLASHMEM
-void DisplayManager::Confirm_session_delete_popup_frame(uint8_t value)
+void DisplayManager::Confirm_patch_delete_popup_frame(uint8_t value)
 {
     Confirm_frame(X_POPUP + x_pos(5.5), Y_POPUP + Y_POPUP_OPT, 2, false); // DISPLAY_confirm_frame(uint8_t col, uint8_t row, uint8_t chars, bool   print)
     Confirm_frame(X_POPUP + x_pos(9.5), Y_POPUP + Y_POPUP_OPT, 3, false);
@@ -2637,7 +2637,7 @@ void DisplayManager::CC_page(void)
 FLASHMEM
 void DisplayManager::All_CC_Sound_gain(void)
 {
-    for (auto n = 0; n < 8; ++n)
+    for (auto n = 0; n < INSTRUMENTS_MAX; ++n)
     {
         Show_CC_Sound_gain(n);
     }
@@ -2677,7 +2677,7 @@ FLASHMEM
 void DisplayManager::Frame_CC_page_menu(int value)
 {
     Frame(0, 1, 6, false); // Return
-    for (uint8_t n = 0; n < 9; ++n)
+    for (auto n = 0; n < 9; ++n)
     {
         Frame(Control_change_X, n + 3, 3, false);
     }
@@ -2954,12 +2954,12 @@ void DisplayManager::SOUND_EDIT_menu(void)
 {
     if (Lilla_state_0 != MIDI_LOOP)
     {
-        uint8_t position = 0;
+        auto position = 0;
 
         // Select_sound_edit_menu_elements(); // DISTRIBUITO
         Delete_row(1);
 
-        for (uint8_t element = 0; element < 3; ++element) // menu element
+        for (auto element = 0; element < 3; ++element) // menu element
         {
             if (Menu_So[element])
             {
@@ -2998,8 +2998,8 @@ void DisplayManager::Frame_SOUND_EDIT_menu(uint8_t position)
 FLASHMEM
 void DisplayManager::Delete_all_frame_SOUND_EDIT_menu(void)
 {
-    uint8_t position;
-    for (uint8_t element = 0; element < 3; ++element)
+    int position;
+    for (auto element = 0; element < 3; ++element)
     {
         if (Menu_So[element])
         {
@@ -3010,9 +3010,9 @@ void DisplayManager::Delete_all_frame_SOUND_EDIT_menu(void)
 }
 
 FLASHMEM
-void DisplayManager::Instrument_VCF_page(uint8_t session, uint8_t instrument)
+void DisplayManager::Instrument_VCF_page(uint8_t patch_id, uint8_t instrument)
 {
-    uint8_t id_sound = Session[session].Instrument[instrument].id_sound;
+    auto id_sound_local = Patch[patch_id].Instrument[instrument].sound_id;
 
     tft.fillScreen(ILI9341_BLACK);
     if (Lilla_state_0 != LIVE_SAMPLING)
@@ -3026,7 +3026,7 @@ void DisplayManager::Instrument_VCF_page(uint8_t session, uint8_t instrument)
             Loop_midi_loop_title();
         }
 
-        Show_Session_number(false);
+        Show_Patch_number(false);
 
         tft.setCursor(x_pos(23), y_pos(0));
         tft.setTextColor(TEXT_COLOR);
@@ -3038,7 +3038,7 @@ void DisplayManager::Instrument_VCF_page(uint8_t session, uint8_t instrument)
         tft.setCursor(x_pos(43), y_pos(0));
         tft.setTextColor(TEXT_COLOR);
         tft.print("GAIN");
-        Show_VCF_gain(id_sound);
+        Show_VCF_gain(id_sound_local);
     }
     else
     {
@@ -3046,7 +3046,7 @@ void DisplayManager::Instrument_VCF_page(uint8_t session, uint8_t instrument)
         tft.setCursor(x_pos(41), y_pos(0));
         tft.setTextColor(TEXT_COLOR);
         tft.print("VOLUME");
-        Session_volume_value(true); // true: YELLOW
+        Patch_volume_value(true); // true: YELLOW
     }
 
     if (Lilla_state_0 != MIDI_LOOP)
@@ -3096,11 +3096,11 @@ void DisplayManager::Instrument_VCF_page(uint8_t session, uint8_t instrument)
     Show_VCF_lfo_index(instrument);
 }
 FLASHMEM
-void DisplayManager::Show_VCF_gain(uint8_t id_sound)
+void DisplayManager::Show_VCF_gain(uint8_t sound_id)
 {
     Cancel_text_reset_cursor(x_pos(47.5), y_pos(0), 4);
     tft.setTextColor((Lilla_state_0 == LIVE_SAMPLING ? ILI9341_WHITE : ILI9341_YELLOW));
-    tft.print(Sound[id_sound].gain / 20.0f);
+    tft.print(Sound[sound_id].gain / 20.0f);
 }
 
 FLASHMEM
@@ -3216,10 +3216,10 @@ void DisplayManager::Show_VCF_lfo_index(uint8_t instrument)
 }
 
 FLASHMEM
-void DisplayManager::Show_VCF_pan(uint8_t id_sound)
+void DisplayManager::Show_VCF_pan(uint8_t sound_id)
 {
     Cancel_text_reset_cursor(259, Instrument_VCF_TXT_Y + 93, 2);
-    if (Sound[id_sound].pan == 0)
+    if (Sound[sound_id].pan == 0)
     {
         tft.setTextColor(ILI9341_WHITE);
         tft.print("0");
@@ -3227,15 +3227,15 @@ void DisplayManager::Show_VCF_pan(uint8_t id_sound)
     }
 
     tft.setTextColor(ILI9341_WHITE);
-    if (Sound[id_sound].pan < 0)
+    if (Sound[sound_id].pan < 0)
     {
         tft.print("L");
     }
-    else if (Sound[id_sound].pan > 0)
+    else if (Sound[sound_id].pan > 0)
     {
         tft.print("R");
     }
-    tft.print(abs(Sound[id_sound].pan));
+    tft.print(abs(Sound[sound_id].pan));
 }
 
 FLASHMEM
@@ -3511,10 +3511,10 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_copiato(int row, const
     tft.print("KB");
 }
 
-void DisplayManager::Show_LS_ring_tape_wave(int id_sound)
+void DisplayManager::Show_LS_ring_tape_wave(int sound_id)
 {
 
-    int id_file = Sound[id_sound].file;
+    int id_file = Sound[sound_id].file;
 
     LS_window_A_sample = LS_constrain_position(LS_X_sample - (LS_window_width - 1) / 2);
     LS_window_B_sample = LS_window_A_sample + LS_window_width - 1;
@@ -3602,7 +3602,7 @@ void DisplayManager::Show_LS_ring_tape_wave(int id_sound)
         canvas.setCursor((WAVE_WIDTH / 2) - 12, y_pos(0));
         canvas.print("MONO");
     }
-    else if (id_sound == SOUNDS_MAX)
+    else if (sound_id == SOUNDS_MAX)
     {
         canvas.setCursor((WAVE_WIDTH / 2) - 63, y_pos(0));
         canvas.print("(STEREO) LEFT CHANNEL");
@@ -3707,11 +3707,11 @@ uint16_t DisplayManager::Get_LS_wave_color(int point)
 
 void DisplayManager::Show_wave(uint8_t instrument)
 {
-    uint8_t id_sound = Session[session].Instrument[instrument].id_sound;
+    uint8_t id_sound_local = Patch[Patch_id].Instrument[instrument].sound_id;
     int yp, yn, y0;
     int NC_A;
     int16_t *X = Info.Sound_620_samples_array(Preset[instrument].file, Preset[instrument].A, Preset[instrument].B);
-    float volume_float = Volume_float[Sound[id_sound].gain];
+    float volume_float = Volume_float[Sound[id_sound_local].gain];
 
     NC_A = ((WAVE_WIDTH * (Preset[instrument].Noclick < Noclick_max ? Preset[instrument].Noclick : Noclick_max)) / (Preset[instrument].B - Preset[instrument].A));
     if (NC_A == 0 && (Preset[instrument].Noclick > 0))

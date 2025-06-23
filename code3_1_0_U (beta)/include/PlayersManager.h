@@ -92,18 +92,18 @@ public:
     int Simplefind_oldest_player(bool power_on);                     // "precedence" instruments are EXCLUDED
     int Simplefind_oldest_player_flash(bool power_on, bool playing); // "precedence" instruments are EXCLUDED
 
-    void Change_from_key(int session, int instrument, int from_key_new);
-    void Change_to_key(int session, int instrument, int to_key_new);
-    void Multicast_change_players_notes(int session, int instrument);
-    bool Get_use_Wavetable(int id_sound);
+    void Change_from_key(int patch_id, int instrument, int from_key_new);
+    void Change_to_key(int patch_id, int instrument, int to_key_new);
+    void Multicast_change_players_notes(int patch_id, int instrument);
+    bool Get_use_Wavetable(int sound_id);
     int8_t Find_oldest_player(int instrument, bool power_on, bool playing);
-    bool Verify_if_stop_players(int session, int instrument);
+    bool Verify_if_stop_players(int patch_id, int instrument);
 
     void Release_player(int player);
     void Release_all_players_for_instrument(int instrument);
     void Release_all_players_for_instrument_solo(int instrument);
     void Release_all_players(void);
-    void Release_softly_all_players(int session);
+    void Release_softly_all_players(int patch_id);
     void Stop_all_players(void); // BROADCAST_stop_all_Players()
 
     void Release_player(int player, int track);
@@ -111,7 +111,7 @@ public:
     void Release_all_players_loop(int track);
     void Multicast_volume_for_MIDI_LOOP_running(int track, float value);
 
-    void Multicast_release_players(int id_sound);
+    void Multicast_release_players(int sound_id);
     void Broadcast_volume(void);
     void Multicast_volume_for_instrument_edit(int instrument); // chiamata da main e MidiReader
     void Multicast_pitch_for_sound_edit(int instrument);
@@ -120,41 +120,41 @@ public:
     void Multicast_effects(float resolution, uint8_t downsampling);
     void Broadcast_reset_effect(float resolution, uint8_t downsampling, int effect);
 
-    void Multicast_main_settings_editing(int session, int instrument);
+    void Multicast_main_settings_editing(int patch_id, int instrument);
     void Multicast_reset_pitch_bend_effects(int instrument);
     void Broadcast_restore_pitch_bend_and_effects(int midi_channel, float value);
 
-    void Update_all_Preset(int session, float volume_session);
-    void Update_all_Preset_volume(int session, float volume_session);
-    void Update_Preset(int session, int instrument, float volume_session);
-    void Update_Preset_volume(int session, int instrument, float volume_session); // chiamata da main e MidiReader
-    void Update_Preset_pan(int session, int instrument);
-    void Update_Preset_id_sound(int session, int instrument);
-    void Update_Preset_file(int session, int instrument);
-    void Update_Preset_midi_channel(int session, int instrument);
-    void Update_Preset_pitch(int session, int instrument);
-    void Update_Preset_mode(int session, int instrument);
-    void Update_Preset_A_B_Wavetable(int session, int instrument);
-    void Update_Preset_Noclick(int session, int instrument);
-    void Update_Preset_attack_type(int session, int instrument);
-    void Update_Preset_attack(int session, int instrument);
-    void Update_Preset_decay(int session, int instrument);
-    void Update_Preset_sustain(int session, int instrument);
-    void Update_Preset_release(int session, int instrument);
-    void Update_Preset_precedence(int session, int instrument);
-    void Update_Preset_lock(int session, int instrument);
+    void Update_all_Preset(int patch_id, float volume_patch);
+    void Update_all_Preset_volume(int patch_id, float volume_patch);
+    void Update_Preset(int patch_id, int instrument, float volume_patch);
+    void Update_Preset_volume(int patch_id, int instrument, float volume_patch); // chiamata da main e MidiReader
+    void Update_Preset_pan(int patch_id, int instrument);
+    void Update_Preset_id_sound(int patch_id, int instrument);
+    void Update_Preset_file(int patch_id, int instrument);
+    void Update_Preset_midi_channel(int patch_id, int instrument);
+    void Update_Preset_pitch(int patch_id, int instrument);
+    void Update_Preset_mode(int patch_id, int instrument);
+    void Update_Preset_A_B_Wavetable(int patch_id, int instrument);
+    void Update_Preset_Noclick(int patch_id, int instrument);
+    void Update_Preset_attack_type(int patch_id, int instrument);
+    void Update_Preset_attack(int patch_id, int instrument);
+    void Update_Preset_decay(int patch_id, int instrument);
+    void Update_Preset_sustain(int patch_id, int instrument);
+    void Update_Preset_release(int patch_id, int instrument);
+    void Update_Preset_precedence(int patch_id, int instrument);
+    void Update_Preset_lock(int patch_id, int instrument);
 
     void Multicast_IF_update_filter_type(int instrument);
-    void Update_IF_resonance(int session, int instrument);
+    void Update_IF_resonance(int patch_id, int instrument);
     void Multicast_IF_pivot(int instrument);
     void Multicast_IF_frequency_filter(int instrument);
     void Multicast_IF_resonance(int instrument);
     void Multicast_IF_index(int instrument, float value); // chiamata da main e MidiReader
-    void Update_Preset_IF(int session, int instrument);
-    void Update_Preset_IF_resonance(int session, int instrument);
-    void Update_Preset_IF_filter_type(int session, int instrument);
-    void Update_Preset_IF_modulation(int session, int instrument);
-    void Update_Preset_IF_index(int session, int instrument);
+    void Update_Preset_IF(int patch_id, int instrument);
+    void Update_Preset_IF_resonance(int patch_id, int instrument);
+    void Update_Preset_IF_filter_type(int patch_id, int instrument);
+    void Update_Preset_IF_modulation(int patch_id, int instrument);
+    void Update_Preset_IF_index(int patch_id, int instrument);
 
     void Broadcast_FIFO_stereo(int16_t *_LS_buffer_L, int16_t *_LS_buffer_R); // chiamata da main LIVE_SAMPLER
     void Broadcast_FIFO_mono(int16_t *_LS_buffer_mono);                       // chiamata da main LIVE_SAMPLER

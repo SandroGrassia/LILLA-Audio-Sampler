@@ -120,7 +120,7 @@ private:
     elapsedMicros execution_clock;
     unsigned long execution_time;
    
-    bool warmup_for_play_again_flag = false; // qundo si riceve Get_ready_to_play ma il Player è !idle, il Player non puo' partire immediatamente
+    bool warmup_for_play_again_flag = false; // quando si riceve Get_ready_to_play ma il Player è !idle, il Player non puo' partire immediatamente
     bool restart_flag = false;
     float fast_stop_gain;
     bool main_settings_editing_flag = false;
@@ -202,8 +202,8 @@ private:
 
     int file_id_wait;
     float volume_gain_wait;
-    int session_wait;
-    int instrument_wait;
+    int patch_id_wait;
+    int instrument_id_wait;
     int id_sound_wait;
     int note_wait;
     float pitch_note_wait;    // 0.5=half speed 1=original speed 2=double speed
@@ -253,9 +253,9 @@ private:
 
     bool precedence = false;
     int midi_channel = 0;
-    int local_session = 0;
-    uint8_t instrument = 0;
-    uint8_t id_sound = 0;
+    int local_patch = 0;
+    uint8_t instrument_id = 0;
+    uint8_t sound_id = 0;
     uint8_t note = 0;
     unsigned long time_stamp = 0;
     float pitch = 0.0;
@@ -347,7 +347,7 @@ public:
     Compiti:
     - setta una serie di valori e flag, individuati col suffisso "wait", utilizzati alla successiva partenza/ripartenza del Player, comandata da update()
     */   
-    void Get_ready_to_play(float pitch_note_in, float velocity_in, int session_in, uint8_t instrument_in, uint8_t id_sound_in, uint8_t note_in); // chiamata da Playermanager per suonare
+    void Get_ready_to_play(float pitch_note_in, float velocity_in, int patch_in, uint8_t instrument_in, uint8_t id_sound_in, uint8_t note_in); // chiamata da Playermanager per suonare
 
     /*
     Main_settings_editing
@@ -364,8 +364,8 @@ public:
     int Read_loop_track(void);
     int Read_update_time(void);
     bool Read_precedence(void);
-    int Read_session_wait(void);
-    int Read_local_session(void);
+    int Read_patch_wait(void);
+    int Read_local_patch(void);
     int Read_midi_channel(void);
     int Read_instrument(void);
     int Read_id_sound(void);

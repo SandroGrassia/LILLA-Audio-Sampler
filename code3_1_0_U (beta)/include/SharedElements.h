@@ -19,8 +19,8 @@ static constexpr int PLAYERS = 16;
 static constexpr int SAMPLES_VOLUME = 5000; // rampa per cambio gain - deve essere pari
 static constexpr int BLOCK_MIN = 674;       // (at least AUDIO_BLOCK_SAMPLES * MAX_PITCH_FLASH) ; below this lenght, samples are copied from flash to RAM and tune is tracked with inner_tune
 static constexpr int NOCLICK_DIM = 300; // max number of samples included in cross-fade time in NoClick array creation
-static constexpr int SESSIONS_MAX = 24;   // max number of Sessions stored in EEPROM
-static constexpr int INSTRUMENTS_MAX = 8; // mux number of Instruments per Session
+static constexpr int PATCHES_MAX = 24;   // max number of Patchs stored in EEPROM
+static constexpr int INSTRUMENTS_MAX = 8; // mux number of Instruments per Patch
 static constexpr int SOUNDS_MAX = 85;     // max number of Sounds stored in EEPROM
 
 
@@ -77,7 +77,7 @@ enum LillaStates
 
 
 
-// SESSION
+// PATCH
 // Variabili runtime
 static constexpr int VOLUME_1 = 29;
 struct Instrument_filter_data_struct
@@ -94,7 +94,7 @@ struct Instrument_filter_data_struct
 struct Instrument_struct
 {
     bool used;
-    uint8_t id_sound;
+    uint8_t sound_id;
     uint8_t root_key;
     uint8_t from_note;
     uint8_t to_note;
@@ -102,15 +102,15 @@ struct Instrument_struct
     bool lock;
     Instrument_filter_data_struct Filter;
 };
-struct Session_struct
+struct Patch_struct
 {
     bool used;
     uint8_t instruments;
     Instrument_struct Instrument[8];
 } __attribute__((__packed__)); // https://cs50.stackexchange.com/questions/22297/i-am-getting-an-unexpected-sizeof-error
 
-extern Session_struct Session[SESSIONS_MAX + 1]; // last used by Direct Sampling for "preascolto" and Live Sampling
-static constexpr uint8_t SIZE_OF_SESSION = sizeof(Session_struct);
+extern Patch_struct Patch[PATCHES_MAX + 1]; // last used by Direct Sampling for "preascolto" and Live Sampling
+static constexpr uint8_t SIZE_OF_PATCH_STRUCT = sizeof(Patch_struct);
 
 struct Instrument_filter_values_struct
 {
@@ -147,8 +147,8 @@ static constexpr uint8_t SIZE_OF_SOUND = sizeof(Sound_struct);
 
 
 // PERFORMANCE
-extern uint8_t session;
-extern int volume_session;
+extern uint8_t Patch_id;
+extern int volume_patch;
 extern uint8_t map_instrument_for_note[16][128];
 extern bool key_state[16][128]; // usato solo a fini statistici; key premuti su ciascun canale midi; rilevato attaverso il conteggio dei NoteOn
 extern bool file_midi_ch_flag; // quale funzionalita' regola l'encoder 2
@@ -227,7 +227,7 @@ extern float pan_gain_L_table[33];
 extern float pan_gain_R_table[33];
 
 // funzioni
-uint8_t Get_midi_channel(uint8_t session, uint8_t instrument);
+uint8_t Get_midi_channel(uint8_t patch_id, uint8_t instrument);
 float Calc_pitch(float value);
 float Calc_attack(uint8_t &n); float CALC_decay(uint8_t &n);
 float Calc_sustain(uint8_t &n);
@@ -241,7 +241,7 @@ struct Preset_struct
 {
     float volume;
     int8_t pan;
-    uint16_t id_sound;
+    uint16_t sound_id;
     uint16_t file;
     uint16_t midi_channel;
     float pitch;
