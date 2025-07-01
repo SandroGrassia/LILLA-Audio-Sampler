@@ -342,7 +342,7 @@ FLASHMEM
 void DisplayManager::Lowpass_filter(void)
 {
     float Y_EFF = (Lilla_state == MIDI_LOOP ? 1.5 : 2.5);
-    Cancel_text_reset_cursor(x_pos(11), y_pos(Y_EFF + 1), 16);
+    Cancel_text_reset_cursor(x_pos(11), y_pos(Y_EFF + 1), 7);
 
     float F = lowpass_value[lowpass_target];
     tft.setTextColor(ILI9341_YELLOW);
@@ -351,19 +351,19 @@ void DisplayManager::Lowpass_filter(void)
     {
         tft.print(F / 1000, 0);
         tft.setTextColor(ILI9341_ORANGE);
-        tft.print(" x pitch kHz");
+        tft.print("kHz");
     }
     else if (F > 999)
     {
         tft.print(F / 1000.0f, 2);
         tft.setTextColor(ILI9341_ORANGE);
-        tft.print(" x pitch kHz");
+        tft.print("kHz");
     }
     else
     {
         tft.print(F, 0);
         tft.setTextColor(ILI9341_ORANGE);
-        tft.print(" x pitch Hz");
+        tft.print("Hz");
     }
 }
 
@@ -3333,7 +3333,7 @@ void DisplayManager::Show_VCF_pan(uint8_t sound_id)
 }
 
 FLASHMEM
-void DisplayManager::Make_VFS_presentazione(void)
+void DisplayManager::Make_VFS_presentation(void)
 {
     tft.fillScreen(ILI9341_BLACK);
 
@@ -3364,7 +3364,7 @@ void DisplayManager::Make_VFS_presentazione(void)
 }
 
 FLASHMEM
-void DisplayManager::Make_VFS_assegnazioni(void)
+void DisplayManager::Make_VFS_assignments(void)
 {
     tft.setCursor(x_pos(0), y_pos(7));
     tft.setTextColor(TEXT_COLOR);
@@ -3390,7 +3390,7 @@ void DisplayManager::Make_VFS_restart(void)
 }
 
 FLASHMEM
-void DisplayManager::Make_VFS_no_spazio_per_sampler(void)
+void DisplayManager::Make_VFS_not_enough_memory_for_sampler(void)
 {
     tft.setCursor(x_pos(0), y_pos(10));
     tft.setTextColor(ILI9341_MAGENTA);
@@ -3415,7 +3415,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_titolo(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_attesa_SD(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_waiting_for_SD(void)
 {
     tft.setCursor(x_pos(0), y_pos(3));
     tft.setTextColor(ILI9341_YELLOW);
@@ -3423,7 +3423,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_attesa_SD(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_directory_assente(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_lillaraw_missing(void)
 {
     tft.setCursor(x_pos(0), y_pos(3));
     tft.setTextColor(ILI9341_YELLOW);
@@ -3431,7 +3431,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_directory_assente(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_consistenza_presente(unsigned long SD_raw_volume, int SD_raw_files, int raw_files_volume, int flash_raw_files)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_files_report(unsigned long SD_raw_volume, int SD_raw_files, int raw_files_volume, int flash_raw_files)
 {
     tft.setCursor(x_pos(0), y_pos(3));
     tft.setTextColor(TEXT_COLOR);
@@ -3481,7 +3481,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_consistenza_presente(unsign
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_ultimo_avviso(float erasing_time_ms)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_last_warning(float erasing_time_ms)
 {
     tft.setCursor(x_pos(0), y_pos(10));
     tft.setTextColor(TEXT_COLOR);
@@ -3510,7 +3510,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_ultimo_avviso(float erasing
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_avvio_copia(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_job_start(void)
 {
     // Start erasing flash chip
     tft.fillRect(0, y_pos(11), 320, 240, ILI9341_BLACK);
@@ -3526,7 +3526,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_avvio_copia(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_percentuale_iniziale(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_initial_percentage(void)
 {
     tft.drawLine(x_pos(0), BAR_POS_Y, x_pos(0), BAR_POS_Y + 5, ILI9341_YELLOW);
     tft.setCursor(x_pos(0) + 10, BAR_POS_Y);
@@ -3535,7 +3535,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_percentuale_iniziale(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_avanzamento(unsigned char barcount)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_progress(unsigned char barcount)
 {
     tft.drawLine(x_pos(0) + barcount, BAR_POS_Y, x_pos(0) + barcount, BAR_POS_Y + 5, ILI9341_YELLOW);
     tft.setCursor(x_pos(0) + barcount + 10, BAR_POS_Y);
@@ -3550,20 +3550,20 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_avanzamento(unsigned char b
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_sfondo_popup(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_popup_landscape(void)
 {
     // Start copying RAW files from SD to Flash chip
     tft.fillRect(0, 12, 320, 240, ILI9341_BLACK);
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_sfondo_elenco(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_list_landscape(void)
 {
     tft.fillRect(0, y_pos(3), 320, 240, ILI9341_BLACK);
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_da_copiare(int row, const char *filename, unsigned long length)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_files_to_copy(int row, const char *filename, unsigned long length)
 {
     tft.setCursor(x_pos(0), y_pos(row));
     tft.setTextColor(TEXT_COLOR);
@@ -3576,21 +3576,21 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_da_copiare(int row, co
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_errore_flash_chip(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_flash_error(void)
 {
     tft.setTextColor(TEXT_COLOR);
     tft.print("  FLASH MEMORY ERROR");
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_errore_flash_full(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_flash_full_error(void)
 {
     tft.setTextColor(TEXT_COLOR);
     tft.print("  ERROR: FLASH MEMORY FULL!");
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_copia_completata(void)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_job_done(void)
 {
     // Display RAW files list
     tft.fillRect(0, 12, 320, 240, ILI9341_BLACK);
@@ -3600,7 +3600,7 @@ void DisplayManager::Copy_raw_files_SD_to_Flash_chip_copia_completata(void)
 }
 
 FLASHMEM
-void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_copiato(int row, const char *filename, uint32_t filesize)
+void DisplayManager::Copy_raw_files_SD_to_Flash_chip_file_copied(int row, const char *filename, uint32_t filesize)
 {
     tft.setCursor(x_pos(0), y_pos(row));
     tft.setTextColor(ILI9341_WHITE);

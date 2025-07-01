@@ -23,13 +23,20 @@
 class AudioPlayer : public AudioStream
 {
 private:
-    static constexpr int BASKET_DIM = 3100; // la dimensione deve essere non inferiore a AUDIO_BLOCK_SAMPLES * MAX_PITCH_WAVETABLE
+    static constexpr int BASKET_DIM = 3100;    // la dimensione deve essere non inferiore a AUDIO_BLOCK_SAMPLES * MAX_PITCH_WAVETABLE
     static int16_t samples_basket[BASKET_DIM]; // cache array unico per samples copiati dai Player
     int16_t block[AUDIO_BLOCK_SAMPLES];
     uint8_t mix_samples = 32;
-
     uint8_t identity;
-    volatile int state; // 0=idle (no output available) 1=running (no stop request) 2=fading (output is falling down)
+    enum PlayerStates
+    {
+        IDLE,   // no output available
+        RUNNING, // running, no stop request
+        FADING,  //  stop requested, output is falling down
+        IDLE_REQUEST // last update, than go to IDLE
+    };
+    
+    int state;
     LillaSerialFlashFile rawfile; // SerialFlashFile rawfile;
     int file_id;
     uint32_t samples_counter; // starting from play()
@@ -89,9 +96,9 @@ private:
 
     */
 
-    float *p_vibrato_array;
+    float *vibrato_array_ptr;
     float vibrato_array_element_float = 0;
-    uint8_t *p_vibrato_array_last_element;
+    uint8_t *vibrato_array_last_element_ptr;
     float pitch_vibrato = 1.0;
 
     // MIDI_LOOP
@@ -115,31 +122,32 @@ private:
     float LFO_index_grain = 0;
 
     // check performance
-    unsigned long monitor_laps = 0;
     elapsedMicros local_timer;
-    unsigned long execution_time;
-   
-    bool warmup_for_play_again_flag = false; // quando si riceve Get_ready_to_play ma il Player è !idle, il Player non puo' partire immediatamente
-    bool restart_flag = false;
-    float fast_stop_gain;
-    bool main_settings_editing_flag = false;
-    bool vibrato_flag = false;
-    bool pitch_tune_flag = false;
-    bool pitch_bend_flag = false;
 
+    // Edit variables
     uint8_t mode_player_E;
-    int16_t *p_Wavetable_E;
-    int16_t *p_Noclick_E;
+    int16_t *Wavetable_E_ptr;
+    int16_t *Noclick_E_ptr;
     int A_Flash_sample_E;
     int B_Flash_sample_E;
     int C_Flash_sample_E;
-    int B_Flash_sample_5_E;
+    int B_Flash_sample_shifted_E;
     uint16_t delta_Noclick_E;
     bool use_Wavetable_E;
     int32_t Wavetable_length_E;
     int32_t Flash_first_RAM_sample_E;
     float pitch_limit_E;
 
+    // Operation variables
+    bool precedence = false;
+    int midi_channel = 0;
+    int local_patch = 0;
+    int instrument_id = 0;
+    int sound_id = 0;
+    int note = 0;
+    unsigned long time_stamp = 0;
+    int update_time;
+    float pitch = 0.0;
     float pitch_note;
     float velocity_gain; // 0 <= velocity_gain <= 1.0
     float pitch_based_gain_correction;
@@ -151,7 +159,7 @@ private:
     float Sustain = 0;
     float Release = 0;
     uint8_t ADSR_phase; // 0: Attack, 1: Decay, 2: Sustain, 3: Release
-    float ADSR_point;  // index, from 0.0 to 10.0
+    float ADSR_point;   // index, from 0.0 to 10.0
     float ADSR_point_0; // last index, from 0.0 to 10.0
     float ADSR_gain;
     float ADSR_gain_0;
@@ -179,26 +187,27 @@ private:
     int16_t stored_sample;
     uint8_t sliding;
     float raw_first_value_cache[AUDIO_BLOCK_SAMPLES];
-
+    float fast_stop_gain;
     uint8_t mode_player;
     int A_Flash_sample;
     int B_Flash_sample;
     int B_Flash_sample_0;
     int C_Flash_sample;
-    int B_Flash_sample_5;
+    int B_Flash_sample_shifted;
     float a_sample;
     float b_sample;
     float a_first_sample;
     float initial_index_offset;
-    int16_t *p_Wavetable;
+    int16_t *Wavetable_ptr;
     bool use_Wavetable_old;
     int16_t INT_Wavetable_B_sample;
     int16_t INT_Wavetable_C_sample;
     int32_t Wavetable_length;
     int32_t Flash_first_RAM_sample;
-    int16_t *p_Noclick;
+    int16_t *Noclick_ptr;
     uint16_t delta_Noclick = 0;
 
+    // wait variables
     int file_id_wait;
     float volume_gain_wait;
     int patch_id_wait;
@@ -210,26 +219,33 @@ private:
     float pitch_tune_wait;
     float pitch_bend_wait;
     uint8_t mode_player_wait;
-    int8_t pan_int_wait;
+    int pan_int_wait;
     float pan_gain_L_wait;
     float pan_gain_R_wait;
     int A_Flash_sample_wait;
     int B_Flash_sample_wait;
     int C_Flash_sample_wait;
-    int B_Flash_sample_5_wait;
+    int B_Flash_sample_shifted_wait;
     float a_first_sample_wait;
-    int16_t *p_Wavetable_wait;
-    int16_t *p_Noclick_wait;
-    uint16_t delta_Noclick_wait;
-    int32_t Wavetable_length_wait;
-    int32_t Flash_first_RAM_sample_wait;
+    int16_t *Wavetable_wait_ptr;
+    int16_t *Noclick_wait_ptr;
+    int delta_Noclick_wait;
+    int Wavetable_length_wait;
+    int Flash_first_RAM_sample_wait;
     float pitch_limit_wait;
     bool use_Wavetable_wait;
-    uint32_t K_resolution_step_wait = 1;
-    uint8_t downsampling_wait;
+    int K_resolution_step_wait;
+    int downsampling_wait;
+
+    // flags
+    bool warmup_for_play_again_flag = false; // quando si riceve Get_ready_to_play ma il Player è !idle, il Player non puo' partire immediatamente
+    bool restart_flag = false;
+    bool main_settings_editing_flag = false;
+    bool vibrato_flag = false;
+    bool pitch_tune_flag = false;
+    bool pitch_bend_flag = false;
     bool resolution_flag_wait = false;
     bool downsampling_flag_wait = false;
-
     bool volume_flag = false;
     bool volume_gain_warmup_flag = false;
     bool pan_flag = false;
@@ -237,47 +253,37 @@ private:
     bool set_effects_flag = false;
     bool resolution_flag = false;
     bool downsampling_flag = false;
-    
+    bool use_Wavetable = false;
+
     // DIRECT_SAMPLIG
     int recording;
     bool recording_flag = false;
     bool stereo_flag = false;
     int packet_delta = 0;
     int first_packet = 0;
-    
+
     // LIVE_SAMPLING
     bool LS_flag = false;
     int16_t *FIFO;
     int FIFO_dim;
 
-    bool precedence = false;
-    int midi_channel = 0;
-    int local_patch = 0;
-    uint8_t instrument_id = 0;
-    uint8_t sound_id = 0;
-    uint8_t note = 0;
-    unsigned long time_stamp = 0;
-    float pitch = 0.0;
-    bool use_Wavetable = false;
-
-    // Player timing
-    uint16_t update_time; 
-
-    void Read_flash(int16_t *destination, int first_sample, int total_samples);
     void Update_pitch(void);
     void Update_volume_gain(void);
     void Update_pan_gain(void);
     void Update_ADSR_parameters(void);
     void Update_ADSR_gain(void);
     void Start_playing(void);
+
     void Flash_memory_harvest(void);
     void Wavetable_harvest(void);
+    void Read_flash(int16_t *destination, int first_sample, int total_samples);
 
     float Mirror(float pivot, float value);
-    void Append_transposed(int16_t *_target, uint16_t first_index, int16_t *_source, uint16_t N);
-    void Append(int16_t *_target, uint16_t first_index, int16_t *_source, uint16_t N);
-    int32_t cache;
-
+    void Append_transposed(int16_t *target_ptr, uint16_t first_index, int16_t *source_ptr, uint16_t N);
+    void Append(int16_t *target_ptr, uint16_t first_index, int16_t *source_ptr, uint16_t N);
+    
+    bool myLED;
+    void My_LED(bool on);
 
 public:
     AudioPlayer(void) : AudioStream(0, NULL)
@@ -288,18 +294,18 @@ public:
     void begin(void);
     virtual void update(void);
     int State(void);
-    
+
     // Settati alla creazione di ciascuna istanza
     void Set_identity(uint8_t value);
-    AudioVCF* VCF_ptr = nullptr;
-    WaveLFO* LFO_ptr = nullptr;
-    StereoLiveSampler* LiveSampler_ptr = nullptr; // meglio static!
-    PlayersStatistics* Players_statistics_ptr = nullptr; // meglio static!
+    AudioVCF *VCF_ptr = nullptr;
+    WaveLFO *LFO_ptr = nullptr;
+    StereoLiveSampler *LiveSampler_ptr = nullptr;        // meglio static!
+    PlayersStatistics *Players_statistics_ptr = nullptr; // meglio static!
 
     // Received when FIFO is created
-    int16_t* LS_buffer_mono_ptr = nullptr;
-    int16_t* LS_buffer_L_ptr = nullptr;
-    int16_t* LS_buffer_R_ptr = nullptr;
+    int16_t *LS_buffer_mono_ptr = nullptr;
+    int16_t *LS_buffer_L_ptr = nullptr;
+    int16_t *LS_buffer_R_ptr = nullptr;
 
     // received before playing
     void Connect_VCF(bool use, int type, float pivot, float resonance, bool modulated);
@@ -316,7 +322,7 @@ public:
     void Set_ADSR(float attack_in, float decay_in, float sustain_in, float release_in, uint8_t attack_type_in); // set ADSR parameters. Times are in seconds. 0 <= sustain_value <= 1.0
     void Set_volume(float volume_gain_value);
     void Update_volume(float volume_gain_value);
-    void Set_pan(int pan_int_value);  
+    void Set_pan(int pan_int_value);
     void Set_effects(float resolution_exp, uint8_t downsampling_in);
     void Set_pitch(float pitch_tune_in);
     void Set_note(float pitch_note_in);
@@ -327,7 +333,6 @@ public:
     void Set_vibrato_flag(bool value);
     void Write_update_time(uint16_t value);
     void Set_mix_samples(uint8_t value);
-    
 
     /*
     Main_settings
@@ -336,16 +341,15 @@ public:
     Compiti:
     - setta una serie di valori e flag, individuati col suffisso "wait", utilizzati alla successiva partenza/ripartenza del Player, comandata da update()
     */
-    void Main_settings(uint8_t mode_in, int A_value_in, int B_value_in, uint16_t delta_Noclick_in, bool RAM_mode_in, int16_t *p_Noclick_in, int16_t *p_Wavetable_in); 
+    void Main_settings(uint8_t mode_in, int A_value_in, int B_value_in, uint16_t delta_Noclick_in, bool RAM_mode_in, int16_t *p_Noclick_in, int16_t *p_Wavetable_in);
 
-    
-     /*
-    Get_ready_to_play
-    chiamata da PlayersManager
+    /*
+   Get_ready_to_play
+   chiamata da PlayersManager
 
-    Compiti:
-    - setta una serie di valori e flag, individuati col suffisso "wait", utilizzati alla successiva partenza/ripartenza del Player, comandata da update()
-    */   
+   Compiti:
+   - setta una serie di valori e flag, individuati col suffisso "wait", utilizzati alla successiva partenza/ripartenza del Player, comandata da update()
+   */
     void Get_ready_to_play(float pitch_note_in, float velocity_in, int patch_in, uint8_t instrument_in, uint8_t id_sound_in, uint8_t note_in); // chiamata da Playermanager per suonare
 
     /*
@@ -354,11 +358,11 @@ public:
 
     Compiti:
     - setta una serie di valori e flag, individuati col suffisso "E", utilizzati al successivo update()
-    */       
+    */
     void Main_settings_editing(uint8_t mode_in, int A_value_in, int B_value_in, uint16_t delta_Noclick_in, bool RAM_mode_in, int16_t *p_Noclick_in, int16_t *p_Wavetable_in);
     void Release_note(void); // release note, fires ADSR "release"
     void Fast_stop(void);
-    
+
     float Read_pitch(void);
     int Read_loop_track(void);
     int Read_update_time(void);

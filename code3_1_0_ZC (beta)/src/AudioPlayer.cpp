@@ -12,7 +12,39 @@ void AudioPlayer::begin(void)
 {
     idle = true;
     power_on = false;
-    state = 0;
+    state = IDLE;
+    myLED = false;
+}
+
+void AudioPlayer::My_LED(bool on)
+{
+    if (on && !myLED)
+    {
+        if (Lilla_state == MIDI_LOOP && track >= 0)
+        {
+            Players_statistics_ptr->Inc_total_Players_per_track_instrument(track, instrument_id);
+        }
+        else if (Lilla_state != MIDI_LOOP)
+        {
+            Players_statistics_ptr->Inc_total_Players_per_instrument(instrument_id);
+        }
+
+        myLED = true;
+    }
+
+    else if (!on && myLED)
+    {
+        if (Lilla_state == MIDI_LOOP && track >= 0)
+        {
+            Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
+        }
+        else if (Lilla_state != MIDI_LOOP)
+        {
+            Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
+        }
+
+        myLED = false;
+    }
 }
 
 void AudioPlayer::Set_effects(float resolution_exp, uint8_t downsampling_in) // 2.0bit <= resolution_exp <= 16.0bit  1 <= downsampling_in <= 128
@@ -125,8 +157,8 @@ if (downsampling_flag)
 
 void AudioPlayer::Main_settings(uint8_t mode_in, int A_value_in, int B_value_in, uint16_t delta_Noclick_in, bool use_Wavetable_in, int16_t *p_Noclick_in, int16_t *p_Wavetable_in)
 {
-    p_Noclick_wait = p_Noclick_in;
-    p_Wavetable_wait = p_Wavetable_in;
+    Noclick_wait_ptr = p_Noclick_in;
+    Wavetable_wait_ptr = p_Wavetable_in;
 
     A_Flash_sample_wait = A_value_in;
     B_Flash_sample_wait = B_value_in;
@@ -330,9 +362,9 @@ void AudioPlayer::Main_settings(uint8_t mode_in, int A_value_in, int B_value_in,
                 mode_player_wait = 3;
                 break;
             case 5: // loop B-->A B-->A
-                B_Flash_sample_5_wait = B_Flash_sample_wait - delta_Noclick_wait;
-                C_Flash_sample_wait = Mirror(B_Flash_sample_5_wait, A_Flash_sample_wait);
-                a_first_sample_wait = B_Flash_sample_5_wait;
+                B_Flash_sample_shifted_wait = B_Flash_sample_wait - delta_Noclick_wait;
+                C_Flash_sample_wait = Mirror(B_Flash_sample_shifted_wait, A_Flash_sample_wait);
+                a_first_sample_wait = B_Flash_sample_shifted_wait;
                 mode_player_wait = mode_in;
                 break;
 
@@ -352,8 +384,8 @@ void AudioPlayer::Main_settings_editing(uint8_t mode_in, int A_value_in, int B_v
     B_Flash_sample_E = B_value_in;
     delta_Noclick_E = delta_Noclick_in;
     use_Wavetable_E = use_Wavetable_in;
-    p_Noclick_E = p_Noclick_in;
-    p_Wavetable_E = p_Wavetable_in;
+    Noclick_E_ptr = p_Noclick_in;
+    Wavetable_E_ptr = p_Wavetable_in;
 
     // Read samples from PSRAM chip
     if (file_id_wait >= FIRST_LIVE_SAMPLING_FILE)
@@ -496,8 +528,8 @@ void AudioPlayer::Main_settings_editing(uint8_t mode_in, int A_value_in, int B_v
             C_Flash_sample_E = Mirror(B_Flash_sample_E, A_Flash_sample_E);
             break;
         case 5: // loop B-->A B-->A
-            B_Flash_sample_5_E = B_Flash_sample_E - delta_Noclick_E;
-            C_Flash_sample_E = Mirror(B_Flash_sample_5_E, A_Flash_sample_E);
+            B_Flash_sample_shifted_E = B_Flash_sample_E - delta_Noclick_E;
+            C_Flash_sample_E = Mirror(B_Flash_sample_shifted_E, A_Flash_sample_E);
             break;
         default:
             break;
@@ -520,14 +552,13 @@ void AudioPlayer::Get_ready_to_play(float pitch_note_in, float velocity_in, int 
 
     power_on = true;
 
-    if (idle)
+    if (state == IDLE)
     {
         Start_playing();
     }
     else
     {
         warmup_for_play_again_flag = true;
-        state = 1;
     }
 }
 
@@ -608,8 +639,8 @@ void AudioPlayer::Start_playing(void)
     pan_int = pan_int_wait;
     pan_gain_L = pan_gain_L_wait;
     pan_gain_R = pan_gain_R_wait;
-    p_Noclick = p_Noclick_wait;
-    p_Wavetable = p_Wavetable_wait;
+    Noclick_ptr = Noclick_wait_ptr;
+    Wavetable_ptr = Wavetable_wait_ptr;
     A_Flash_sample = A_Flash_sample_wait;
     B_Flash_sample = B_Flash_sample_wait;
     delta_Noclick = delta_Noclick_wait;
@@ -620,7 +651,7 @@ void AudioPlayer::Start_playing(void)
     Wavetable_length = Wavetable_length_wait;
     pitch_limit = pitch_limit_wait;
     C_Flash_sample = C_Flash_sample_wait;
-    B_Flash_sample_5 = B_Flash_sample_5_wait;
+    B_Flash_sample_shifted = B_Flash_sample_shifted_wait;
     initial_index_offset = 0;
     samples_counter = 0;
     local_patch = patch_id_wait;
@@ -628,14 +659,7 @@ void AudioPlayer::Start_playing(void)
     // Player is NOT idle, decrement statistics for OLD instrument
     if (warmup_for_play_again_flag)
     {
-        if (Lilla_state == MIDI_LOOP && track >= 0)
-        {
-            Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
-        }
-        else if (Lilla_state != MIDI_LOOP)
-        {
-            Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
-        }
+        My_LED(false);
     }
 
     instrument_id = instrument_id_wait;
@@ -651,18 +675,10 @@ void AudioPlayer::Start_playing(void)
     sliding = 0;
     track = track_wait;
     Start_VCF();
-    idle = false;
-    state = 1;
 
-    // Increment statistics for NEW instrument_id
-    if (Lilla_state == MIDI_LOOP && track >= 0)
-    {
-        Players_statistics_ptr->Inc_total_Players_per_track_instrument(track, instrument_id);
-    }
-    else if (Lilla_state != MIDI_LOOP)
-    {
-        Players_statistics_ptr->Inc_total_Players_per_instrument(instrument_id);
-    }
+    idle = false;
+    state = RUNNING;
+    My_LED(true);
 }
 
 void AudioPlayer::Release_note(void) // release note, fires ADSR "release"
@@ -671,18 +687,10 @@ void AudioPlayer::Release_note(void) // release note, fires ADSR "release"
     ADSR_phase = 3;              // Release
     ADSR_point_0 = -K_Release_step;
     time_stamp = millis();
+
     power_on = false;
-    state = 2;
-
-    if (Lilla_state == MIDI_LOOP && track >= 0)
-    {
-        Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
-    }
-
-    else if (Lilla_state != MIDI_LOOP)
-    {
-        Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
-    }
+    state = FADING;
+    My_LED(false);
 }
 
 void AudioPlayer::Update_pitch(void)
@@ -730,22 +738,18 @@ void AudioPlayer::update(void)
     if (security_timer > 2800)
     {
         Serial.println("*PROTECT*");
-        idle = true;
-        power_on = false;
-        state = 0;
 
-        if (Lilla_state == MIDI_LOOP && track >= 0)
+        if (state != IDLE)
         {
-            Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
-        }
 
-        else if (Lilla_state != MIDI_LOOP)
-        {
-            Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
+            idle = true;
+            power_on = false;
+            state = IDLE;
+            My_LED(false);
         }
     }
 
-    if (idle)
+    if (state == IDLE)
     {
         for (auto sample = 0; sample < AUDIO_BLOCK_SAMPLES; ++sample)
         {
@@ -769,9 +773,11 @@ void AudioPlayer::update(void)
                 a_sample = a_first_sample;
                 initial_index_offset = a_sample - floor(a_sample);
                 b_sample = a_sample + (pitch * (mix_samples - 1));
+
                 (use_Wavetable ? Wavetable_harvest() : Flash_memory_harvest());
 
                 float volume_tmp = volume_gain * velocity_gain * ADSR_gain * pitch_based_gain_correction;
+
                 for (uint8_t i = 0; i < mix_samples; ++i)
                 {
                     F_basket_sample = (i * pitch) + initial_index_offset; // "initial_index_offset" may be modified in harvest function
@@ -815,8 +821,8 @@ void AudioPlayer::update(void)
         {
             vibrato_array_element_float += VIBRATO_STEP;
             vibrato_array_element = ((uint8_t)vibrato_array_element_float) % 32;
-            *p_vibrato_array_last_element = vibrato_array_element;
-            pitch_vibrato = *(p_vibrato_array + vibrato_array_element);
+            *vibrato_array_last_element_ptr = vibrato_array_element;
+            pitch_vibrato = *(vibrato_array_ptr + vibrato_array_element);
         }
 
         Update_pitch();
@@ -1148,13 +1154,13 @@ void AudioPlayer::update(void)
 
                     else
                     {
-                        a_first_sample_real = Mirror(B_Flash_sample_5, a_first_sample); // a'
+                        a_first_sample_real = Mirror(B_Flash_sample_shifted, a_first_sample); // a'
 
-                        // a' MUST be between A_Flash_sample_E and B_Flash_sample_5_E
+                        // a' MUST be between A_Flash_sample_E and B_Flash_sample_shifted_E
                         // ............AE--<<<<<<<a'----------------------B_5E........
-                        if (ceil(a_first_sample_real) > A_Flash_sample_E && ceil(a_first_sample_real) <= B_Flash_sample_5_E)
+                        if (ceil(a_first_sample_real) > A_Flash_sample_E && ceil(a_first_sample_real) <= B_Flash_sample_shifted_E)
                         {
-                            a_first_sample_E = Mirror(B_Flash_sample_5_E, a_first_sample_real);
+                            a_first_sample_E = Mirror(B_Flash_sample_shifted_E, a_first_sample_real);
                             snubber_flag = true;
                             // Serial.println("NoWavetable - case i loop B-->A B-->A");
                         }
@@ -1162,7 +1168,7 @@ void AudioPlayer::update(void)
                         // out of range
                         else
                         {
-                            a_first_sample_E = B_Flash_sample_5_E;
+                            a_first_sample_E = B_Flash_sample_shifted_E;
                             snubber_flag = true;
                             // Serial.println("NoWavetable - case j loop B-->A B-->A");
                         }
@@ -1176,7 +1182,9 @@ void AudioPlayer::update(void)
                 a_sample = a_first_sample; // original a_first_sample
                 initial_index_offset = a_sample - floor(a_sample);
                 b_sample = a_sample + pitch * (mix_samples - 1); // read half samples
+
                 (use_Wavetable ? Wavetable_harvest() : Flash_memory_harvest());
+
                 float volume_tmp = volume_gain * velocity_gain * ADSR_gain * pitch_based_gain_correction;
 
                 // mix_samples < AUDIO_BLOCK_SAMPLES
@@ -1210,8 +1218,8 @@ void AudioPlayer::update(void)
             mode_player = mode_player_E;
             a_first_sample = a_first_sample_E;
             delta_Noclick = delta_Noclick_E;
-            p_Wavetable = p_Wavetable_E;
-            p_Noclick = p_Noclick_E;
+            Wavetable_ptr = Wavetable_E_ptr;
+            Noclick_ptr = Noclick_E_ptr;
             use_Wavetable = use_Wavetable_E;
             A_Flash_sample = A_Flash_sample_E;
             B_Flash_sample = B_Flash_sample_E;
@@ -1224,7 +1232,7 @@ void AudioPlayer::update(void)
             else
             {
                 C_Flash_sample = C_Flash_sample_E;
-                B_Flash_sample_5 = B_Flash_sample_5_E;
+                B_Flash_sample_shifted = B_Flash_sample_shifted_E;
             }
 
             main_settings_editing_flag = false;
@@ -1284,6 +1292,7 @@ void AudioPlayer::update(void)
 
         for (auto sample = 0; sample < AUDIO_BLOCK_SAMPLES; ++sample)
         {
+            int32_t cache;
             F_basket_sample = (sample * pitch) + initial_index_offset; // "initial_index_offset" may be modified in harvest function
             I_basket_L_sample = floor(F_basket_sample);                // index of the lower sample needed for calculation
             I_basket_H_sample = ceil(F_basket_sample);                 // index of the upper sample needed for calculation
@@ -1401,9 +1410,8 @@ void AudioPlayer::update(void)
 
         if ((ADSR_gain < 0.0001) && (ADSR_phase > 0))
         {
-            idle = true;
-            power_on = false;
-            state = 0;
+            state = IDLE_REQUEST;
+            My_LED(false);
 
             rawfile.close();
             AudioStopUsingSPI();
@@ -1422,17 +1430,12 @@ void AudioPlayer::update(void)
             Serial.println();
         }
 
-        if (idle)
+        if (state == IDLE_REQUEST)
         {
-            if (Lilla_state == MIDI_LOOP && track >= 0)
-            {
-                Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
-            }
-
-            else if (Lilla_state != MIDI_LOOP)
-            {
-                Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
-            }
+            idle = true;
+            power_on = false;
+            state = IDLE;
+            My_LED(false);
         }
     }
 }
@@ -1598,7 +1601,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             {
                 idle = true;
                 power_on = false;
-                state = 0;
+                state = IDLE_REQUEST;
 
                 rawfile.close();
                 AudioStopUsingSPI();
@@ -1619,9 +1622,7 @@ void AudioPlayer::Flash_memory_harvest(void)
 
             if (!warmup_for_play_again_flag)
             {
-                idle = true;
-                power_on = false;
-                state = 0;
+                state = IDLE_REQUEST;
 
                 rawfile.close();
                 AudioStopUsingSPI();
@@ -1638,9 +1639,7 @@ void AudioPlayer::Flash_memory_harvest(void)
 
             if (!warmup_for_play_again_flag)
             {
-                idle = true;
-                power_on = false;
-                state = 0;
+                state = IDLE_REQUEST;
 
                 rawfile.close();
                 AudioStopUsingSPI();
@@ -1672,9 +1671,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             a_first_sample = b_sample_tmp + pitch;
             if (ceil(a_first_sample) >= C_Flash_sample)
             {
-                idle = true;
-                power_on = false;
-                state = 0;
+                state = IDLE_REQUEST;
 
                 rawfile.close();
                 AudioStopUsingSPI();
@@ -1700,9 +1697,7 @@ void AudioPlayer::Flash_memory_harvest(void)
 
             if (!warmup_for_play_again_flag)
             {
-                idle = true;
-                power_on = false;
-                state = 0;
+                state = IDLE_REQUEST;
 
                 rawfile.close();
                 AudioStopUsingSPI();
@@ -1752,7 +1747,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             samples_to_read_2 = INT_b_Flash_sample - (B_Flash_sample - delta_Noclick + 1) + 1;
             for (auto sample = 0; sample < samples_to_read_2; ++sample)
             {
-                samples_basket[samples_to_read_1 + sample] = *(p_Noclick + sample);
+                samples_basket[samples_to_read_1 + sample] = *(Noclick_ptr + sample);
             }
 
             a_first_sample = b_sample + pitch;
@@ -1769,7 +1764,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             first_index = floor(a_sample) - (B_Flash_sample - delta_Noclick + 1);
             for (auto sample = 0; sample < samples_to_read; ++sample)
             {
-                samples_basket[sample] = *(p_Noclick + first_index + sample);
+                samples_basket[sample] = *(Noclick_ptr + first_index + sample);
             }
 
             a_first_sample = b_sample + pitch;
@@ -1788,7 +1783,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             first_index = floor(a_sample) - (B_Flash_sample - delta_Noclick + 1);
             for (auto sample = 0; sample < samples_to_read_1; ++sample)
             {
-                samples_basket[sample] = *(p_Noclick + first_index + sample);
+                samples_basket[sample] = *(Noclick_ptr + first_index + sample);
             }
 
             // read again from flash and merge
@@ -1814,7 +1809,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             samples_to_read_2 = delta_Noclick;
             for (auto sample = 0; sample < samples_to_read_2; ++sample)
             {
-                samples_basket[samples_to_read_1 + sample] = *(p_Noclick + sample);
+                samples_basket[samples_to_read_1 + sample] = *(Noclick_ptr + sample);
             }
 
             // read again from flash and merge
@@ -1958,10 +1953,10 @@ void AudioPlayer::Flash_memory_harvest(void)
     case 5: // loop B-->A
 
         // a_sample and b_sample are virtual sample
-        // B_Flash_sample_5 is (B_value_in - delta_Noclick)
+        // B_Flash_sample_shifted is (B_value_in - delta_Noclick)
         a_b_distance = b_sample - a_sample;
-        a_Flash_sample = Mirror(B_Flash_sample_5, a_sample);
-        b_Flash_sample = Mirror(B_Flash_sample_5, b_sample); // a_Flash_sample - a_b_distance;
+        a_Flash_sample = Mirror(B_Flash_sample_shifted, a_sample);
+        b_Flash_sample = Mirror(B_Flash_sample_shifted, b_sample); // a_Flash_sample - a_b_distance;
         INT_a_Flash_sample = ceil(a_Flash_sample);
         INT_b_Flash_sample = floor(b_Flash_sample);
         samples_to_read = INT_a_Flash_sample - INT_b_Flash_sample + 1;
@@ -1978,11 +1973,11 @@ void AudioPlayer::Flash_memory_harvest(void)
             }
 
             // Append_transposed(samples_basket, 0, samples_basket_local, samples_to_read);
-            b_sample_tmp = Mirror(B_Flash_sample_5, b_Flash_sample);
+            b_sample_tmp = Mirror(B_Flash_sample_shifted, b_Flash_sample);
             a_first_sample = b_sample_tmp + pitch;
             if (floor(a_first_sample) > C_Flash_sample)
             {
-                a_first_sample = B_Flash_sample_5 + (a_first_sample - C_Flash_sample);
+                a_first_sample = B_Flash_sample_shifted + (a_first_sample - C_Flash_sample);
             }
         }
 
@@ -1994,7 +1989,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             first_index = INT_b_Flash_sample - A_Flash_sample;
             for (auto sample = 0; sample < samples_to_read_1; ++sample)
             {
-                samples_basket_local[sample] = *(p_Noclick + first_index + sample);
+                samples_basket_local[sample] = *(Noclick_ptr + first_index + sample);
             }
 
             // from flash
@@ -2014,11 +2009,11 @@ void AudioPlayer::Flash_memory_harvest(void)
                 samples_basket[sample] = samples_basket_local[samples_to_read - 1 - sample];
             }
 
-            b_sample_tmp = Mirror(B_Flash_sample_5, b_Flash_sample);
+            b_sample_tmp = Mirror(B_Flash_sample_shifted, b_Flash_sample);
             a_first_sample = b_sample_tmp + pitch;
             if (floor(a_first_sample) > C_Flash_sample)
             {
-                a_first_sample = B_Flash_sample_5 + (a_first_sample - C_Flash_sample);
+                a_first_sample = B_Flash_sample_shifted + (a_first_sample - C_Flash_sample);
             }
         }
 
@@ -2026,11 +2021,11 @@ void AudioPlayer::Flash_memory_harvest(void)
         // .........A<<<<<<<<<<<<(A+d-1)(A+d)<<<<aF-----------b'F<<<(B_5)....... --> triple read
         else if ((INT_a_Flash_sample >= (A_Flash_sample + delta_Noclick)) && (INT_b_Flash_sample < A_Flash_sample))
         {
-            b_Flash_sample_new = B_Flash_sample_5 - (A_Flash_sample - 1 - b_Flash_sample);
+            b_Flash_sample_new = B_Flash_sample_shifted - (A_Flash_sample - 1 - b_Flash_sample);
             INT_b_Flash_sample = floor(b_Flash_sample_new);
 
             // from flash - last
-            samples_to_read_1 = B_Flash_sample_5 - INT_b_Flash_sample + 1;
+            samples_to_read_1 = B_Flash_sample_shifted - INT_b_Flash_sample + 1;
 
             Read_flash(samples_basket_local, INT_b_Flash_sample, samples_to_read_1); // Read_flash (int16_t *destination, int seek_in, int samples_in)
 
@@ -2041,7 +2036,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             // Append directly
             for (auto sample = 0; sample < samples_to_read_2; ++sample)
             {
-                samples_basket_local[sample + samples_to_read_1] = *(p_Noclick + first_index + sample);
+                samples_basket_local[sample + samples_to_read_1] = *(Noclick_ptr + first_index + sample);
             }
 
             // from flash - first
@@ -2061,7 +2056,7 @@ void AudioPlayer::Flash_memory_harvest(void)
                 samples_basket[sample] = samples_basket_local[samples_to_read - 1 - sample];
             }
 
-            b_sample_tmp = Mirror(B_Flash_sample_5, b_Flash_sample_new);
+            b_sample_tmp = Mirror(B_Flash_sample_shifted, b_Flash_sample_new);
             a_first_sample = b_sample_tmp + pitch;
         }
 
@@ -2072,7 +2067,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             first_index = INT_b_Flash_sample - A_Flash_sample;
             for (auto sample = 0; sample < samples_to_read; ++sample)
             {
-                samples_basket_local[sample] = *(p_Noclick + first_index + sample);
+                samples_basket_local[sample] = *(Noclick_ptr + first_index + sample);
             }
 
             // Transpose
@@ -2081,11 +2076,11 @@ void AudioPlayer::Flash_memory_harvest(void)
                 samples_basket[sample] = samples_basket_local[samples_to_read - 1 - sample];
             }
 
-            b_sample_tmp = Mirror(B_Flash_sample_5, b_Flash_sample);
+            b_sample_tmp = Mirror(B_Flash_sample_shifted, b_Flash_sample);
             a_first_sample = b_sample_tmp + pitch;
             if (floor(a_first_sample) > C_Flash_sample)
             {
-                a_first_sample = B_Flash_sample_5 + (a_first_sample - C_Flash_sample);
+                a_first_sample = B_Flash_sample_shifted + (a_first_sample - C_Flash_sample);
             }
         }
 
@@ -2093,11 +2088,11 @@ void AudioPlayer::Flash_memory_harvest(void)
         // ...........A<<<<<<aF-----(A+d-1)(A+d)-------------b'F<<<<(B_5)....... --> double read
         else if ((INT_a_Flash_sample <= (A_Flash_sample + delta_Noclick - 1)) && (INT_b_Flash_sample < A_Flash_sample))
         {
-            b_Flash_sample_new = B_Flash_sample_5 - (A_Flash_sample - 1 - b_Flash_sample);
+            b_Flash_sample_new = B_Flash_sample_shifted - (A_Flash_sample - 1 - b_Flash_sample);
             INT_b_Flash_sample = floor(b_Flash_sample_new);
 
             // from flash
-            samples_to_read_1 = B_Flash_sample_5 - INT_b_Flash_sample + 1;
+            samples_to_read_1 = B_Flash_sample_shifted - INT_b_Flash_sample + 1;
             Read_flash(samples_basket_local, INT_b_Flash_sample, samples_to_read_1); // Read_flash (int16_t *destination, int seek_in, int samples_in)
 
             // from RAM
@@ -2107,7 +2102,7 @@ void AudioPlayer::Flash_memory_harvest(void)
             // Append directly
             for (auto sample = 0; sample < samples_to_read_2; ++sample)
             {
-                samples_basket_local[sample + samples_to_read_1] = *(p_Noclick + first_index + sample);
+                samples_basket_local[sample + samples_to_read_1] = *(Noclick_ptr + first_index + sample);
             }
 
             // Transpose
@@ -2116,7 +2111,7 @@ void AudioPlayer::Flash_memory_harvest(void)
                 samples_basket[sample] = samples_basket_local[samples_to_read - 1 - sample];
             }
 
-            b_sample_tmp = Mirror(B_Flash_sample_5, b_Flash_sample_new);
+            b_sample_tmp = Mirror(B_Flash_sample_shifted, b_Flash_sample_new);
             a_first_sample = b_sample_tmp + pitch;
         }
         break;
@@ -2148,7 +2143,7 @@ void AudioPlayer::Wavetable_harvest()
         {
             while (sample < samples_to_read)
             {
-                samples_basket[sample] = *(p_Wavetable + Wavetable_LOW_sample_int + sample);
+                samples_basket[sample] = *(Wavetable_ptr + Wavetable_LOW_sample_int + sample);
                 sample++;
             }
         }
@@ -2159,7 +2154,7 @@ void AudioPlayer::Wavetable_harvest()
             samples_to_read_W = Wavetable_length - Wavetable_LOW_sample_int;
             while (sample < samples_to_read_W)
             {
-                samples_basket[sample] = *(p_Wavetable + Wavetable_LOW_sample_int + sample);
+                samples_basket[sample] = *(Wavetable_ptr + Wavetable_LOW_sample_int + sample);
                 sample++;
             }
             while (sample < samples_to_read)
@@ -2170,9 +2165,7 @@ void AudioPlayer::Wavetable_harvest()
 
             if (!warmup_for_play_again_flag)
             {
-                idle = true;
-                power_on = false;
-                state = 0;
+                state = IDLE_REQUEST;
 
                 rawfile.close();
                 AudioStopUsingSPI();
@@ -2191,7 +2184,7 @@ void AudioPlayer::Wavetable_harvest()
         // read from Wavetable_LOW_sample_int to Wavetable_HIGH_sample_int
         while (sample < samples_to_read)
         {
-            samples_basket[sample] = *(p_Wavetable + ((Wavetable_LOW_sample_int + sample) % Wavetable_length));
+            samples_basket[sample] = *(Wavetable_ptr + ((Wavetable_LOW_sample_int + sample) % Wavetable_length));
             sample++;
         }
 
@@ -2281,18 +2274,8 @@ void AudioPlayer::Fast_stop(void)
     ADSR_phase = 3;               // Release
     K_Release_step = 10 / 128.0f; // gain fall to 0 in 10 samples!
     ADSR_point_0 = -K_Release_step;
-    power_on = false;
-    state = 2;
 
-    if (Lilla_state == MIDI_LOOP && track >= 0)
-    {
-        Players_statistics_ptr->Dec_total_Players_per_track_instrument(track, instrument_id);
-    }
-
-    else if (Lilla_state != MIDI_LOOP)
-    {
-        Players_statistics_ptr->Dec_total_Players_per_instrument(instrument_id);
-    }
+    state = IDLE_REQUEST;
 }
 
 void AudioPlayer::Update_pan(float pan_int_value)
@@ -2309,8 +2292,8 @@ void AudioPlayer::Update_pan(float pan_int_value)
 
 void AudioPlayer::Set_vibrato_pointers(float *p_vibrato_array_in, uint8_t *p_vibrato_array_last_element_in)
 {
-    p_vibrato_array = p_vibrato_array_in;
-    p_vibrato_array_last_element = p_vibrato_array_last_element_in;
+    vibrato_array_ptr = p_vibrato_array_in;
+    vibrato_array_last_element_ptr = p_vibrato_array_last_element_in;
 }
 
 void AudioPlayer::Set_vibrato_flag(bool value)
@@ -2332,7 +2315,7 @@ void AudioPlayer::Set_vibrato_flag(bool value)
         if (value)
         {
             vibrato_flag = true;
-            vibrato_array_element_float = *p_vibrato_array_last_element;
+            vibrato_array_element_float = *vibrato_array_last_element_ptr;
             return;
         }
         else
@@ -2517,28 +2500,28 @@ float AudioPlayer::Mirror(float pivot, float value)
     return (2.0 * pivot) - value;
 }
 
-void AudioPlayer::Append_transposed(int16_t *_target, uint16_t first_index, int16_t *_source, uint16_t N)
+void AudioPlayer::Append_transposed(int16_t *target_ptr, uint16_t first_index, int16_t *source_ptr, uint16_t N)
 {
-    _target += first_index;
-    _source += N - 1;
+    target_ptr += first_index;
+    source_ptr += N - 1;
 
     for (auto i = 0; i < N; ++i)
     {
-        *_target = *_source;
-        _target++;
-        _source--;
+        *target_ptr = *source_ptr;
+        target_ptr++;
+        source_ptr--;
     }
 }
 
-void AudioPlayer::Append(int16_t *_target, uint16_t first_index, int16_t *_source, uint16_t N)
+void AudioPlayer::Append(int16_t *target_ptr, uint16_t first_index, int16_t *source_ptr, uint16_t N)
 {
-    _target += first_index;
+    target_ptr += first_index;
 
     for (auto i = 0; i < N; ++i)
     {
-        *_target = *_source;
-        _target++;
-        _source++;
+        *target_ptr = *source_ptr;
+        ++target_ptr;
+        source_ptr++;
     }
 }
 

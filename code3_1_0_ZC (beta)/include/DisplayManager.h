@@ -259,10 +259,10 @@ public:
     void Frame_CC_page_menu(int value);
     // configura VFS
     void Show_VFS_packets(void);
-    void Make_VFS_presentazione(void);
-    void Make_VFS_assegnazioni(void);
+    void Make_VFS_presentation(void);
+    void Make_VFS_assignments(void);
     void Make_VFS_restart(void);
-    void Make_VFS_no_spazio_per_sampler(void);
+    void Make_VFS_not_enough_memory_for_sampler(void);
     // copia RAW files da SD
     void Import_raw_files_frame(uint8_t value);
     void Confirm_config_import_popup(void);
@@ -277,20 +277,20 @@ public:
     void Factory_reset_wait_popup(void);
     void Config_reset_popup(void);
     void Copy_raw_files_SD_to_Flash_chip_titolo(void); // importa i file RAW dalla scheda SD
-    void Copy_raw_files_SD_to_Flash_chip_attesa_SD(void); // attesa 10sec scheda SD
-    void Copy_raw_files_SD_to_Flash_chip_directory_assente(void); // manca /LILLARAW
-    void Copy_raw_files_SD_to_Flash_chip_consistenza_presente(unsigned long SD_raw_volume, int SD_raw_files, int flash_raw_volume, int flash_raw_files);
-    void Copy_raw_files_SD_to_Flash_chip_ultimo_avviso(float erasing_time_ms);
-    void Copy_raw_files_SD_to_Flash_chip_avvio_copia(void); // inizia la cancellazione (erasing) della Flash memory
-    void Copy_raw_files_SD_to_Flash_chip_percentuale_iniziale(void);
-    void Copy_raw_files_SD_to_Flash_chip_avanzamento(unsigned char barcount);
-    void Copy_raw_files_SD_to_Flash_chip_sfondo_popup(void); // black panel
-    void Copy_raw_files_SD_to_Flash_chip_sfondo_elenco(void);
-    void Copy_raw_files_SD_to_Flash_chip_file_da_copiare(int row, const char *filename, unsigned long length);
-    void Copy_raw_files_SD_to_Flash_chip_errore_flash_chip(void); // Flash memory error!
-    void Copy_raw_files_SD_to_Flash_chip_errore_flash_full(void); // Flash memory full!
-    void Copy_raw_files_SD_to_Flash_chip_copia_completata(void);
-    void Copy_raw_files_SD_to_Flash_chip_file_copiato(int row, const char *filename, uint32_t filesize);
+    void Copy_raw_files_SD_to_Flash_chip_waiting_for_SD(void); // attesa 10sec scheda SD
+    void Copy_raw_files_SD_to_Flash_chip_lillaraw_missing(void); // manca /LILLARAW
+    void Copy_raw_files_SD_to_Flash_chip_files_report(unsigned long SD_raw_volume, int SD_raw_files, int flash_raw_volume, int flash_raw_files);
+    void Copy_raw_files_SD_to_Flash_chip_last_warning(float erasing_time_ms);
+    void Copy_raw_files_SD_to_Flash_chip_job_start(void); // inizia la cancellazione (erasing) della Flash memory
+    void Copy_raw_files_SD_to_Flash_chip_initial_percentage(void);
+    void Copy_raw_files_SD_to_Flash_chip_progress(unsigned char barcount);
+    void Copy_raw_files_SD_to_Flash_chip_popup_landscape(void); // black panel
+    void Copy_raw_files_SD_to_Flash_chip_list_landscape(void);
+    void Copy_raw_files_SD_to_Flash_chip_files_to_copy(int row, const char *filename, unsigned long length);
+    void Copy_raw_files_SD_to_Flash_chip_flash_error(void); // Flash memory error!
+    void Copy_raw_files_SD_to_Flash_chip_flash_full_error(void); // Flash memory full!
+    void Copy_raw_files_SD_to_Flash_chip_job_done(void);
+    void Copy_raw_files_SD_to_Flash_chip_file_copied(int row, const char *filename, uint32_t filesize);
 
     // MIDI_LOOP
     static constexpr int Loop_LED_Y = 151; // Y-PIXEL primo led

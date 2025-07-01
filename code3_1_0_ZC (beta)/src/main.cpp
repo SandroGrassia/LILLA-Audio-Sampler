@@ -11,7 +11,7 @@
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0_Y beta 26/06/2025";
+String FIRMWARE_VERSION = "3.1.0_ZC beta 01/07/2025";
 
 
 // **********************************************************
@@ -82,30 +82,19 @@ String FIRMWARE_VERSION = "3.1.0_Y beta 26/06/2025";
 // ****************         LIBRERIE           *****************
 // *************************************************************
 
-// Classi standard (ex #include <Audio.h>)
-#define AudioNoInterrupts() (NVIC_DISABLE_IRQ(IRQ_SOFTWARE))
-#define AudioInterrupts() (NVIC_ENABLE_IRQ(IRQ_SOFTWARE))
-
+// Standard classes
 #include <control_sgtl5000.h>
 #include <filter_biquad.h>
 #include <input_i2s.h>
-#include <memcpy_audio.h>
 #include <mixer.h>
 #include <output_i2s.h>
-#include <record_queue.h>
-#include <spi_interrupt.h>
-#include <Wire.h> // comunicazione I2C
 #include <SD.h>
 #include <SerialFlash.h> // accesso alla Flash memory SPI
 #include <utility/dspinst.h>
 #include <MIDI.h>
-
-// Classi Display
 #include <SPI.h>
-#include <Adafruit_GFX.h>     // https://learn.adafruit.com/adafruit-gfx-graphics-library/graphics-primitives
-#include <Adafruit_ILI9341.h> // 1.5.12 version - Hardware-specific library
 
-// Classi Lilla non istanziate
+// Lilla modules
 #include "ElementiGrafici.h"
 #include "SharedElements.h"
 #include "SharedDS.h"
@@ -117,7 +106,7 @@ String FIRMWARE_VERSION = "3.1.0_Y beta 26/06/2025";
 #include "SharedMM.h"
 #include "UserInterface.h"
 
-// Classi Lilla istanziate
+// Lilla Classes
 #include "AudioPlayer.h"
 #include "InfoMaster.h"
 #include "NoclickCrossmix.h"
@@ -323,6 +312,9 @@ DelayManager Delay_manager;
 // *************************************************************
 // ****************    VARIABLES AND ARRAYS     ****************
 // *************************************************************
+
+#define AudioNoInterrupts() (NVIC_DISABLE_IRQ(IRQ_SOFTWARE))
+#define AudioInterrupts() (NVIC_ENABLE_IRQ(IRQ_SOFTWARE))
 
 // Polyphony/Max Pitch
 uint8_t optimization_cache;
@@ -9534,13 +9526,13 @@ int Get_previous_loop_id_in_SD(int loop_id)
 
 void Make_VFS(void)
 {
-    Display.Make_VFS_presentazione();
+    Display.Make_VFS_presentation();
     // calcola DS_packets Free space, in PACKET_DIM
     VFS_packets_max = (Get_flash_size() - Get_flash_occupation() - FLASH_FREE_SPACE) / PACKET_DIM;
     VFS_packets_max = constrain(VFS_packets_max, 0, VFS_PACKETS_MAX);
     if (VFS_packets_max > 40)
     {
-        Display.Make_VFS_assegnazioni();
+        Display.Make_VFS_assignments();
         VFS_packets = VFS_packets_max / 3.0f; // questa proporzione puo' essere modifitata a piacere
         Display.Show_VFS_packets();
         bool confirmation = false;
@@ -9589,7 +9581,7 @@ void Make_VFS(void)
 
     else
     {
-        Display.Make_VFS_no_spazio_per_sampler();
+        Display.Make_VFS_not_enough_memory_for_sampler();
         delay(10000);
     }
 }
@@ -11261,7 +11253,7 @@ bool Copy_raw_files_from_SD_to_Flash()
     // Wait for SD card
     while (!SD.begin(BUILTIN_SDCARD))
     {
-        Display.Copy_raw_files_SD_to_Flash_chip_attesa_SD();
+        Display.Copy_raw_files_SD_to_Flash_chip_waiting_for_SD();
         delay(10000);
         return false;
     }
@@ -11270,7 +11262,7 @@ bool Copy_raw_files_from_SD_to_Flash()
     // Check if LILLARAW directory exists
     if (!SD.exists("/LILLARAW"))
     {
-        Display.Copy_raw_files_SD_to_Flash_chip_directory_assente();
+        Display.Copy_raw_files_SD_to_Flash_chip_lillaraw_missing();
         delay(4000);
         return false;
     }
@@ -11294,7 +11286,7 @@ bool Copy_raw_files_from_SD_to_Flash()
     }
     rootdir.close();
 
-    Display.Copy_raw_files_SD_to_Flash_chip_consistenza_presente(SD_raw_volume, SD_raw_files, Get_raw_files_volume(), Get_raw_files());
+    Display.Copy_raw_files_SD_to_Flash_chip_files_report(SD_raw_volume, SD_raw_files, Get_raw_files_volume(), Get_raw_files());
 
     unsigned char id[3];
     SerialFlash.readID(id);
@@ -11348,7 +11340,7 @@ bool Copy_raw_files_from_SD_to_Flash()
 
     float erasing_time_ms = Get_flash_size() / eraseBytesPerSecond(id) * 1000;
     uint32_t erasing_time_ms_step = erasing_time_ms / 100;
-    Display.Copy_raw_files_SD_to_Flash_chip_ultimo_avviso(erasing_time_ms);
+    Display.Copy_raw_files_SD_to_Flash_chip_last_warning(erasing_time_ms);
 
     // Confirmation
     bool confirm = false;
@@ -11394,13 +11386,13 @@ bool Copy_raw_files_from_SD_to_Flash()
     }
 
     // Start erasing flash chip
-    Display.Copy_raw_files_SD_to_Flash_chip_avvio_copia();
+    Display.Copy_raw_files_SD_to_Flash_chip_job_start();
 
     SerialFlash.eraseAll(); // uint32_t size = Get_flash_size(); // SerialFlash.capacity(id);
     elapsedMillis dotMillis = 0;
     unsigned char barcount = 0;
 
-    Display.Copy_raw_files_SD_to_Flash_chip_percentuale_iniziale();
+    Display.Copy_raw_files_SD_to_Flash_chip_initial_percentage();
 
     while (SerialFlash.ready() == false)
     {
@@ -11411,13 +11403,13 @@ bool Copy_raw_files_from_SD_to_Flash()
             barcount = barcount + 1;
             if (barcount <= 100)
             {
-                Display.Copy_raw_files_SD_to_Flash_chip_avanzamento(barcount);
+                Display.Copy_raw_files_SD_to_Flash_chip_progress(barcount);
             }
         }
     }
 
     // Start copying RAW files from SD to Flash chip
-    Display.Copy_raw_files_SD_to_Flash_chip_sfondo_popup();
+    Display.Copy_raw_files_SD_to_Flash_chip_popup_landscape();
     rootdir = SD.open("/LILLARAW");
     row = 2;
     while (1)
@@ -11435,10 +11427,10 @@ bool Copy_raw_files_from_SD_to_Flash()
         row++;
         if (row > 14)
         {
-            Display.Copy_raw_files_SD_to_Flash_chip_sfondo_popup();
+            Display.Copy_raw_files_SD_to_Flash_chip_popup_landscape();
             row = 3;
         }
-        Display.Copy_raw_files_SD_to_Flash_chip_file_da_copiare(row, filename, length);
+        Display.Copy_raw_files_SD_to_Flash_chip_files_to_copy(row, filename, length);
 
         // create the (empty) file on the Flash chip, than copy data
         if (SerialFlash.create(filename, length))
@@ -11460,13 +11452,13 @@ bool Copy_raw_files_from_SD_to_Flash()
             }
             else
             {
-                Display.Copy_raw_files_SD_to_Flash_chip_errore_flash_chip();
+                Display.Copy_raw_files_SD_to_Flash_chip_flash_error();
             }
         }
 
         else
         {
-            Display.Copy_raw_files_SD_to_Flash_chip_errore_flash_full();
+            Display.Copy_raw_files_SD_to_Flash_chip_flash_full_error();
         }
         f.close();
     }
@@ -11474,7 +11466,7 @@ bool Copy_raw_files_from_SD_to_Flash()
     delay(10);
 
     // Display RAW files list
-    Display.Copy_raw_files_SD_to_Flash_chip_copia_completata();
+    Display.Copy_raw_files_SD_to_Flash_chip_job_done();
     row = 2;
     SerialFlash.opendir();
 
@@ -11486,11 +11478,11 @@ bool Copy_raw_files_from_SD_to_Flash()
         if (row > 14)
         {
             delay(4000);
-            Display.Copy_raw_files_SD_to_Flash_chip_sfondo_elenco();
+            Display.Copy_raw_files_SD_to_Flash_chip_list_landscape();
             row = 3;
         }
 
-        Display.Copy_raw_files_SD_to_Flash_chip_file_copiato(row, filename, filesize);
+        Display.Copy_raw_files_SD_to_Flash_chip_file_copied(row, filename, filesize);
     }
     delay(6000);
     return true;

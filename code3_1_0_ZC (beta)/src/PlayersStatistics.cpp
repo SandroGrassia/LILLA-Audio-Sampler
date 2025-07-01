@@ -67,7 +67,7 @@ void PlayersStatistics::Inc_total_Players_per_instrument(int instrument)
 {
     ++total_Players_per_instrument[instrument];
 
-    if (false)
+    if (true)
     {
         for (auto i = 0; i < INSTRUMENTS_MAX; ++i)
         {
@@ -98,7 +98,7 @@ void PlayersStatistics::Dec_total_Players_per_instrument(int instrument)
         }
     }
 
-    if (false)
+    if (true)
     {
         for (auto i = 0; i < INSTRUMENTS_MAX; ++i)
         {
