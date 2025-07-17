@@ -212,7 +212,7 @@ private:
     float volume_gain_wait;
     int patch_id_wait;
     int instrument_id_wait;
-    int id_sound_wait;
+    int sound_id_wait;
     int note_wait;
     float pitch_note_wait;    // 0.5=half speed 1=original speed 2=double speed
     float velocity_gain_wait; // 0 <= velocity_gain <= 1.0
@@ -350,7 +350,7 @@ public:
    Compiti:
    - setta una serie di valori e flag, individuati col suffisso "wait", utilizzati alla successiva partenza/ripartenza del Player, comandata da update()
    */
-    void Get_ready_to_play(float pitch_note_in, float velocity_in, int patch_in, uint8_t instrument_in, uint8_t id_sound_in, uint8_t note_in); // chiamata da Playermanager per suonare
+    void Get_ready_to_play(float pitch_note_in, float velocity_in, int patch_in, uint8_t instrument_in, uint8_t sound_id_in, uint8_t note_in); // chiamata da Playermanager per suonare
 
     /*
     Main_settings_editing
@@ -371,7 +371,7 @@ public:
     int Read_local_patch(void);
     int Read_midi_channel(void);
     int Read_instrument(void);
-    int Read_id_sound(void);
+    int Read_sound_id(void);
     int Read_note(void);
     unsigned long Read_time_stamp(void);
     int Read_use_Wavetable(void);

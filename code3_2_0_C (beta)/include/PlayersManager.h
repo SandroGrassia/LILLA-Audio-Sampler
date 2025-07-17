@@ -37,7 +37,7 @@ private:
     bool Player_booked[PLAYERS] = {false};
     bool restart_Player[PLAYERS] = {false}; // questo array serve per contare, ad ogni ciclo, il numero di Player che devono ripartire; la ripartenza richiede una doppia lettura di campioni da vecchio e nuovo file ed il calcolo di mix_samples fatto dalla funzione Calculate_and_set_mix_samples
 
-    static uint8_t Id_sound(uint8_t s, uint8_t i);
+    static uint8_t Sound_Id(uint8_t patch_id, uint8_t instrument_id);
 
 
 public:
@@ -129,7 +129,7 @@ public:
     void Update_Preset(int patch_id, int instrument, float volume_patch);
     void Update_Preset_volume(int patch_id, int instrument, float volume_patch); // chiamata da main e MidiReader
     void Update_Preset_pan(int patch_id, int instrument);
-    void Update_Preset_id_sound(int patch_id, int instrument);
+    void Update_Preset_sound_id(int patch_id, int instrument);
     void Update_Preset_file(int patch_id, int instrument);
     void Update_Preset_midi_channel(int patch_id, int instrument);
     void Update_Preset_pitch(int patch_id, int instrument);

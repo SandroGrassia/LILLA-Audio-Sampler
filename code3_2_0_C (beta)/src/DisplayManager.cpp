@@ -486,7 +486,7 @@ void DisplayManager::Gain_sound(uint8_t patch_id, uint8_t instrument)
 {
     Cancel_text_reset_cursor(x_pos(35.5), y_pos(4.9), 4);
     tft.setTextColor(ILI9341_YELLOW);
-    tft.print(Sound[Id_sound(patch_id, instrument)].gain / 20.0);
+    tft.print(Sound[Sound_Id(patch_id, instrument)].gain / 20.0);
 }
 
 FLASHMEM
@@ -1027,20 +1027,20 @@ void DisplayManager::D_sounds(void)
         return;
     }
 
-    for (auto instrument_id_local = 0; instrument_id_local < INSTRUMENTS_MAX; ++instrument_id_local)
+    for (auto instrument_id = 0; instrument_id < INSTRUMENTS_MAX; ++instrument_id)
     {
-        if (Delay_values.instrument_route[instrument_id_local])
+        if (Delay_values.instrument_route[instrument_id])
         {
             tft.setTextColor(ILI9341_YELLOW);
             tft.print("S");
-            tft.print(instrument_id_local + 1);
+            tft.print(instrument_id + 1);
             tft.print("  ");
         }
         else
         {
             tft.setTextColor(0x6300);
             tft.print("S");
-            tft.print(instrument_id_local + 1);
+            tft.print(instrument_id + 1);
             tft.print("  ");
         }
     }
@@ -1158,7 +1158,7 @@ void DisplayManager::D_modulation_phase_LR(void)
     tft.print("deg");
 }
 
-inline uint8_t DisplayManager::Id_sound(uint8_t patch, uint8_t instrument)
+inline uint8_t DisplayManager::Sound_Id(uint8_t patch, uint8_t instrument)
 {
     return Patch[patch].Instrument[instrument].sound_id;
 }
@@ -2112,7 +2112,7 @@ void DisplayManager::MX_source_values_jump(uint8_t old_source, uint8_t new_sourc
 FLASHMEM
 void DisplayManager::MX_source_values_write(uint8_t source)
 {
-    int local_id_sound;
+    int local_sound_id;
     if (source == 8)
     {
         tft.setTextColor((source == MX_source ? TEXT_COLOR : 0x6300));
@@ -2131,7 +2131,7 @@ void DisplayManager::MX_source_values_write(uint8_t source)
 
     else
     {
-        local_id_sound = Patch[Patch_id].Instrument[source].sound_id;
+        local_sound_id = Patch[Patch_id].Instrument[source].sound_id;
 
         tft.setTextColor((source == MX_source ? TEXT_COLOR : 0x6300));
         tft.setCursor(x_pos(MX_X0 + source * 5), y_pos(MX_Y0));
@@ -2143,9 +2143,9 @@ void DisplayManager::MX_source_values_write(uint8_t source)
 
         Cancel_text(x_pos(MX_X0 - 1 + source * 5), y_pos(MX_Y0 + 2), 4);
         tft.setCursor(x_pos(MX_X0 - 1 + source * 5), y_pos(MX_Y0 + 2)); // Gain
-        tft.print(Sound[local_id_sound].gain / 20.0f);
+        tft.print(Sound[local_sound_id].gain / 20.0f);
 
-        if (Sound[local_id_sound].pan == 0)
+        if (Sound[local_sound_id].pan == 0)
         {
             Cancel_text(x_pos(MX_X0 - 0.5 + source * 5), y_pos(MX_Y0 + 3), 3);
             tft.setCursor(x_pos(MX_X0 + 0.5 + source * 5), y_pos(MX_Y0 + 3)); // Pan
@@ -2153,7 +2153,7 @@ void DisplayManager::MX_source_values_write(uint8_t source)
         }
         else
         {
-            if (abs(Sound[local_id_sound].pan) < 10) // Pan
+            if (abs(Sound[local_sound_id].pan) < 10) // Pan
             {
                 tft.setCursor(x_pos(MX_X0 + source * 5), y_pos(MX_Y0 + 3));
             }
@@ -2162,15 +2162,15 @@ void DisplayManager::MX_source_values_write(uint8_t source)
                 tft.setCursor(x_pos(MX_X0 - 0.5 + source * 5), y_pos(MX_Y0 + 3));
             }
 
-            if (Sound[local_id_sound].pan < 0)
+            if (Sound[local_sound_id].pan < 0)
             {
                 tft.print("L");
             }
-            else if (Sound[local_id_sound].pan > 0)
+            else if (Sound[local_sound_id].pan > 0)
             {
                 tft.print("R");
             }
-            tft.print(abs(Sound[local_id_sound].pan));
+            tft.print(abs(Sound[local_sound_id].pan));
         }
     }
 
@@ -3099,7 +3099,7 @@ void DisplayManager::Delete_all_frame_SOUND_EDIT_menu(void)
 FLASHMEM
 void DisplayManager::Instrument_VCF_page(uint8_t patch_id, uint8_t instrument)
 {
-    auto id_sound_local = Patch[patch_id].Instrument[instrument].sound_id;
+    auto sound_id_local = Patch[patch_id].Instrument[instrument].sound_id;
 
     tft.fillScreen(ILI9341_BLACK);
     if (Lilla_state_0 != LIVE_SAMPLING)
@@ -3125,7 +3125,7 @@ void DisplayManager::Instrument_VCF_page(uint8_t patch_id, uint8_t instrument)
         tft.setCursor(x_pos(43), y_pos(0));
         tft.setTextColor(TEXT_COLOR);
         tft.print("GAIN");
-        Show_VCF_gain(id_sound_local);
+        Show_VCF_gain(sound_id_local);
     }
     else
     {
@@ -3817,11 +3817,11 @@ uint16_t DisplayManager::Get_LS_wave_color(int point)
 
 void DisplayManager::Show_wave(uint8_t instrument)
 {
-    uint8_t id_sound_local = Patch[Patch_id].Instrument[instrument].sound_id;
+    auto sound_id_local = Patch[Patch_id].Instrument[instrument].sound_id;
     int yp, yn, y0;
     int NC_A;
     int16_t *X = Info.Sound_620_samples_array(Preset[instrument].file, Preset[instrument].A, Preset[instrument].B);
-    float volume_float = Volume_float[Sound[id_sound_local].gain];
+    float volume_float = Volume_float[Sound[sound_id_local].gain];
 
     NC_A = ((WAVE_WIDTH * (Preset[instrument].Noclick < Noclick_max ? Preset[instrument].Noclick : Noclick_max)) / (Preset[instrument].B - Preset[instrument].A));
 

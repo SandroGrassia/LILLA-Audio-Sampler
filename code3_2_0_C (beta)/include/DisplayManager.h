@@ -68,7 +68,7 @@ private:
     int Y_POPUP_OPT; // riga opzioni
 
     // PERFORMANCE
-    uint8_t Id_sound(const uint8_t patch, const uint8_t instrument);
+    uint8_t Sound_Id(const uint8_t patch, const uint8_t instrument);
     static constexpr int X_LED = 8; // posizione led pagina Performance (caratteri)
     int Instrument_Y_POSITION(int position);
     // rappresentazione Instrument VCF page

@@ -14,7 +14,7 @@
 #include <spi_interrupt.h>
 #include "SharedDS.h"
 #include "LillaSerialFlash.h"
-#include "EepromManager.h"
+#include "ArchivingManager.h"
 
 class StereoSampler : public AudioStream
 {
@@ -55,10 +55,10 @@ private:
     elapsedMicros timer;
 
     // riferimenti esterni
-    EepromManager &Archive;
+    ArchivingManager &Archive;
 
 public:
-    StereoSampler(EepromManager &Archive) : AudioStream(2, inputQueueArray), Archive(Archive) // input: 0 (Left), 1 (Right)
+    StereoSampler(ArchivingManager &Archive) : AudioStream(2, inputQueueArray), Archive(Archive) // input: 0 (Left), 1 (Right)
     {
         Begin();
     }

@@ -6,13 +6,10 @@
 
 #include <Arduino.h>
 
-
-
 // **********************************************************
 // **************      VERSIONE FIRMWARE       **************
 // **********************************************************
-String FIRMWARE_VERSION = "3.1.0_ZC beta 01/07/2025";
-
+String FIRMWARE_VERSION = "3.2.0_C 16/07/2025";
 
 // **********************************************************
 // **************       VERSIONE LILLA         **************
@@ -37,7 +34,6 @@ String FIRMWARE_VERSION = "3.1.0_ZC beta 01/07/2025";
 // #define PCB_2023 0 // case alluminio
 #define PCB_2024 0 // case alluminio - encoder con CLK e DT invertiti
 
-
 /*
     Hardware
     - Teensy 4.1 (ARM Cortex-M7; 1MB RAM; 8MB Flash memory; EEPROM: 4284 bytes); clock 600MHz
@@ -49,7 +45,7 @@ String FIRMWARE_VERSION = "3.1.0_ZC beta 01/07/2025";
     - n.1 modulo Mic Amplifier con AD828A
 
     RAM1 (fast): 512KB (16 blocks x 32KB)
-    RAM2 (4 times slower): 512KB 
+    RAM2 (4 times slower): 512KB
 
     Compiler options
     - clock: 600MHz
@@ -132,7 +128,7 @@ String FIRMWARE_VERSION = "3.1.0_ZC beta 01/07/2025";
 #include "LoopMetronomo.h"
 #include "PlayersManager.h"
 #include "PlayersStatistics.h"
-#include "EepromManager.h"
+#include "ArchivingManager.h"
 #include "PsramManager.h"
 #include "DisplayManager.h"
 #include "DelayManager.h"
@@ -158,7 +154,7 @@ AudioFeedback LS_Feedback_L;
 AudioFeedback LS_Feedback_R;
 StereoLiveSampler LiveSampler;
 
-EepromManager Archive; // NON e' AudioStream ma serve a StereoSampler
+ArchivingManager Archive; // NON e' AudioStream ma serve a StereoSampler
 StereoSampler DirectSampler(Archive);
 
 AudioGain D_gain_L_feedback;
@@ -308,7 +304,6 @@ PlayersManager Players_Manager(&Player[0], &Router_L, &Router_R, &Noclick[0], &W
 MidiReader Midi_reader(LOOP_metronomo);
 DelayManager Delay_manager;
 
-
 // *************************************************************
 // ****************    VARIABLES AND ARRAYS     ****************
 // *************************************************************
@@ -370,15 +365,15 @@ uint8_t patch_change;
 // functions
 void Update_instruments_leds(void);
 void Update_Instruments_positions(void); // posizione di tutti gli Instrument sul display
-bool Verify_if_Instrument_original(uint8_t I);
+bool Verify_if_Instrument_original(int instrument_id);
 void Macro_Instrument_editing(void);
-void Map_one_Instrument_for_all_notes(uint8_t instrument);
-void Drop_Instrument(uint8_t instrument);        // drop the instrument from the patch_id ONLY IF instruments > 1
-uint8_t Clone_Instrument(uint8_t instrument);    // insert ONE new instrument BELOW instrument
+void Map_one_Instrument_for_all_notes(int instrument_id);
+void Drop_Instrument(int instrument_id);         // drop the instrument from the patch_id ONLY IF instruments > 1
+uint8_t Clone_Instrument(int instrument_id);     // insert ONE new instrument BELOW instrument
 void Update_all_maps_Instrument_for_notes(void); // aggiorna la mappatura tra tutte le coppie midi_channel/note_number e relativi Instrument
 void Reset_all_maps_Instrument_for_notes(void);
-void Reset_map_Instrument_for_notes(uint8_t instrument);
-void Delete_one_map_Instrument_for_notes(uint8_t instrument);
+void Reset_map_Instrument_for_notes(int instrument_id);
+void Delete_one_map_Instrument_for_notes(int instrument_id);
 
 // instrument VCF functions
 bool Request_VCF_mode(void);
@@ -391,7 +386,7 @@ uint8_t Sound_id;
 bool sound_original = true;
 
 // functions
-bool Verify_is_Sound_original(uint8_t sound_id);
+bool Verify_is_Sound_original(int sound_id);
 void Copy_all_Sound_to_Sound_cache_P(void);
 void Pull_all_Sound_from_Sound_cache_P(void);
 uint8_t Get_sounds_free(void);
@@ -401,15 +396,15 @@ int8_t Get_sound_free(void);
 bool Request_SOUND_EDIT_mode(void);
 void Select_sound_edit_menu_elements(void);
 void Macro_Sound_menu(void);
-uint32_t Calc_trim_step(uint8_t value);
-uint8_t Get_midi_channel_from_Sound(uint8_t sound_id);
-void Set_midi_channel_for_Sound(uint8_t sound_id, uint8_t midi_channel);
+uint32_t Calc_trim_step(int value);
+uint8_t Get_midi_channel_from_Sound(int sound_id);
+void Set_midi_channel_for_Sound(int sound_id, int midi_channel);
 void Set_Sound_SOLO_OFF(void);
 
 // wavetable functions
 void Get_all_Wavetable_pointer(void);
 void Fill_all_Wavetable(void);
-void Fill_Wavetable(uint8_t instrument);
+void Fill_Wavetable(int instrument);
 
 // noclick functions
 uint16_t Calc_Noclick_max(bool use_Wavetable);
@@ -535,7 +530,7 @@ int LS_menu_max;
 
 // variables
 uint8_t LS_gain;
-int LS_id_sound;
+int LS_sound_id;
 int LS_instrument;
 int LS_COMB = 64;
 int LS_window_step;
@@ -602,15 +597,6 @@ void Golive_MIXER(int instrument = -1);
 // EEPROM
 void Factory_setup_Eeprom(void);
 
-// General purpose
-bool changed;
-bool confirmation;
-int action;
-int row;
-int col;
-int result;
-uint32_t big_result;
-
 // Switch
 void Switch_to_PERFORMANCE_patch_old(void);
 void Jump_to_Patch(uint8_t next_patch);
@@ -640,13 +626,12 @@ void Golive_SETUP(void);
 void Switch_from_MIDI_LOOP_to_SETUP(void); // si fermano i track
 
 // Print
-void P_Patch(uint8_t patch_id);
-void P_Instrument(uint8_t patch_id, uint8_t instrument_id);
-void P_Patch_cache_P(void);
-void P_Sound(uint8_t sound_id);
-void P_Lilla_state(void);
-void P_keyboard_state(uint8_t mc, int8_t a, int8_t b);
-void P_map_instrument_for_note(uint8_t midi_channel);
+void Print_Patch(int patch_id);
+void Print_Instrument(int patch_id, int instrument_id);
+void Print_Sound(int sound_id);
+void Print_Lilla_state(void);
+void Print_keyboard_state(int midi_channel, int from_key, int to_key);
+void Print_map_instrument_for_note(int midi_channel);
 template <class T>
 void P(String &what, T &value);
 void Print_Directory(File dir, int numSpaces);
@@ -663,6 +648,16 @@ bool mux_en;
 
 // Protection
 bool exibition = false;
+
+// General purpose
+bool changed;
+bool confirmation;
+int action;
+int row;
+int col;
+int result;
+uint32_t big_result;
+elapsedMicros microtimer;
 
 // Startup
 void Compile_tables(void);
@@ -715,11 +710,10 @@ void setup()
     SerialFlash.begin();
     delay(100);
 
-   // User interfaces
-   Setup_Mux_Pins();
-   Setup_encoders();
-   Setup_pushbuttons();
-
+    // User interfaces
+    Setup_Mux_Pins();
+    Setup_encoders();
+    Setup_pushbuttons();
 
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //              Inizializzazione degli oggetti
@@ -805,11 +799,9 @@ void setup()
     Players_statistics.Loop_led_set_ptr = &Loop_led_set;
     Players_statistics.Performance_led_set_ptr = &Performance_led_set;
 
-
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // ************     MUX, ENCODERS, PUSHBUTTONS      ***********
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
-
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //   ***************    FUNZIONI SPECIALI   *****************
@@ -845,7 +837,6 @@ void setup()
     {
         exibition = true;
     }
-
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //                          PARTENZA
@@ -1353,7 +1344,7 @@ void loop()
                         Jump_to_Patch(patch_change);
 
                         // Patch Delay: look for delay_<patch_id> in SD
-                        if (Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id))
+                        if (Archive.Copy_Patch_Delay_data_from_SD_to_Eeprom(Patch_id))
                         {
                             Serial.println(F("Smooth changing of delay values COULD start..."));
 
@@ -1373,7 +1364,7 @@ void loop()
                     Jump_to_Patch(patch_change);
 
                     // Patch Delay: look for delay_<patch_id> in SD
-                    if (Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id))
+                    if (Archive.Copy_Patch_Delay_data_from_SD_to_Eeprom(Patch_id))
                     {
                         Serial.println(F("Smooth changing of delay values COULD start..."));
 
@@ -1500,7 +1491,7 @@ void loop()
                     Fill_all_Wavetable();
                     AudioInterrupts();
 
-                    P_Patch(Patch_id);
+                    Print_Patch(Patch_id);
                     patch_original = true;
                     P_menu = 0;
                     Update_Instruments_positions();
@@ -1513,6 +1504,8 @@ void loop()
                 case 1: // SAVE changes in THIS Patch
                     Save_all_Sounds_changed();
                     Archive.Save_Patch(Patch_id, Patch[Patch_id]);
+                    // Archive.Copy_Patch_from_RAM_to_SD(Patch_id);
+
                     Read_all_Sounds();
 
                     Patch_cache_P = Patch[Patch_id];
@@ -1525,7 +1518,7 @@ void loop()
                     AudioNoInterrupts();
                     Players_statistics.Reset_total_Players_per_instrument();
 
-                    // 1: copy all Instrument in the new patch_id, with same id_sounds
+                    // 1: copy all Instrument in the new patch_id, with same sound_id
                     new_patch = Get_Patch_id_free();
                     if (new_patch >= 0)
                     {
@@ -1560,7 +1553,7 @@ void loop()
                         Archive.Save_Patch(Patch_id, Patch[Patch_id]);
 
                         // Save Delay_data in delay_<patch_id>.txt in SD
-                        Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
+                        Archive.Copy_Patch_Delay_data_from_RAM_to_SD(Patch_id);
 
                         Read_all_Patches();
                         Read_all_Sounds();
@@ -1574,7 +1567,7 @@ void loop()
 
                     Patch_cache_P = Patch[Patch_id];
                     Copy_all_Sound_to_Sound_cache_P();
-                    P_Patch(Patch_id);
+                    Print_Patch(Patch_id);
                     Update_Instruments_positions();
                     Golive_with_PERFORMANCE(Patch_id);
                     break;
@@ -1583,18 +1576,18 @@ void loop()
 
                     AudioNoInterrupts();
                     Players_statistics.Reset_total_Players_per_instrument();
-                    // 0: hunt some "instruments" id_sounds free
+                    // 0: hunt some "instruments" sound_id free
 
-                    // 1: copy all Instrument in the new patch_id, with same id_sounds
+                    // 1: copy all Instrument in the new patch_id, with same sound_id
                     new_patch = Get_Patch_id_free();
                     if (new_patch >= 0)
                     {
                         Sound_struct Sound_NEW[INSTRUMENTS_MAX];
-                        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
+                        for (auto instrument_id = 0; instrument_id < INSTRUMENTS_MAX; ++instrument_id)
                         {
-                            if (Patch[Patch_id].Instrument[instrument_local].used)
+                            if (Patch[Patch_id].Instrument[instrument_id].used)
                             {
-                                Sound_NEW[instrument_local] = Sound[Patch[Patch_id].Instrument[instrument_local].sound_id];
+                                Sound_NEW[instrument_id] = Sound[Patch[Patch_id].Instrument[instrument_id].sound_id];
                             }
                         }
                         Pull_all_Sound_from_Sound_cache_P(); // 3: restore all original Sound
@@ -1602,18 +1595,18 @@ void loop()
                         Patch[Patch_id] = Patch_cache_P; // 4: ora patch_id è ripristinata, anche i relativi Sound sono stati ripristinati
 
                         // 5: Create a new Sound for each Instrument in new_patch
-                        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
+                        for (auto instrument_id = 0; instrument_id < INSTRUMENTS_MAX; ++instrument_id)
                         {
-                            if (Patch[new_patch].Instrument[instrument_local].used)
+                            if (Patch[new_patch].Instrument[instrument_id].used)
                             {
-                                int id_sound_local = Get_sound_free();
-                                if (id_sound_local >= 0)
+                                int sound_id_local = Get_sound_free();
+                                if (sound_id_local >= 0)
                                 {
-                                    Sound[id_sound_local] = Sound_NEW[instrument_local];
-                                    Patch[new_patch].Instrument[instrument_local].sound_id = id_sound_local;
+                                    Sound[sound_id_local] = Sound_NEW[instrument_id];
+                                    Patch[new_patch].Instrument[instrument_id].sound_id = sound_id_local;
                                 }
                                 else
-                                    Patch[new_patch].Instrument[instrument_local].used = false;
+                                    Patch[new_patch].Instrument[instrument_id].used = false;
                             }
                         }
 
@@ -1622,7 +1615,7 @@ void loop()
                         Archive.Save_Patch(Patch_id, Patch[Patch_id]);
 
                         // Save Delay_data in delay_<patch_id>.txt in SD
-                        Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
+                        Archive.Copy_Patch_Delay_data_from_RAM_to_SD(Patch_id);
 
                         Read_all_Patches();
                         Read_all_Sounds();
@@ -1636,7 +1629,7 @@ void loop()
 
                     Patch_cache_P = Patch[Patch_id];
                     Copy_all_Sound_to_Sound_cache_P();
-                    P_Patch(Patch_id);
+                    Print_Patch(Patch_id);
                     Update_Instruments_positions();
 
                     Golive_with_PERFORMANCE(Patch_id);
@@ -1667,7 +1660,7 @@ void loop()
                         Archive.Save_Patch(Patch_id, Patch[Patch_id]);
 
                         // Delete delay_<patch_id>.txt file
-                        Archive.Delete_Delay_data_in_SD(Patch_id);
+                        Archive.Delete_Patch_Delay_data_in_SD(Patch_id);
 
                         Read_all_Patches();
                         Update_Patches_number();
@@ -1694,7 +1687,7 @@ void loop()
             {
                 Lilla_state_0 = PERFORMANCE;
                 Lilla_state = SOUND_EDIT;
-                P_Sound(Sound_id);
+                Print_Sound(Sound_id);
                 samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
                 Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                 trim_step = Calc_trim_step(trim_speed);
@@ -1725,7 +1718,7 @@ void loop()
                 Serial.print("Editing Sound: ");
                 Serial.println(Instrument_id);
                 Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
-                P_Sound(Sound_id);
+                Print_Sound(Sound_id);
 
                 samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
                 Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
@@ -2432,7 +2425,7 @@ void loop()
 
                     Instrument_id = PB_number;
                     Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
-                    P_Sound(Sound_id);
+                    Print_Sound(Sound_id);
                     samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
                     Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                     trim_step = Calc_trim_step(trim_speed);
@@ -2785,7 +2778,7 @@ void loop()
                         Instrument_id = PB_number;
                         Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
 
-                        P_Sound(Sound_id);
+                        Print_Sound(Sound_id);
                         samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
                         Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                         trim_step = Calc_trim_step(trim_speed);
@@ -2817,7 +2810,7 @@ void loop()
                         if (Instrument_id == 0)
                         {
                             LS_instrument = 0;        // Left
-                            LS_id_sound = SOUNDS_MAX; // Left
+                            LS_sound_id = SOUNDS_MAX; // Left
                             Golive_with_LIVE_SAMPLING();
                         }
                         else
@@ -2837,7 +2830,7 @@ void loop()
                         if (Instrument_id == 1)
                         {
                             LS_instrument = 1;            // Right
-                            LS_id_sound = SOUNDS_MAX + 1; // Right
+                            LS_sound_id = SOUNDS_MAX + 1; // Right
                             Golive_with_LIVE_SAMPLING();
                         }
                         else
@@ -2892,7 +2885,7 @@ void loop()
                         Instrument_id = PB_number;
                         // PB_state[instrument] = 1; // Sound_edit, PB down
                         Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
-                        P_Sound(Sound_id);
+                        Print_Sound(Sound_id);
                         samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
                         Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
                         trim_step = Calc_trim_step(trim_speed);
@@ -3648,7 +3641,7 @@ void loop()
                     }
 
                     // Save Delay_data in delay_<patch_id>.txt in SD
-                    Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
+                    Archive.Copy_Patch_Delay_data_from_RAM_to_SD(Patch_id);
 
                     Golive_with_PERFORMANCE(Patch_id);
                     break;
@@ -3663,7 +3656,7 @@ void loop()
 
                 case MIDI_LOOP:
                     // Patch delay
-                    Archive.Copy_patch_Delay_data_from_RAM_to_SD(Patch_id);
+                    Archive.Copy_Patch_Delay_data_from_RAM_to_SD(Patch_id);
 
                     Switch_from_MIDI_LOOP_to_PERFORMANCE();
                     break;
@@ -3922,7 +3915,7 @@ void loop()
                 {
                     LS_update_Q_sample();
                 }
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
             }
         }
 
@@ -3961,7 +3954,7 @@ void loop()
                 {
                     LS_update_Q_sample();
                 }
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
             }
             LS_X_step = LS_window_width / LS_COMB;
             Display.Show_LS_X_step();
@@ -3982,7 +3975,7 @@ void loop()
                 {
                     LS_update_Q_sample();
                 }
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
             }
             LS_X_step = LS_window_width / LS_COMB;
             Display.Show_LS_X_step();
@@ -4055,7 +4048,7 @@ void loop()
                 {
                     LS_update_Q_sample();
                 }
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
             }
         }
 
@@ -4095,7 +4088,7 @@ void loop()
                 {
                     LS_update_Q_sample();
                 }
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
             }
         }
 
@@ -4141,7 +4134,7 @@ void loop()
                 {
                     LS_update_Q_sample();
                 }
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
             }
         }
 
@@ -4228,7 +4221,7 @@ void loop()
                     LS_update_Q_sample();
                 }
 
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
                 break;
 
             case 2:                 // Toggle Mono/Stereo
@@ -4246,8 +4239,8 @@ void loop()
                 Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
                 AudioInterrupts();
 
-                P_Patch(Patch_id);
-                LS_id_sound = SOUNDS_MAX; // mostra sempre il primo Sound
+                Print_Patch(Patch_id);
+                LS_sound_id = SOUNDS_MAX; // mostra sempre il primo Sound
                 LS_instrument = 0;
                 LS_X_delta = 0;
                 LS_X_sample = 0;
@@ -4276,7 +4269,7 @@ void loop()
 
                 LiveSampler.Reset(); // reset Q_sample and P_sample
                 LS_state = 0;
-                LS_id_sound = SOUNDS_MAX; // mostra sempre il primo Sound
+                LS_sound_id = SOUNDS_MAX; // mostra sempre il primo Sound
                 LS_instrument = 0;
                 LS_window_width = LS_buffer_dim; // LS_window_width = 441001;
                 LS_window_step = LS_window_width / 8;
@@ -4306,7 +4299,7 @@ void loop()
                     LS_update_Q_sample();
                 }
 
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
                 break;
 
             default:
@@ -4331,7 +4324,7 @@ void loop()
                     LS_update_Q_sample();
                 }
 
-                Display.Show_LS_ring_tape_wave(LS_id_sound);
+                Display.Show_LS_ring_tape_wave(LS_sound_id);
             }
         }
 
@@ -4346,7 +4339,7 @@ void loop()
                     if (LS_instrument == 1) // Right
                     {
                         LS_instrument = 0;        // Left
-                        LS_id_sound = SOUNDS_MAX; // Left
+                        LS_sound_id = SOUNDS_MAX; // Left
                         if (LS_state != 1)
                         {
                             if (!LS_XY_lock)
@@ -4358,7 +4351,7 @@ void loop()
                                 LS_update_Q_sample();
                             }
 
-                            Display.Show_LS_ring_tape_wave(LS_id_sound);
+                            Display.Show_LS_ring_tape_wave(LS_sound_id);
                         }
                     }
 
@@ -4382,7 +4375,7 @@ void loop()
                     if (LS_instrument == 0) // Left
                     {
                         LS_instrument = 1;            // Right
-                        LS_id_sound = SOUNDS_MAX + 1; // Right
+                        LS_sound_id = SOUNDS_MAX + 1; // Right
                         if (LS_state != 1)
                         {
                             if (!LS_XY_lock)
@@ -4393,7 +4386,7 @@ void loop()
                             {
                                 LS_update_Q_sample();
                             }
-                            Display.Show_LS_ring_tape_wave(LS_id_sound);
+                            Display.Show_LS_ring_tape_wave(LS_sound_id);
                         }
                     }
 
@@ -6421,7 +6414,7 @@ void loop()
             Serial.print("Editing Sound: ");
             Serial.println(Instrument_id);
             Sound_id = Patch[Patch_id].Instrument[Instrument_id].sound_id;
-            P_Sound(Sound_id);
+            Print_Sound(Sound_id);
 
             samples_in_file = Get_samples_in_raw_file(Sound[Sound_id].file);
             Noclick_max = Calc_Noclick_max(Preset[Instrument_id].use_Wavetable);
@@ -6513,9 +6506,9 @@ void loop()
                 Lilla_state = CC_SETTINGS;
                 display_wait = false;
 
-                for (auto local_instrument = 0; local_instrument < INSTRUMENTS_MAX; ++local_instrument)
+                for (auto local_instrument_id = 0; local_instrument_id < INSTRUMENTS_MAX; ++local_instrument_id)
                 {
-                    CC_Sound_gain_cache[local_instrument] = CC_Sound_gain[local_instrument];
+                    CC_Sound_gain_cache[local_instrument_id] = CC_Sound_gain[local_instrument_id];
                 }
 
                 CC_lowpass_filter_cache = CC_lowpass_filter;
@@ -6580,9 +6573,12 @@ void loop()
                     Display.Config_import_REBOOT_popup();
 
                     File file = SD.open("/LILLASET/lilla.txt"); // apertura file esistente
-                    Archive.Save_setup_file(file);
-                    file.close();
-                    Serial.println("Lilla setup has been copied from lilla.txt to EEPROM");
+                    if (file)
+                    {
+                        Archive.Save_setup_file(file);
+                        file.close();
+                        Serial.println("Lilla setup has been copied from lilla.txt to EEPROM");
+                    }
 
                     // eventually imported Recordings MUST be deleted
                     DS_seed_all_Recordings();
@@ -6602,23 +6598,14 @@ void loop()
                 }
 
                 // check SD presence
-                if (!SD.begin(BUILTIN_SDCARD))
-                {
-                    Display.SD_missing(ILI9341_BLACK);
-                    delay(5000);
-                    Display.Settings_page();
-                    Display.Settings_frame(SET_menu);
-                    break;
-                }
-
-                // do it
-                else
+                if (SD.begin(BUILTIN_SDCARD))
                 {
                     if (!SD.exists("/LILLASET"))
                     {
                         SD.mkdir("/LILLASET");
                         Serial.println(F("/LILLASET directory created"));
                     }
+
                     if (SD.open("/LILLASET/lillaold.txt"))
                     {
                         SD.remove("/LILLASET/lillaold.txt");
@@ -6626,10 +6613,9 @@ void loop()
                     }
 
                     File file = SD.open("/LILLASET/lillaold.txt", FILE_WRITE); // creazione del file destinazione
-                    Serial.println(F("new lillaold.txt has been created"));
                     if (file)
                     {
-                        Serial.println("lillaold.txt exists");
+                        Serial.println(F("new lillaold.txt has been created"));
                         Archive.Copy_setup_from_Eeprom_to_SD(file);
                         file.close();
                         Display.Config_export_save_popup();
@@ -6643,11 +6629,22 @@ void loop()
                     Display.Settings_page();
                     Display.Settings_frame(SET_menu);
                 }
+
+                else
+                {
+                    Display.SD_missing(ILI9341_BLACK);
+                    delay(5000);
+                    Display.Settings_page();
+                    Display.Settings_frame(SET_menu);
+                    break;
+                }
+
                 break;
 
             case 7: // Factory reset
                 Display.Confirm_factory_reset_popup();
                 Display.Confirm_config_import_frame(0);
+
                 Ask_if_FACTORY_RESET();
                 if (result == 0)
                 {
@@ -6977,19 +6974,19 @@ int x_pos(float col)
 // **********************************          INSTRUMENT MAPPING               **********************************
 // ***************************************************************************************************************
 
-void Reset_map_Instrument_for_notes(uint8_t instrument)
+void Reset_map_Instrument_for_notes(int instrument_id)
 {
     for (auto note = 0; note < 128; ++note)
     {
-        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 0);
+        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument_id)][note], instrument_id, 0);
     }
 }
 
-void Delete_one_map_Instrument_for_notes(uint8_t instrument)
+void Delete_one_map_Instrument_for_notes(int instrument_id)
 {
     for (auto note = 0; note < 128; ++note)
     {
-        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 0);
+        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument_id)][note], instrument_id, 0);
     }
 }
 
@@ -7005,12 +7002,12 @@ void Update_all_maps_Instrument_for_notes()
     }
 }
 
-void Map_one_Instrument_for_all_notes(uint8_t instrument)
+void Map_one_Instrument_for_all_notes(int instrument_id)
 {
     Reset_all_maps_Instrument_for_notes();
     for (auto note = 0; note < 128; ++note)
     {
-        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument)][note], instrument, 1);
+        bitWrite(map_instrument_for_note[Get_midi_channel(Patch_id, instrument_id)][note], instrument_id, 1);
     }
 }
 
@@ -7176,8 +7173,8 @@ void Golive_with_PERFORMANCE(int patch_id)
     Performance_led_set.Request_all_LED_switch_off();
     Display.Frame_performance_menu(P_menu, true);
 
-    P_Lilla_state();
-    P_Patch(patch_id);
+    Print_Lilla_state();
+    Print_Patch(patch_id);
 }
 
 void Rebuild_patch_old(void)
@@ -7369,14 +7366,14 @@ void Select_performance_menu_elements(void)
 // **********************************           SOUND, INSTRUMENT              ***********************************
 // ***************************************************************************************************************
 
-void Set_midi_channel_for_Sound(uint8_t sound_id, uint8_t midi_channel)
+void Set_midi_channel_for_Sound(int sound_id, int midi_channel)
 {
     // .data contains midi channel in its bits: 7 6 5 M I D I 0
     Sound[sound_id].data = (midi_channel << 1) + (Sound[sound_id].data & 0b11100000);
 }
 
 FLASHMEM
-uint8_t Get_midi_channel_from_Sound(uint8_t sound_id)
+uint8_t Get_midi_channel_from_Sound(int sound_id)
 {
     // .data contains midi channel in its bits: 7 6 5 M I D I 0
     return ((Sound[sound_id].data & 30) >> 1);
@@ -7419,7 +7416,7 @@ void Set_Sound_SOLO_OFF(void)
 }
 
 FLASHMEM
-uint32_t Calc_trim_step(uint8_t value)
+uint32_t Calc_trim_step(int value)
 {
     value = value % 6;
     switch (value)
@@ -7449,14 +7446,14 @@ uint32_t Calc_trim_step(uint8_t value)
     }
 }
 
-void Drop_Instrument(uint8_t instrument)
+void Drop_Instrument(int instrument_id)
 {
-    Sound[Patch[Patch_id].Instrument[instrument].sound_id].used = false;
-    Patch[Patch_id].Instrument[instrument].used = false;
+    Sound[Patch[Patch_id].Instrument[instrument_id].sound_id].used = false;
+    Patch[Patch_id].Instrument[instrument_id].used = false;
     Patch[Patch_id].instruments--;
 }
 
-uint8_t Clone_Instrument(uint8_t instrument)
+uint8_t Clone_Instrument(int instrument_id)
 {
     int new_instrument;
     for (new_instrument = 0; new_instrument < INSTRUMENTS_MAX; ++new_instrument)
@@ -7467,11 +7464,11 @@ uint8_t Clone_Instrument(uint8_t instrument)
         }
     }
 
-    Patch[Patch_id].Instrument[new_instrument] = Patch[Patch_id].Instrument[instrument];
+    Patch[Patch_id].Instrument[new_instrument] = Patch[Patch_id].Instrument[instrument_id];
     int S = Get_sound_free();
     if (S >= 0)
     {
-        Sound[S] = Sound[Patch[Patch_id].Instrument[instrument].sound_id];
+        Sound[S] = Sound[Patch[Patch_id].Instrument[instrument_id].sound_id];
         Sound[S].gain = 0;
         Patch[Patch_id].Instrument[new_instrument].sound_id = S;
         Patch[Patch_id].instruments++;
@@ -7707,10 +7704,10 @@ void Golive_DIRECT_SAMPLING(void)
     Display.DS_bar(0, 0);
     Display.DS_bar(1, 0);
 
-    P_Patch(Patch_id);
+    Print_Patch(Patch_id);
     Serial.println(F("*** DIRECT_SAMPLING ***  Sounds are:"));
-    P_Sound(SOUNDS_MAX);
-    P_Sound(SOUNDS_MAX + 1);
+    Print_Sound(SOUNDS_MAX);
+    Print_Sound(SOUNDS_MAX + 1);
 }
 
 FLASHMEM
@@ -7774,8 +7771,8 @@ void Jump_to_DIRECT_SAMPLING_recording(int &recording)
     Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     AudioInterrupts();
 
-    P_Sound(SOUNDS_MAX);
-    P_Sound(SOUNDS_MAX + 1);
+    Print_Sound(SOUNDS_MAX);
+    Print_Sound(SOUNDS_MAX + 1);
 
     Display.DS_hide_recording();
 
@@ -7807,8 +7804,8 @@ void DS_back_to_first_DS_Recording(void)
     Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     AudioInterrupts();
 
-    P_Sound(SOUNDS_MAX);
-    P_Sound(SOUNDS_MAX + 1);
+    Print_Sound(SOUNDS_MAX);
+    Print_Sound(SOUNDS_MAX + 1);
 
     DS_menu = 0;
     DS_define_model(); // updates "Value_Max_encoder.DS_menu" used by encoder_menu
@@ -8558,10 +8555,10 @@ void Golive_with_LIVE_SAMPLING(void)
         LS_update_Q_sample();
     }
 
-    Display.Show_LS_ring_tape_wave(LS_id_sound);
+    Display.Show_LS_ring_tape_wave(LS_sound_id);
 
-    P_Lilla_state();
-    P_Patch(Patch_id);
+    Print_Lilla_state();
+    Print_Patch(Patch_id);
 }
 
 void Switch_from_PERFORMANCE_to_LIVE_SAMPLING(void)
@@ -8727,7 +8724,7 @@ void Switch_from_LIVE_SAMPLING_to_PERFORMANCE(void)
             Switch_to_PERFORMANCE_patch_old();
 
             // Patch Delay: look for delay_<patch_id> in SD
-            if (Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id))
+            if (Archive.Copy_Patch_Delay_data_from_SD_to_Eeprom(Patch_id))
             {
                 Serial.println(F("Smooth changing of delay values COULD start..."));
 
@@ -9189,14 +9186,20 @@ bool Copy_midi_loop_from_RAM_to_SD(int loop_id)
         Serial.println(full_path);
 
         File file = SD.open(full_path_, FILE_WRITE); // creazione del file vuoto
-        Compile_midi_loop_file(loop_id, file);
-        file.close();
-
-        return true;
+        if (file)
+        {
+            Compile_midi_loop_file(loop_id, file);
+            file.close();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     else
     {
-        Serial.println(F("Copy_patch_Delay_data_from_SD_to_Eeprom - SD not present!"));
+        Serial.println(F("Copy_Patch_Delay_data_from_SD_to_Eeprom - SD not present!"));
         return false;
     }
 }
@@ -9272,11 +9275,17 @@ bool Copy_midi_loop_from_SD_to_RAM(int loop_id) // public
             Serial.println(F(" found; now starts data import."));
 
             File file = SD.open(full_path_);
-
-            Copy_midi_loop_from_SD_to_RAM_local(file);
-
-            LOOP_original = true;
-            return true;
+            if (file)
+            {
+                Copy_midi_loop_from_SD_to_RAM_local(file);
+                file.close();
+                LOOP_original = true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         else
         {
@@ -10289,11 +10298,11 @@ void Fill_all_Wavetable(void) // DELETE
     }
 }
 
-void Fill_Wavetable(uint8_t instrument) // fill Wavetable with a sound
+void Fill_Wavetable(int instrument_id) // fill Wavetable with a sound
 {
-    if (Preset[instrument].use_Wavetable)
+    if (Preset[instrument_id].use_Wavetable)
     {
-        Wavetable[instrument].Make(Preset[instrument].file, Preset[instrument].mode, Preset[instrument].A, Preset[instrument].B, Preset[instrument].Noclick, Noclick_pointer[instrument]);
+        Wavetable[instrument_id].Make(Preset[instrument_id].file, Preset[instrument_id].mode, Preset[instrument_id].A, Preset[instrument_id].B, Preset[instrument_id].Noclick, Noclick_pointer[instrument_id]);
     }
 }
 
@@ -10378,7 +10387,7 @@ void Factory_setup_Eeprom(void)
 }
 
 FLASHMEM
-void P_Patch(uint8_t patch_id)
+void Print_Patch(int patch_id)
 {
     Serial.print("Patch:");
     Serial.print(patch_id);
@@ -10388,18 +10397,18 @@ void P_Patch(uint8_t patch_id)
         Serial.print(Patch[patch_id].used);
         Serial.print(" instruments:");
         Serial.println(Patch[patch_id].instruments);
-        for (auto instrument_id_local = 0; instrument_id_local < INSTRUMENTS_MAX; ++instrument_id_local)
+        for (auto instrument_id = 0; instrument_id < INSTRUMENTS_MAX; ++instrument_id)
         {
-            if (!Patch[patch_id].Instrument[instrument_id_local].used)
+            if (!Patch[patch_id].Instrument[instrument_id].used)
             {
                 Serial.print("* ");
-                Serial.println(instrument_id_local);
+                Serial.println(instrument_id);
             }
             else
             {
                 Serial.print("* ");
-                Serial.print(instrument_id_local);
-                P_Instrument(patch_id, instrument_id_local);
+                Serial.print(instrument_id);
+                Print_Instrument(patch_id, instrument_id);
                 Serial.println();
             }
         }
@@ -10408,7 +10417,7 @@ void P_Patch(uint8_t patch_id)
 }
 
 FLASHMEM
-void P_Instrument(uint8_t patch_id, uint8_t instrument_id)
+void Print_Instrument(int patch_id, int instrument_id)
 {
     Serial.print(" sound_id:");
     Serial.print(Patch[patch_id].Instrument[instrument_id].sound_id);
@@ -10443,42 +10452,7 @@ void P_Instrument(uint8_t patch_id, uint8_t instrument_id)
 }
 
 FLASHMEM
-void P_Patch_cache_P(void)
-{
-    Serial.print("Patch: Patch_cache_P");
-    Serial.print(" used:");
-    Serial.print(Patch_cache_P.used);
-    Serial.print(" instruments:");
-    Serial.println(Patch_cache_P.instruments);
-    for (uint8_t I = 0; I < INSTRUMENTS_MAX; ++I)
-    {
-        if (!Patch_cache_P.Instrument[I].used)
-        {
-            Serial.print("* ");
-            Serial.println(I);
-        }
-        else
-        {
-            Serial.print("* ");
-            Serial.print(I);
-            Serial.print(" sound_id:");
-            Serial.print(Patch_cache_P.Instrument[I].sound_id);
-            Serial.print(" root_key:");
-            Serial.print(Patch_cache_P.Instrument[I].root_key);
-            Serial.print(" file:");
-            Serial.print(Sound[Patch_cache_P.Instrument[I].sound_id].file);
-            Serial.print(".raw");
-            Serial.print(" lock:");
-            Serial.print((Patch_cache_P.Instrument[I].lock ? "yes" : "no"));
-            Serial.print(" precedence:");
-            Serial.println((Patch_cache_P.Instrument[I].precedence ? "yes" : "no"));
-        }
-    }
-    Serial.println();
-}
-
-FLASHMEM
-void P_Sound(uint8_t sound_id)
+void Print_Sound(int sound_id)
 {
     Serial.println();
     Serial.print("sound_id:");
@@ -10534,7 +10508,7 @@ void P_Sound(uint8_t sound_id)
 }
 
 FLASHMEM
-void P_Lilla_state(void)
+void Print_Lilla_state(void)
 {
     Serial.print("Displayed page is: ");
     switch (Lilla_state)
@@ -10576,19 +10550,19 @@ void P_Lilla_state(void)
 }
 
 FLASHMEM
-void P_keyboard_state(uint8_t mc, int8_t a, int8_t b)
+void Print_keyboard_state(int midi_channel, int from_key, int to_key)
 {
     Serial.println();
-    Serial.print(F("********  P_keyboard_state - MIDI CH.: "));
-    Serial.print(mc + 1);
+    Serial.print(F("********  Print_keyboard_state - MIDI CH.: "));
+    Serial.print(midi_channel + 1);
     Serial.println("   *********");
-    for (uint8_t key = a; key <= b; ++key)
+    for (auto key = from_key; key <= to_key; ++key)
     {
-        Serial.print(key_state[mc][key]);
+        Serial.print(key_state[midi_channel][key]);
         Serial.print("  ");
     }
     Serial.println();
-    for (uint8_t key = a; key <= b; ++key)
+    for (auto key = from_key; key <= to_key; ++key)
     {
         Serial.print(key);
         Serial.print("  ");
@@ -10597,32 +10571,30 @@ void P_keyboard_state(uint8_t mc, int8_t a, int8_t b)
 }
 
 FLASHMEM
-void P_map_instrument_for_note(uint8_t midi_channel)
+void Print_map_instrument_for_note(int midi_channel)
 {
     Serial.println();
     Serial.print(F("Map notes/Sound for MIDI channel:"));
     Serial.println(midi_channel + 1);
-    for (int8_t i = 7; i >= 0; --i)
+    for (auto instrument_id = (INSTRUMENTS_MAX - 1); instrument_id >= 0; --instrument_id)
     {
-        for (uint8_t n = 0; n < 128; ++n)
+        for (auto note_number = 0; note_number < 128; ++note_number)
         {
-            Serial.print(bitRead(map_instrument_for_note[midi_channel][n], i));
+            Serial.print(bitRead(map_instrument_for_note[midi_channel][note_number], instrument_id));
             Serial.print("  ");
         }
         Serial.println();
     }
     Serial.println();
 
-    for (uint8_t n = 0; n < 128; ++n)
+    for (auto note_number = 0; note_number < 128; ++note_number)
     {
-        Serial.print(n);
+        Serial.print(note_number);
         Serial.print("  ");
     }
     Serial.println();
     Serial.println();
 }
-
-
 
 // ***************************************************************************************************************
 // **********************************                LIVE_SAMPLING              **********************************
@@ -10649,7 +10621,7 @@ void LS_refresh_LS_page(void)
     {
         LS_update_Q_sample(); // Usato da LS_wave_color
     }
-    Display.Show_LS_ring_tape_wave(LS_id_sound);
+    Display.Show_LS_ring_tape_wave(LS_sound_id);
 }
 
 FLASHMEM
@@ -10994,11 +10966,11 @@ void Switch_to_MIXER()
     // Se non si sta editando, si parte dal primo Instrument esistente
     if (Lilla_state_0 != PERFORMANCE && Lilla_state_0 != SOUND_EDIT && Lilla_state_0 != INSTRUMENT_VCF && Lilla_state_0 != LIVE_SAMPLING)
     {
-        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
+        for (auto instrument_id = 0; instrument_id < INSTRUMENTS_MAX; ++instrument_id)
         {
-            if (Patch[Patch_id].Instrument[instrument_local].used)
+            if (Patch[Patch_id].Instrument[instrument_id].used)
             {
-                Instrument_id = instrument_local;
+                Instrument_id = instrument_id;
                 break;
             }
         }
@@ -11015,19 +10987,19 @@ void Switch_to_MIXER()
 }
 
 FLASHMEM
-void Golive_MIXER(int instrument)
+void Golive_MIXER(int instrument_id)
 {
-    if (instrument < 0)
+    if (instrument_id < 0)
     {
-        for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
+        for (auto instrument_id_local = 0; instrument_id_local < INSTRUMENTS_MAX; ++instrument_id_local)
         {
-            if (Patch[Patch_id].Instrument[instrument_local].used)
+            if (Patch[Patch_id].Instrument[instrument_id_local].used)
             {
-                instrument = instrument_local;
+                instrument_id = instrument_id_local;
             }
         }
 
-        if (instrument < 0)
+        if (instrument_id < 0)
         {
             Serial.println(F("Golive_MIXER - ERROR: no instrument used!"));
             return;
@@ -11035,7 +11007,7 @@ void Golive_MIXER(int instrument)
     }
 
     Lilla_state = MIXER;
-    MX_source = instrument;
+    MX_source = instrument_id;
 
     Display.MX_page();
     for (auto source = 0; source < 9; ++source)
@@ -11045,36 +11017,36 @@ void Golive_MIXER(int instrument)
 }
 
 FLASHMEM
-bool Verify_if_Instrument_original(uint8_t I)
+bool Verify_if_Instrument_original(int instrument_id)
 {
-    if (!Patch[Patch_id].Instrument[I].used && !Patch_cache_P.Instrument[I].used)
+    if (!Patch[Patch_id].Instrument[instrument_id].used && !Patch_cache_P.Instrument[instrument_id].used)
     {
         return true;
     }
 
     bool result;
-    result = ((Patch[Patch_id].Instrument[I].used == Patch_cache_P.Instrument[I].used) &&
-              (Patch[Patch_id].Instrument[I].sound_id == Patch_cache_P.Instrument[I].sound_id) &&
-              (Patch[Patch_id].Instrument[I].root_key == Patch_cache_P.Instrument[I].root_key) &&
-              (Patch[Patch_id].Instrument[I].from_note == Patch_cache_P.Instrument[I].from_note) &&
-              (Patch[Patch_id].Instrument[I].to_note == Patch_cache_P.Instrument[I].to_note) &&
-              (Patch[Patch_id].Instrument[I].precedence == Patch_cache_P.Instrument[I].precedence) &&
-              (Patch[Patch_id].Instrument[I].lock == Patch_cache_P.Instrument[I].lock) &&
+    result = ((Patch[Patch_id].Instrument[instrument_id].used == Patch_cache_P.Instrument[instrument_id].used) &&
+              (Patch[Patch_id].Instrument[instrument_id].sound_id == Patch_cache_P.Instrument[instrument_id].sound_id) &&
+              (Patch[Patch_id].Instrument[instrument_id].root_key == Patch_cache_P.Instrument[instrument_id].root_key) &&
+              (Patch[Patch_id].Instrument[instrument_id].from_note == Patch_cache_P.Instrument[instrument_id].from_note) &&
+              (Patch[Patch_id].Instrument[instrument_id].to_note == Patch_cache_P.Instrument[instrument_id].to_note) &&
+              (Patch[Patch_id].Instrument[instrument_id].precedence == Patch_cache_P.Instrument[instrument_id].precedence) &&
+              (Patch[Patch_id].Instrument[instrument_id].lock == Patch_cache_P.Instrument[instrument_id].lock) &&
 
-              (Patch[Patch_id].Instrument[I].Filter.use == Patch_cache_P.Instrument[I].Filter.use) &&
-              (Patch[Patch_id].Instrument[I].Filter.type == Patch_cache_P.Instrument[I].Filter.type) &&
-              (Patch[Patch_id].Instrument[I].Filter.pivot == Patch_cache_P.Instrument[I].Filter.pivot) &&
-              (Patch[Patch_id].Instrument[I].Filter.resonance == Patch_cache_P.Instrument[I].Filter.resonance) &&
-              (Patch[Patch_id].Instrument[I].Filter.modulation == Patch_cache_P.Instrument[I].Filter.modulation) &&
-              (Patch[Patch_id].Instrument[I].Filter.index == Patch_cache_P.Instrument[I].Filter.index) &&
-              (Patch[Patch_id].Instrument[I].Filter.frequency_time == Patch_cache_P.Instrument[I].Filter.frequency_time) &&
-              Verify_is_Sound_original(Patch[Patch_id].Instrument[I].sound_id));
+              (Patch[Patch_id].Instrument[instrument_id].Filter.use == Patch_cache_P.Instrument[instrument_id].Filter.use) &&
+              (Patch[Patch_id].Instrument[instrument_id].Filter.type == Patch_cache_P.Instrument[instrument_id].Filter.type) &&
+              (Patch[Patch_id].Instrument[instrument_id].Filter.pivot == Patch_cache_P.Instrument[instrument_id].Filter.pivot) &&
+              (Patch[Patch_id].Instrument[instrument_id].Filter.resonance == Patch_cache_P.Instrument[instrument_id].Filter.resonance) &&
+              (Patch[Patch_id].Instrument[instrument_id].Filter.modulation == Patch_cache_P.Instrument[instrument_id].Filter.modulation) &&
+              (Patch[Patch_id].Instrument[instrument_id].Filter.index == Patch_cache_P.Instrument[instrument_id].Filter.index) &&
+              (Patch[Patch_id].Instrument[instrument_id].Filter.frequency_time == Patch_cache_P.Instrument[instrument_id].Filter.frequency_time) &&
+              Verify_is_Sound_original(Patch[Patch_id].Instrument[instrument_id].sound_id));
 
     return result;
 }
 
 FLASHMEM
-bool Verify_is_Sound_original(uint8_t sound_id)
+bool Verify_is_Sound_original(int sound_id)
 {
     return (
         (Sound[sound_id].file == Sound_cache_P[sound_id].file) &&
@@ -11094,17 +11066,17 @@ bool Verify_is_Sound_original(uint8_t sound_id)
 
 void Copy_all_Sound_to_Sound_cache_P(void)
 {
-    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
+    for (auto sound_id = 0; sound_id < SOUNDS_MAX; ++sound_id)
     {
-        Sound_cache_P[id_sound_local] = Sound[id_sound_local];
+        Sound_cache_P[sound_id] = Sound[sound_id];
     }
 }
 
 void Pull_all_Sound_from_Sound_cache_P(void)
 {
-    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
+    for (auto sound_id = 0; sound_id < SOUNDS_MAX; ++sound_id)
     {
-        Sound[id_sound_local] = Sound_cache_P[id_sound_local];
+        Sound[sound_id] = Sound_cache_P[sound_id];
     }
 }
 
@@ -11112,9 +11084,9 @@ uint8_t Get_sounds_free(void)
 {
     auto result = 0;
 
-    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
+    for (auto sound_id = 0; sound_id < SOUNDS_MAX; ++sound_id)
     {
-        if (!Sound[id_sound_local].used)
+        if (!Sound[sound_id].used)
         {
             result++;
         }
@@ -11124,31 +11096,31 @@ uint8_t Get_sounds_free(void)
 
 void Read_all_Sounds(void)
 {
-    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
+    for (auto sound_id = 0; sound_id < SOUNDS_MAX; ++sound_id)
     {
-        Archive.Read_Sound(id_sound_local, Sound[id_sound_local]);
-        // P_Sound(id_sound_local);
+        Archive.Read_Sound(sound_id, Sound[sound_id]);
+        // Print_Sound(sound_id);
     }
 }
 
 void Save_all_Sounds_changed(void)
 {
-    for (auto id_sound_local = 0; id_sound_local < SOUNDS_MAX; ++id_sound_local)
+    for (auto sound_id = 0; sound_id < SOUNDS_MAX; ++sound_id)
     {
         // Sound which have been changed only for .used
-        if (Sound[id_sound_local].used != Sound_cache_P[id_sound_local].used)
+        if (Sound[sound_id].used != Sound_cache_P[sound_id].used)
         {
-            Archive.Save_Sound(id_sound_local);
+            Archive.Save_Sound(sound_id);
             Serial.println("Save_all_Sounds_changed: attenzione! Sound[sound_id].used e' variato per sound_id: ");
-            Serial.println(id_sound_local);
+            Serial.println(sound_id);
         }
 
         // Sound used which have been changed
-        else if ((Sound[id_sound_local].used == 1) && !Verify_is_Sound_original(id_sound_local)) // save Sound used and changed in phisical properties
+        else if ((Sound[sound_id].used == 1) && !Verify_is_Sound_original(sound_id)) // save Sound used and changed in phisical properties
         {
-            Archive.Save_Sound(id_sound_local);
+            Archive.Save_Sound(sound_id);
             Serial.println("Save_all_Sounds_changed: attenzione! Verify_is_Sound_original ha dato esito NEGATIVO che ha richiesto salvataggio su EEPROM per per sound_id: ");
-            Serial.println(id_sound_local);
+            Serial.println(sound_id);
         }
     }
 }
@@ -11162,11 +11134,11 @@ void Save_CC_SETTINGS(void)
 {
     Midi_reader.Stop();
 
-    for (auto instrument_local = 0; instrument_local < INSTRUMENTS_MAX; ++instrument_local)
+    for (auto instrument_id = 0; instrument_id < INSTRUMENTS_MAX; ++instrument_id)
     {
-        if (CC_Sound_gain[instrument_local] != CC_Sound_gain_cache[instrument_local])
+        if (CC_Sound_gain[instrument_id] != CC_Sound_gain_cache[instrument_id])
         {
-            Archive.Save_CC_Sound_gain(instrument_local, CC_Sound_gain[instrument_local]);
+            Archive.Save_CC_Sound_gain(instrument_id, CC_Sound_gain[instrument_id]);
         }
     }
 
@@ -11245,7 +11217,6 @@ void Read_all_CC_Sound_gain()
 FLASHMEM
 bool Copy_raw_files_from_SD_to_Flash()
 {
-    SerialFlashFile file;
     int row;
 
     Display.Copy_raw_files_SD_to_Flash_chip_titolo();
@@ -11830,7 +11801,7 @@ void Bootstrap_setup(void)
     Delay_R.DELAY_fifo = DELAY_fifo_R;
 
     // Tenta l'import dei dati patch_id delay da SD alla EEPROM
-    Archive.Copy_patch_Delay_data_from_SD_to_Eeprom(Patch_id);
+    Archive.Copy_Patch_Delay_data_from_SD_to_Eeprom(Patch_id);
 
     // Imposta i parametri per il Delay
     if (Read_pushbutton(35))
@@ -11877,7 +11848,7 @@ void Bootstrap_setup(void)
     LiveSampler.Reset();
     LS_state = 0;
 
-    LS_id_sound = SOUNDS_MAX;
+    LS_sound_id = SOUNDS_MAX;
     LS_instrument = 0;
     LS_X_delta = 0;
     LS_X_sample = 0;
@@ -11903,23 +11874,22 @@ void Bootstrap_setup(void)
     Players_Manager.Update_all_Preset(Patch_id, Volume_float[volume_patch]);
     Fill_all_Noclick(); // fill Noclick for all Instrument in the Patch
     Fill_all_Wavetable();
-    
+
     // **************           flags            ****************
     file_midi_ch_flag = true;
     display_instrument_volume_flag = false;
-    
 
-    // **************     MIDI CONTROL CHANGE     **************** 
+    // **************     MIDI CONTROL CHANGE     ****************
     CC_lowpass_filter = 0;
     CC_midi_controller = 0;
 
-    // **************  RESOLUTION  DOWNSAMPLING   **************** 
+    // **************  RESOLUTION  DOWNSAMPLING   ****************
     lowpass_flag = false;
     lowpass_direction = false;
     lowpass = LPF_MAX;
     lowpass_target = LPF_MAX;
     display_lowpass_flag = false;
-    resolution = 0; // [0, RES_MAX] 0: risoluzione 16bit
+    resolution = 0;   // [0, RES_MAX] 0: risoluzione 16bit
     downsampling = 1; // n. of repeated samples  1 = 44.1ksps
 
     // *******************    MIDI LOOP   ************************
@@ -11932,10 +11902,10 @@ void Bootstrap_setup(void)
 
     // ****************       PERFORMANCE     ********************
     patch_old = Patch_id;
-    P_Patch(Patch_id);
+    Print_Patch(Patch_id);
     Patch_cache_P = Patch[Patch_id];
     Update_all_maps_Instrument_for_notes();
-    P_map_instrument_for_note(0); // P_map_instrument_for_note(uint8_t midi_channel)
+    Print_map_instrument_for_note(0); // Print_map_instrument_for_note(uint8_t midi_channel)
     instrument_volume_changed = 0;
 
     // ******************   PERFORMANCE PAGE   ********************
@@ -11950,4 +11920,13 @@ void Bootstrap_setup(void)
     Trigger_0.Start();
     Trigger_1.Start();
     delay(20);
+
+    Serial.print("SIZE_OF_INSTRUMENT_FILTER_DATA: ");
+    Serial.println(SIZE_OF_INSTRUMENT_FILTER_DATA);
+    Serial.print("SIZE_OF_INSTRUMENT: ");
+    Serial.println(SIZE_OF_INSTRUMENT);
+    Serial.print("SIZE_OF_PATCH: ");
+    Serial.println(SIZE_OF_PATCH);
+    Serial.print("SIZE_OF_SOUND: ");
+    Serial.println(SIZE_OF_SOUND);
 }

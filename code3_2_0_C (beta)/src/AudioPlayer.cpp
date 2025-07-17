@@ -540,13 +540,13 @@ void AudioPlayer::Main_settings_editing(uint8_t mode_in, int A_value_in, int B_v
     main_settings_editing_flag = true;
 }
 
-void AudioPlayer::Get_ready_to_play(float pitch_note_in, float velocity_in, int patch_in, uint8_t instrument_in, uint8_t id_sound_in, uint8_t note_in)
+void AudioPlayer::Get_ready_to_play(float pitch_note_in, float velocity_in, int patch_in, uint8_t instrument_in, uint8_t sound_id_in, uint8_t note_in)
 {
     pitch_note_wait = pitch_note_in;
     velocity_gain_wait = velocity_in;
     patch_id_wait = patch_in;
     instrument_id_wait = instrument_in;
-    id_sound_wait = id_sound_in;
+    sound_id_wait = sound_id_in;
     note_wait = note_in;
     time_stamp = millis();
 
@@ -663,7 +663,7 @@ void AudioPlayer::Start_playing(void)
     }
 
     instrument_id = instrument_id_wait;
-    sound_id = id_sound_wait;
+    sound_id = sound_id_wait;
     note = note_wait;
     pitch_tune = pitch_tune_wait;
     pitch_tune_flag = false;
@@ -2666,7 +2666,7 @@ int AudioPlayer::Read_instrument(void)
     return instrument_id;
 }
 
-int AudioPlayer::Read_id_sound(void)
+int AudioPlayer::Read_sound_id(void)
 {
     return sound_id;
 }

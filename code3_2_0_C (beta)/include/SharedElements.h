@@ -6,6 +6,7 @@
 
 #pragma once
 #include <Arduino.h>
+#include <FS.h>
 
 // RELEASE SOFTWARE
 extern String FIRMWARE_VERSION; // definita in main.cpp
@@ -96,7 +97,6 @@ enum LillaStates
 static constexpr int VOLUME_1 = 29;
 struct Instrument_filter_data_struct
 {
-    // uint8_t compound; // bit0:use  bit1,2,3:modulation  bit4,5:filter_type
     uint8_t use;            // yes/no
     uint8_t type;           // filter type 0 --> 3
     uint8_t pivot;          // 0 --> 100 filter frequency/note frequency
@@ -105,6 +105,8 @@ struct Instrument_filter_data_struct
     uint8_t index;          // 1 --> 20 modulation_index
     uint8_t frequency_time; // 0 --> 20
 };
+static constexpr uint8_t SIZE_OF_INSTRUMENT_FILTER_DATA = sizeof(Instrument_filter_data_struct); // 7
+
 struct Instrument_struct
 {
     bool used;
@@ -116,6 +118,8 @@ struct Instrument_struct
     bool lock;
     Instrument_filter_data_struct Filter;
 };
+static constexpr uint8_t SIZE_OF_INSTRUMENT = sizeof(Instrument_struct); // 14
+
 struct Patch_struct
 {
     bool used;
@@ -124,7 +128,7 @@ struct Patch_struct
 } __attribute__((__packed__)); // https://cs50.stackexchange.com/questions/22297/i-am-getting-an-unexpected-sizeof-error
 
 extern Patch_struct Patch[PATCHES_MAX + 1]; // last used by Direct Sampling for "preascolto" and Live Sampling
-static constexpr uint8_t SIZE_OF_PATCH_STRUCT = sizeof(Patch_struct);
+static constexpr uint8_t SIZE_OF_PATCH = sizeof(Patch_struct); // 2 + 8 * 14 = 114
 
 struct Instrument_filter_values_struct
 {
@@ -156,7 +160,7 @@ struct Sound_struct // 22 bytes
     uint8_t gain;
 } __attribute__((__packed__));             // https://cs50.stackexchange.com/questions/22297/i-am-getting-an-unexpected-sizeof-error
 extern Sound_struct Sound[SOUNDS_MAX + 2]; // last 2 used by Direct Sampling for "preascolto" and Live Sampling
-static constexpr uint8_t SIZE_OF_SOUND = sizeof(Sound_struct);
+static constexpr uint8_t SIZE_OF_SOUND = sizeof(Sound_struct); // 22
 
 // PERFORMANCE
 static constexpr char PROGMEM note_name[12][3] = {{"C"}, {"C#"}, {"D"}, {"D#"}, {"E"}, {"F"}, {"F#"}, {"G"}, {"G#"}, {"A"}, {"A#"}, {"B"}};
@@ -267,9 +271,10 @@ extern float pan_gain_R_table[33];
 uint8_t Get_midi_channel(uint8_t patch_id, uint8_t instrument);
 float Calc_pitch(float value);
 float Calc_attack(uint8_t &n);
-float CALC_decay(uint8_t &n);
+float Calc_decay(uint8_t &n);
 float Calc_sustain(uint8_t &n);
 float Calc_release(uint8_t &n);
+
 
 // PRESET
 // E' il the data-set sent to a Player; it's a complete description of a sound that has to be played
@@ -346,6 +351,8 @@ extern uint8_t CC_midi_controller;
 
 // STAMPA
 void PRINT(String who, String what, float value);
+
+
 
 /*
 semitones	pitch	    delta pitch

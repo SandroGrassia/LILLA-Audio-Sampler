@@ -82,24 +82,28 @@ uint8_t Get_midi_channel(uint8_t patch_id, uint8_t instrument)
     // .data contains midi channel in its bits: 7 6 5 M I D I 0
     return ((Sound[Patch[patch_id].Instrument[instrument].sound_id].data & 30) >> 1);
 }
+
 float Calc_pitch(float value)
 {
     return pow(2.0f, value / 192.0f); // 0: no shift
 }
+
 float Calc_attack(uint8_t &n)
 {
     return (n / 100.0f);
 }
-float CALC_decay(uint8_t &n)
+
+float Calc_decay(uint8_t &n)
 {
     return (n / 25.0f);
 }
+
 float Calc_sustain(uint8_t &n)
 {
     return (n / 50.0f);
 }
-float Calc_release(uint8_t &n)
 
+float Calc_release(uint8_t &n)
 {
     return (n / 2.0f);
 }

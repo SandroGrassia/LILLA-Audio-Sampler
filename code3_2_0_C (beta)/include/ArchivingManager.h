@@ -13,9 +13,11 @@
 #include <SD.h>
 #include <FS.h>
 
-class EepromManager
+class ArchivingManager
 {
 private:
+    #define AUDIO_BOARD_SDCARD 10
+
     // Locations of settings data in emulated EEPROM memory (dimension T4.1: 4284 bytes)
     static constexpr int EEPROM_BYTES = 4284;          // Teensy 4.1 EEPROM total bytes
     static constexpr int LOCATION_PATCH = 0;         // location in EEPROM of Patch[0]   --> 24 patches_number x 90 bytes = 2160 bytes
@@ -35,10 +37,19 @@ private:
     void Copy_Delay_data_from_RAM_to_SD(File &file);
     void Copy_Delay_data_from_Eeprom_to_SD(File &file);
     void Copy_Delay_data_from_SD_to_Eeprom(File &file);
-    void Print_Delay_data_on_EEPROM(void);
+    void Print_Delay_data_reading_from_Eeprom(void);
+    String Filename_patch_delay(int patch_id);
+
+    String Filename_Patch(int patch_id);
+    String Filename_Sound(int patch_id, int instrument_id);
+    void Copy_Patch_from_RAM_to_File(int patch_id, File &file);
+    void Copy_Patch_from_SD_to_RAM(int patch_id, File &file);
+    void Copy_Sound_from_RAM_to_File(int patch_id, int instrument_id, File &file);
+    void Copy_Sound_from_SD_to_RAM(int patch_id, int instrument_id, int sound_id, File &file);
+    
 
 public:
-    EepromManager(void) {}
+    ArchivingManager(void) {}
 
     void Save_CC_lowpass_filter(uint8_t CC_lowpass_filter);
     void Read_CC_lowpass_filter(uint8_t &CC_lowpass_filter);
@@ -51,8 +62,8 @@ public:
     void Read_first_octave(int8_t &first_octave);
     void Save_first_octave(int8_t first_octave);
     void Save_Sound(uint8_t sound_id);
-    void Read_Sound(uint8_t sound_id, Sound_struct &Sound_id_sound);
-    void Save_Patch(uint8_t patch_id, Patch_struct Patch_patch);
+    void Read_Sound(uint8_t sound_id, Sound_struct &Sound_this_sound_id);
+    void Save_Patch(uint8_t patch_id, Patch_struct Patch_this_patch_id);
     void Read_Patch(uint8_t patch_id);
     void Save_DS_Recording(int recording);
     void Save_DS_Recording(const int &recording, const EEPROM_VFS_Recording &EEPROM_Rec_recording);
@@ -61,12 +72,16 @@ public:
     void Copy_setup_from_Eeprom_to_SD(File &file); // File e' l'oggetto file incluso in FS.h
     void Reset_EEPROM(void);
     void Print_EEPROM_content(void);
-    String Filename_patch_delay(int patch_id); // private
-    void Copy_patch_Delay_data_from_Eeprom_to_SD(int patch_id);
-    void Copy_patch_Delay_data_from_RAM_to_SD(int patch_id);
-    bool Copy_patch_Delay_data_from_SD_to_Eeprom(int patch_id);
-    void Print_Delay_file_SD(int patch_id);
-    void Delete_Delay_data_in_SD(int patch_id);
+    
+    void Copy_Patch_Delay_data_from_Eeprom_to_SD(int patch_id);
+    void Copy_Patch_Delay_data_from_RAM_to_SD(int patch_id);
+    bool Copy_Patch_Delay_data_from_SD_to_Eeprom(int patch_id);
+    void Print_Patch_Delay_file_reading_from_SD(int patch_id);
+    void Delete_Patch_Delay_data_in_SD(int patch_id);
+
+    void Copy_Patch_from_RAM_to_SD(int patch_id);
+    void Copy_Sound_from_RAM_to_SD(int patch_id, int instrument_id);
+    bool Copy_Patch_from_SD_to_RAM(int patch_id); // public
 
     struct EEPROM_Instrument_filter_data_struct // 5 bytes
     {

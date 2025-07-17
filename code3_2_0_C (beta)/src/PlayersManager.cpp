@@ -552,7 +552,7 @@ void PlayersManager::Multicast_release_players(int sound_id)
 {
     for (auto player = 0; player < PLAYERS; ++player)
     {
-        if (Player_ptr[player].Read_id_sound() == sound_id)
+        if (Player_ptr[player].Read_sound_id() == sound_id)
         {
             Release_player(player);
         }
@@ -660,21 +660,21 @@ void PlayersManager::Update_all_Preset_volume(int patch_id, float volume_patch)
 void PlayersManager::Update_Preset(int patch_id, int instrument, float volume_patch)
 {
     Update_Preset_volume(patch_id, instrument, volume_patch);
-    Preset[instrument].pan = Sound[Id_sound(patch_id, instrument)].pan;
-    Preset[instrument].sound_id = Id_sound(patch_id, instrument);
-    Preset[instrument].file = Sound[Id_sound(patch_id, instrument)].file;
+    Preset[instrument].pan = Sound[Sound_Id(patch_id, instrument)].pan;
+    Preset[instrument].sound_id = Sound_Id(patch_id, instrument);
+    Preset[instrument].file = Sound[Sound_Id(patch_id, instrument)].file;
     Preset[instrument].midi_channel = Get_midi_channel(patch_id, instrument);
-    Preset[instrument].pitch = Calc_pitch(Sound[Id_sound(patch_id, instrument)].pitch);
-    Preset[instrument].mode = Sound[Id_sound(patch_id, instrument)].mode;
-    Preset[instrument].A = Sound[Id_sound(patch_id, instrument)].A;
-    Preset[instrument].B = Sound[Id_sound(patch_id, instrument)].B;
+    Preset[instrument].pitch = Calc_pitch(Sound[Sound_Id(patch_id, instrument)].pitch);
+    Preset[instrument].mode = Sound[Sound_Id(patch_id, instrument)].mode;
+    Preset[instrument].A = Sound[Sound_Id(patch_id, instrument)].A;
+    Preset[instrument].B = Sound[Sound_Id(patch_id, instrument)].B;
     Preset[instrument].use_Wavetable = (Preset[instrument].B - Preset[instrument].A + 1) <= BLOCK_MIN;
-    Preset[instrument].Noclick = Sound[Id_sound(patch_id, instrument)].Noclick;
-    Preset[instrument].attack_type = bitRead(Sound[Id_sound(patch_id, instrument)].data, 0);
-    Preset[instrument].attack = Calc_attack(Sound[Id_sound(patch_id, instrument)].attack);
-    Preset[instrument].decay = CALC_decay(Sound[Id_sound(patch_id, instrument)].decay);
-    Preset[instrument].sustain = Calc_sustain(Sound[Id_sound(patch_id, instrument)].sustain);
-    Preset[instrument].release = Calc_release(Sound[Id_sound(patch_id, instrument)].release);
+    Preset[instrument].Noclick = Sound[Sound_Id(patch_id, instrument)].Noclick;
+    Preset[instrument].attack_type = bitRead(Sound[Sound_Id(patch_id, instrument)].data, 0);
+    Preset[instrument].attack = Calc_attack(Sound[Sound_Id(patch_id, instrument)].attack);
+    Preset[instrument].decay = Calc_decay(Sound[Sound_Id(patch_id, instrument)].decay);
+    Preset[instrument].sustain = Calc_sustain(Sound[Sound_Id(patch_id, instrument)].sustain);
+    Preset[instrument].release = Calc_release(Sound[Sound_Id(patch_id, instrument)].release);
     Preset[instrument].precedence = Patch[patch_id].Instrument[instrument].precedence; // Preset[I].precedence = bitRead(Patch[patch_id].Instrument[I].info, 0);
     Preset[instrument].lock = Patch[patch_id].Instrument[instrument].lock;             // Preset[I].lock = bitRead(Patch[patch_id].Instrument[I].info, 1)
     Update_Preset_IF(patch_id, instrument);
@@ -687,22 +687,22 @@ void PlayersManager::Update_Preset_volume(int patch_id, int instrument, float vo
         Preset[instrument].volume = 0.0;
     }
     else
-        Preset[instrument].volume = volume_patch * Volume_float[Sound[Id_sound(patch_id, instrument)].gain];
+        Preset[instrument].volume = volume_patch * Volume_float[Sound[Sound_Id(patch_id, instrument)].gain];
 }
 
 void PlayersManager::Update_Preset_pan(int patch_id, int instrument)
 {
-    Preset[instrument].pan = Sound[Id_sound(patch_id, instrument)].pan;
+    Preset[instrument].pan = Sound[Sound_Id(patch_id, instrument)].pan;
 }
 
-void PlayersManager::Update_Preset_id_sound(int patch_id, int instrument)
+void PlayersManager::Update_Preset_sound_id(int patch_id, int instrument)
 {
-    Preset[instrument].sound_id = Id_sound(patch_id, instrument);
+    Preset[instrument].sound_id = Sound_Id(patch_id, instrument);
 }
 
 void PlayersManager::Update_Preset_file(int patch_id, int instrument)
 {
-    Preset[instrument].file = Sound[Id_sound(patch_id, instrument)].file;
+    Preset[instrument].file = Sound[Sound_Id(patch_id, instrument)].file;
 }
 
 void PlayersManager::Update_Preset_midi_channel(int patch_id, int instrument)
@@ -712,49 +712,49 @@ void PlayersManager::Update_Preset_midi_channel(int patch_id, int instrument)
 
 void PlayersManager::Update_Preset_pitch(int patch_id, int instrument)
 {
-    Preset[instrument].pitch = Calc_pitch(Sound[Id_sound(patch_id, instrument)].pitch);
+    Preset[instrument].pitch = Calc_pitch(Sound[Sound_Id(patch_id, instrument)].pitch);
 }
 
 void PlayersManager::Update_Preset_mode(int patch_id, int instrument)
 {
-    Preset[instrument].mode = Sound[Id_sound(patch_id, instrument)].mode;
+    Preset[instrument].mode = Sound[Sound_Id(patch_id, instrument)].mode;
 }
 
 void PlayersManager::Update_Preset_A_B_Wavetable(int patch_id, int instrument)
 {
-    Preset[instrument].A = Sound[Id_sound(patch_id, instrument)].A;
-    Preset[instrument].B = Sound[Id_sound(patch_id, instrument)].B;
+    Preset[instrument].A = Sound[Sound_Id(patch_id, instrument)].A;
+    Preset[instrument].B = Sound[Sound_Id(patch_id, instrument)].B;
     Preset[instrument].use_Wavetable = (Preset[instrument].B - Preset[instrument].A + 1) <= BLOCK_MIN;
 }
 
 void PlayersManager::Update_Preset_Noclick(int patch_id, int instrument)
 {
-    Preset[instrument].Noclick = Sound[Id_sound(patch_id, instrument)].Noclick;
+    Preset[instrument].Noclick = Sound[Sound_Id(patch_id, instrument)].Noclick;
 }
 
 void PlayersManager::Update_Preset_attack_type(int patch_id, int instrument)
 {
-    Preset[instrument].attack_type = bitRead(Sound[Id_sound(patch_id, instrument)].data, 0);
+    Preset[instrument].attack_type = bitRead(Sound[Sound_Id(patch_id, instrument)].data, 0);
 }
 
 void PlayersManager::Update_Preset_attack(int patch_id, int instrument)
 {
-    Preset[instrument].attack = Calc_attack(Sound[Id_sound(patch_id, instrument)].attack);
+    Preset[instrument].attack = Calc_attack(Sound[Sound_Id(patch_id, instrument)].attack);
 }
 
 void PlayersManager::Update_Preset_decay(int patch_id, int instrument)
 {
-    Preset[instrument].decay = CALC_decay(Sound[Id_sound(patch_id, instrument)].decay);
+    Preset[instrument].decay = Calc_decay(Sound[Sound_Id(patch_id, instrument)].decay);
 }
 
 void PlayersManager::Update_Preset_sustain(int patch_id, int instrument)
 {
-    Preset[instrument].sustain = Calc_sustain(Sound[Id_sound(patch_id, instrument)].sustain);
+    Preset[instrument].sustain = Calc_sustain(Sound[Sound_Id(patch_id, instrument)].sustain);
 }
 
 void PlayersManager::Update_Preset_release(int patch_id, int instrument)
 {
-    Preset[instrument].release = Calc_release(Sound[Id_sound(patch_id, instrument)].release);
+    Preset[instrument].release = Calc_release(Sound[Sound_Id(patch_id, instrument)].release);
 }
 
 void PlayersManager::Update_Preset_precedence(int patch_id, int instrument)
@@ -1254,7 +1254,7 @@ bool PlayersManager::Verify_if_stop_players(int patch_id, int instrument) // whe
     uint8_t players_to_stop = 0;
     int8_t index = 0;
 
-    if ((POLYPHONY_FLASH[optimization] < PLAYERS) && Preset[instrument].use_Wavetable && !Get_use_Wavetable(Id_sound(patch_id, instrument))) // Sound passes from use_Wavetable to !use_Wavetable
+    if ((POLYPHONY_FLASH[optimization] < PLAYERS) && Preset[instrument].use_Wavetable && !Get_use_Wavetable(Sound_Id(patch_id, instrument))) // Sound passes from use_Wavetable to !use_Wavetable
     {
         // players_critical  = how many Player ARE GOING to !use_Wavetable (those playing "instrument") + how many Player are ALREDY !use_Wavetable
         for (auto player = 0; player < PLAYERS; ++player)
@@ -1862,7 +1862,7 @@ void PlayersManager::Broadcast_FIFO_mono(int16_t *LS_buffer_mono_ptr)
     }
 }
 
-uint8_t PlayersManager::Id_sound(uint8_t patch_id, uint8_t instrument)
+uint8_t PlayersManager::Sound_Id(uint8_t patch_id, uint8_t instrument)
 {
     return Patch[patch_id].Instrument[instrument].sound_id;
 }
