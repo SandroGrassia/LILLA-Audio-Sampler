@@ -1,5 +1,3 @@
-[📋 See Project Overview](PROJECT.md)
-
 <p align="center">
 <img width="500" src="/doc/assets/images/logo_0.jpg")
 </p>
